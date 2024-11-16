@@ -1,21 +1,146 @@
-import { Text, View, StyleSheet } from 'react-native';
+import { ThemedView } from "@/components/ThemedView";
+import { Ionicons } from "@expo/vector-icons";
+import React from "react";
+import {
+  View,
+  StyleSheet,
+  TouchableOpacity,
+  Image,
+  ScrollView,
+} from "react-native";
+import { tw } from "react-native-tailwindcss";
+import { heightPercentageToDP } from "react-native-responsive-screen";
+import ButtonComponent from "@/components/Button";
+import TextComponent from "@/components/Text";
+import { introText } from "@/constants/text";
+import Input from "@/components/input";
+import { Button, Chip, Divider, TextInput } from "react-native-paper";
+import { Link, useRouter } from "expo-router";
+import Separator from "@/components/Separator";
+import OTPTextView from "react-native-otp-textinput";
+import { SafeAreaView } from "react-native-safe-area-context";
+import CircularProgress from "react-native-circular-progress-indicator";
 
-export default function AboutScreen() {
+const ProfileScreen: React.FC = () => {
+  const router = useRouter();
+  const handleOtp = () => {
+    console.log("Pressed");
+    router.push({ pathname: "/(tabs)" });
+  };
   return (
-    <View style={styles.container}>
-      <Text style={styles.text}>Profile screen</Text>
-    </View>
-  );
-}
+    <SafeAreaView>
+      <ScrollView>
+        <View style={[tw.hFull, tw.mB8]}>
+          <View style={[tw.flex, tw.justifyCenter, tw.itemsCenter]}>
+            <Image
+              source={require("../../assets/images/c_photo.jpeg")}
+              style={[tw.wFull, tw.h48]}
+            />
+          </View>
+          <View
+            style={[tw.relative, tw.flex, tw.justifyCenter, tw.itemsCenter]}
+          >
+            <Image
+              source={require("../../assets/images/b_lady.jpg")}
+              style={[
+                tw.absolute,
+                tw.w32,
+                tw.h32,
+                tw.roundedFull,
+                tw.border4,
+                tw.borderWhite,
+              ]}
+            />
+          </View>
+          <View style={[tw.pT20]}>
+            <View>
+              <TextComponent style={[tw.textCenter, tw.text2xl, tw.fontBold]}>
+                Jane Doe
+              </TextComponent>
+              <TextComponent
+                style={[tw.textCenter, tw.textBase, tw.textGray600]}
+              >
+                28 Yo . Los Angeles, CA
+              </TextComponent>
+            </View>
+          </View>
+          <View
+            style={[
+              tw.bgWhite,
+              tw.mX4,
+              tw.rounded,
+              tw.p4,
+              tw.mY4,
+              tw.shadow2xl,
+            ]}
+          >
+            <TextComponent variant="labelLarge" style={[tw.fontBlack]}>
+              Almost There!
+            </TextComponent>
+            <View style={[tw.flex, tw.flexRow, tw.justifyBetween]}>
+              <View style={[tw.w3_4]}>
+                <TextComponent variant="bodyMedium">
+                  Your profile is 32% complete! Complete your profile to find
+                  the one meant for you!
+                </TextComponent>
+              </View>
+              <View>
+                <CircularProgress
+                  value={32}
+                  radius={38}
+                  valueSuffix="%"
+                  activeStrokeWidth={10}
+                  inActiveStrokeWidth={10}
+                  activeStrokeColor={"#eca899"}
+                  inActiveStrokeColor={"#e4e1f7"}
+                  duration={2000}
+                  dashedStrokeConfig={{
+                    count: 100,
+                    width: 2,
+                  }}
+                />
+              </View>
+            </View>
+            <Button mode="outlined" style={[tw.mT4]}>
+              Complete My Profile
+            </Button>
+          </View>
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#25292e',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  text: {
-    color: '#fff',
-  },
-});
+          <View style={[tw.mX4]}>
+            <TextComponent variant="labelLarge" style={[tw.fontBlack]}>
+              About
+            </TextComponent>
+            <TextComponent variant="bodyMedium" style={[tw.textGray600]}>
+              I am a fun loving person who loves to travel and explore new
+              places. I am looking for someone who is understanding and caring.
+            </TextComponent>
+          </View>
+          <Divider style={[tw.bgGray500, tw.m4]} />
+          <View style={[tw.mX4]}>
+            <TextComponent variant="labelLarge" style={[tw.fontBlack]}>
+              Interest
+            </TextComponent>
+            <View style={[tw.flex, tw.flexRow, tw.justifyAround, tw.flexWrap]}>
+              <Chip style={[tw.bgBlue200, tw.mY2, tw.roundedFull]}>Travel</Chip>
+              <Chip style={[tw.bgGray300, tw.mY2, tw.roundedFull]}>Food</Chip>
+              <Chip style={[tw.bgIndigo200, tw.mY2, tw.roundedFull]}>
+                Movies
+              </Chip>
+              <Chip style={[tw.bgRed100, tw.mY2, tw.roundedFull]}>Music</Chip>
+              <Chip style={[tw.bgPurple200, tw.mY2, tw.roundedFull]}>
+                Reading
+              </Chip>
+              <Chip style={[tw.bgBlue200, tw.mY2, tw.roundedFull]}>Praise</Chip>
+              <Chip style={[tw.bgGray300, tw.mY2, tw.roundedFull]}>Camping</Chip>
+              <Chip style={[tw.bgIndigo200, tw.mY2, tw.roundedFull]}>
+                Church
+              </Chip>
+            </View>
+          </View>
+        </View>
+      </ScrollView>
+    </SafeAreaView>
+  );
+};
+
+export default ProfileScreen;

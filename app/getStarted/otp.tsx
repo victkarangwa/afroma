@@ -9,11 +9,16 @@ import TextComponent from "@/components/Text";
 import { introText } from "@/constants/text";
 import Input from "@/components/input";
 import { Button, Divider, TextInput } from "react-native-paper";
-import { Link } from "expo-router";
+import { Link, useRouter } from "expo-router";
 import Separator from "@/components/Separator";
 import OTPTextView from "react-native-otp-textinput";
 
 const OtpScreen: React.FC = () => {
+  const router = useRouter();
+  const handleOtp = () => {
+    console.log("Pressed");
+    router.push({ pathname: "/(tabs)" });
+  };
   return (
     <View style={[tw.bgPink100, tw.hFull]}>
       <View style={[tw.flex, tw.justifyCenter, tw.itemsCenter, tw.pX8]}>
@@ -49,11 +54,7 @@ const OtpScreen: React.FC = () => {
           tintColor={"#757fb4"}
         />
       </View>
-      <Button
-        onPress={() => console.log("Pressed")}
-        mode="contained"
-        style={[tw.mX8, tw.mY2]}
-      >
+      <Button onPress={handleOtp} mode="contained" style={[tw.mX8, tw.mY2]}>
         Verify
       </Button>
 

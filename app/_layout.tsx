@@ -1,37 +1,66 @@
-import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
-import { useFonts } from 'expo-font';
-import { Stack } from 'expo-router';
-import * as SplashScreen from 'expo-splash-screen';
-import { useEffect } from 'react';
-import 'react-native-reanimated';
+import {
+  DarkTheme,
+  DefaultTheme,
+  ThemeProvider,
+} from "@react-navigation/native";
+import { useFonts } from "expo-font";
+import { router, Stack } from "expo-router";
+import * as SplashScreen from "expo-splash-screen";
+import { useEffect } from "react";
+import { useColorScheme } from "react-native";
+import { PaperProvider } from "react-native-paper";
 
-import { useColorScheme } from '@/hooks/useColorScheme';
-
-// Prevent the splash screen from auto-hiding before asset loading is complete.
-SplashScreen.preventAutoHideAsync();
+export const unstable_settings = {
+  // Ensure any route can link back to `/`
+  initialRouteName: "starters/indexr",
+};
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
   const [loaded] = useFonts({
-    SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
+    SpaceMono: require("@/assets/fonts/SpaceMono-Regular.ttf"),
   });
 
   useEffect(() => {
-    if (loaded) {
-      SplashScreen.hideAsync();
-    }
+    const fetchData = async () => {
+      if (loaded) {
+        try {
+          await SplashScreen.hideAsync();
+          if (router.canDismiss()) router.dismissAll();
+          router.replace({ pathname: "/starters" });
+        } catch (error) {
+          console.error("Initialization Error:", error);
+        }
+      }
+    };
+    fetchData();
   }, [loaded]);
 
-  if (!loaded) {
-    return null;
-  }
+  // modify default theme
+  const theme = {
+    ...DefaultTheme,
+    colors: {
+      primary: "#eca899",
+      outline: "#eca899",
+    },
+  };
 
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="+not-found" />
-      </Stack>
+    <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
+      <PaperProvider theme={colorScheme === "dark" ? DarkTheme : theme}>
+        <Stack>
+          <Stack.Screen
+            name="starters/index"
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="getStarted/index"
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+          <Stack.Screen name="+not-found" />
+        </Stack>
+      </PaperProvider>
     </ThemeProvider>
   );
 }

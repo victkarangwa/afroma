@@ -42,6 +42,7 @@ export default function RootLayout() {
     colors: {
       primary: "#eca899",
       outline: "#eca899",
+      link: "#eca899",
     },
   };
 
@@ -55,6 +56,14 @@ export default function RootLayout() {
           />
           <Stack.Screen
             name="getStarted/index"
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="getStarted/login"
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="getStarted/otp"
             options={{ headerShown: false }}
           />
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />

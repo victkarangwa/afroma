@@ -7,7 +7,6 @@ import { heightPercentageToDP } from "react-native-responsive-screen";
 import ButtonComponent from "@/components/Button";
 import TextComponent from "@/components/Text";
 import { introText } from "@/constants/text";
-import { LinearGradient } from "expo-linear-gradient";
 import Input from "@/components/input";
 import { Button, Divider, TextInput } from "react-native-paper";
 

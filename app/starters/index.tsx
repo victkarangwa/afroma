@@ -4,23 +4,10 @@ import React from "react";
 import { View, StyleSheet, TouchableOpacity } from "react-native";
 import { tw } from "react-native-tailwindcss";
 import { heightPercentageToDP } from "react-native-responsive-screen";
-import ButtonComponent from "@/components/Button";
 import TextComponent from "@/components/Text";
 import { introText } from "@/constants/text";
-import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 
-const st = StyleSheet.create({
-  linearGradient: {},
-  buttonText: {
-    fontSize: 18,
-    fontFamily: "Gill Sans",
-    textAlign: "center",
-    margin: 10,
-    color: "#ffffff",
-    backgroundColor: "transparent",
-  },
-});
 
 const StarterScreen1: React.FC = () => {
   const router = useRouter();

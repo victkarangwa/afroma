@@ -9,6 +9,10 @@ import * as SplashScreen from "expo-splash-screen";
 import { useEffect } from "react";
 import { useColorScheme } from "react-native";
 import { PaperProvider } from "react-native-paper";
+import "react-native-reanimated";
+import { StatusBar } from "expo-status-bar";
+import Toast from "react-native-toast-message";
+import { ApiProvider, UserProvider } from "@/context";
 
 export const unstable_settings = {
   // Ensure any route can link back to `/`
@@ -47,29 +51,37 @@ export default function RootLayout() {
   };
 
   return (
-    <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
-      <PaperProvider theme={colorScheme === "dark" ? DarkTheme : theme}>
-        <Stack>
-          <Stack.Screen
-            name="starters/index"
-            options={{ headerShown: false }}
-          />
-          <Stack.Screen
-            name="getStarted/index"
-            options={{ headerShown: false }}
-          />
-          <Stack.Screen
-            name="getStarted/login"
-            options={{ headerShown: false }}
-          />
-          <Stack.Screen
-            name="getStarted/otp"
-            options={{ headerShown: false }}
-          />
-          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-          <Stack.Screen name="+not-found" />
-        </Stack>
-      </PaperProvider>
-    </ThemeProvider>
+    <ApiProvider>
+      <UserProvider>
+        <ThemeProvider
+          value={colorScheme === "dark" ? DarkTheme : DefaultTheme}
+        >
+          <PaperProvider theme={colorScheme === "dark" ? DarkTheme : theme}>
+            <Toast topOffset={80} />
+            <StatusBar style="auto" />
+            <Stack>
+              <Stack.Screen
+                name="starters/index"
+                options={{ headerShown: false }}
+              />
+              <Stack.Screen
+                name="getStarted/index"
+                options={{ headerShown: false }}
+              />
+              <Stack.Screen
+                name="getStarted/login"
+                options={{ headerShown: false }}
+              />
+              <Stack.Screen
+                name="getStarted/otp"
+                options={{ headerShown: false }}
+              />
+              <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+              <Stack.Screen name="+not-found" />
+            </Stack>
+          </PaperProvider>
+        </ThemeProvider>
+      </UserProvider>
+    </ApiProvider>
   );
 }

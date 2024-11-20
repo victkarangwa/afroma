@@ -83,6 +83,10 @@ export default function RootLayout() {
                 options={{ headerShown: false }}
               />
               <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+              <Stack.Screen
+                name="form/profile"
+                options={{ headerShown: false }}
+              />
               <Stack.Screen name="+not-found" />
             </Stack>
           </PaperProvider>

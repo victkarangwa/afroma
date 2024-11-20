@@ -45,7 +45,7 @@ const OtpScreen: React.FC = () => {
     const result = await send("post", "/bonded-user-service/auth/login-auth2", {
       code,
     });
-    console.log("---OTP---", result, errors);
+    console.log("___OTP___", result, errors);
     if (result?.errors) {
       return setVisible(true);
     }

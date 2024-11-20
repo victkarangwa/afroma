@@ -9,6 +9,7 @@ interface Props extends TextInputProps {
   onChangeText?: (text: string) => void;
   placeholder?: string;
   icon?: string;
+  containerStyles?: any;
 }
 
 const Input = ({
@@ -17,10 +18,19 @@ const Input = ({
   placeholder,
   icon,
   onChangeText,
+  containerStyles,
   ...rest
 }: Props) => {
   return (
-    <View style={[tw.border, tw.borderPink700, tw.rounded, tw.mY2]}>
+    <View
+      style={[
+        tw.border,
+        tw.borderPink700,
+        tw.rounded,
+        tw.mY2,
+        ...(containerStyles || []),
+      ]}
+    >
       <TextInput
         style={[tw.wFull, tw.mXAuto, tw.textWhite]}
         placeholderTextColor={"white"}

@@ -13,12 +13,12 @@ const useApiRequest = <T>(
     data?: any ,
     config?: object
   ) => {
-    if (reqType === "get") {
-      Object.values(data).forEach((element) => {
-        url = `${url}/${element}`;
-      });
-      data = null;
-    }
+    // if (reqType === "get") {
+    //   Object.values(data).forEach((element) => {
+    //     url = `${url}/${element}`;
+    //   });
+    //   data = null;
+    // }
     const result = await request<T>(reqType, url, data, config);
     setResponseData(result);
     return result;

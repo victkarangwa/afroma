@@ -13,6 +13,7 @@ import "react-native-reanimated";
 import { StatusBar } from "expo-status-bar";
 import Toast from "react-native-toast-message";
 import { ApiProvider, UserProvider } from "@/context";
+import LocalStorage from "@/utils/storage";
 
 export const unstable_settings = {
   // Ensure any route can link back to `/`
@@ -30,7 +31,12 @@ export default function RootLayout() {
       if (loaded) {
         try {
           await SplashScreen.hideAsync();
-          if (router.canDismiss()) router.dismissAll();
+
+          if (await LocalStorage.getItem("token")) {
+            router.replace({ pathname: "/(tabs)" });
+            return;
+          }
+          // if (router.canDismiss()) router.dismissAll();
           router.replace({ pathname: "/starters" });
         } catch (error) {
           console.error("Initialization Error:", error);

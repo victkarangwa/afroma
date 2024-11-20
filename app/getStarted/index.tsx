@@ -28,6 +28,19 @@ const SignupScreen: React.FC = () => {
   const { loading, send, error } = useApiRequest<ApiResponse>();
 
   const [visible, setVisible] = React.useState(false);
+  const [modalInfo, setModalInfo] = React.useState<{
+    title: string;
+    description: string;
+    status: "error" | "success" | "warning" | "info";
+    btnText: string;
+    onDismiss?: () => void;
+  }>({
+    title: "",
+    description: "",
+    status: "error",
+    btnText: "Try Again",
+    onDismiss: () => {},
+  });
 
   const {
     control,
@@ -63,17 +76,33 @@ const SignupScreen: React.FC = () => {
       password,
     });
     if (result?.errors) {
+      setModalInfo({
+        title: "Error",
+        description: error || "An error occurred. Please try again.",
+        status: "error",
+        btnText: "Try Again",
+        onDismiss: () => setVisible(false),
+      });
       return setVisible(true);
     }
-    router.push({ pathname: "/getStarted/login" });
+    setVisible(true);
+    setModalInfo({
+      title: "Success",
+      description: "Account created successfully",
+      status: "success",
+      btnText: "Contrinue to login",
+      onDismiss: () => router.push({ pathname: "/getStarted/login" }),
+    });
   };
   return (
     <AuthScreenLayout>
       <Modal
-        title="Error"
-        description={error || "An error occurred. Please try again."}
+        title={modalInfo.title}
+        description={modalInfo.description}
         visible={visible}
-        onDismiss={() => setVisible(false)}
+        status={modalInfo.status}
+        btnText={modalInfo.btnText}
+        onDismiss={modalInfo.onDismiss || (() => {})}
       />
       <View style={[tw.bgPink100, tw.hFull, tw.flex, tw.flexCol]}>
         <View style={[tw.flex, tw.justifyCenter, tw.itemsCenter, tw.pX8]}>

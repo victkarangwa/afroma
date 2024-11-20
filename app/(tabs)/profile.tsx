@@ -1,6 +1,6 @@
 import { ThemedView } from "@/components/ThemedView";
 import { Ionicons } from "@expo/vector-icons";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
   View,
   StyleSheet,
@@ -28,6 +28,22 @@ const ProfileScreen: React.FC = () => {
   const router = useRouter();
 
   const { loading, send } = useApiRequest<ApiResponse>();
+
+  const [profile, setProfile] = useState<any>({});
+
+  const getMyProfile = async () => {
+    const result = await send("get", "/bonded-user-service/users/me");
+
+    console.log("---PROFILE---", result)
+    if (result?.errors) {
+      return;
+    }
+    setProfile(result);
+  };
+
+  useEffect(() => {
+    getMyProfile();
+  }, []);
 
   const handleLogout = async () => {
     const result = await send("post", "/bonded-user-service/auth/logout");
@@ -59,13 +75,13 @@ const ProfileScreen: React.FC = () => {
                 tw.roundedFull,
                 tw.border4,
                 tw.borderWhite,
-              ]}
+              ]} 
             />
           </View>
           <View style={[tw.pT20]}>
             <View>
               <TextComponent style={[tw.textCenter, tw.text2xl, tw.fontBold]}>
-                Jane Doe
+                {profile?.firstname} {profile?.lastname}
               </TextComponent>
               <TextComponent
                 style={[tw.textCenter, tw.textBase, tw.textGray600]}

@@ -8,10 +8,48 @@ interface ModalProps {
   onDismiss: () => void;
   title: string;
   description: string;
+  status?: "error" | "success" | "warning" | "info";
+  btnText?: string;
 }
 
 const ModalComponent = (props: ModalProps) => {
-  const { visible, onDismiss, title, description } = props;
+  const {
+    visible,
+    onDismiss,
+    title,
+    description,
+    status = "error",
+    btnText = "Try Again",
+  } = props;
+  let icon:
+    | "close-circle-outline"
+    | "checkmark-circle-outline"
+    | "alert-circle-outline"
+    | "information-circle-outline";
+  let color: string;
+  switch (status) {
+    case "error":
+      icon = "close-circle-outline";
+      color = "red";
+      break;
+    case "success":
+      icon = "checkmark-circle-outline";
+      color = "green";
+      break;
+    case "warning":
+      icon = "alert-circle-outline";
+      color = "yellow";
+      break;
+    case "info":
+      icon = "information-circle-outline";
+      color = "blue";
+      break;
+    default:
+      icon = "information-circle-outline";
+      color = "blue";
+      break;
+  }
+
   return (
     <Portal>
       <Modal
@@ -25,15 +63,15 @@ const ModalComponent = (props: ModalProps) => {
           tw.h1_2,
         ]}
         theme={{
-            colors: {
-                backdrop: "rgba(0, 0, 0, 0.5)",
-            },
+          colors: {
+            backdrop: "rgba(0, 0, 0, 0.5)",
+          },
         }}
       >
         <Ionicons
-          name="close-circle-outline"
+          name={icon}
           size={36}
-          color="red"
+          color={color}
           style={[tw.mT2, tw.textCenter]}
         />
         <TextComponent
@@ -44,7 +82,7 @@ const ModalComponent = (props: ModalProps) => {
         </TextComponent>
         <TextComponent style={[tw.textCenter]}>{description}</TextComponent>
         <Button mode="outlined" onPress={onDismiss} style={[tw.mY6]}>
-          Try Again
+          {btnText}
         </Button>
       </Modal>
     </Portal>

@@ -1,6 +1,6 @@
 import { ThemedView } from "@/components/ThemedView";
 import { Ionicons } from "@expo/vector-icons";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { View, StyleSheet, TouchableOpacity, Image } from "react-native";
 import { tw } from "react-native-tailwindcss";
 import { heightPercentageToDP } from "react-native-responsive-screen";
@@ -42,15 +42,14 @@ const OtpScreen: React.FC = () => {
   const [code, setCode] = React.useState("");
 
   const handleOtp = async () => {
-    const token = LocalStorage.getItem(localStore.otpToken);
     const result = await send("post", "/bonded-user-service/auth/login-auth2", {
       code,
     });
-    console.log("------", result, errors);
+    console.log("---OTP---", result, errors);
     if (result?.errors) {
       return setVisible(true);
     }
-
+    LocalStorage.setItem(localStore.token, result?.token);
     router.push({ pathname: "/(tabs)" });
   };
 

@@ -20,12 +20,22 @@ import Separator from "@/components/Separator";
 import OTPTextView from "react-native-otp-textinput";
 import { SafeAreaView } from "react-native-safe-area-context";
 import CircularProgress from "react-native-circular-progress-indicator";
+import { removeUserData } from "@/utils";
+import useApiRequest from "@/hooks/useApiRequest";
+import { ApiResponse } from "@/types";
 
 const ProfileScreen: React.FC = () => {
   const router = useRouter();
-  const handleOtp = () => {
-    console.log("Pressed");
-    router.push({ pathname: "/(tabs)" });
+
+  const { loading, send } = useApiRequest<ApiResponse>();
+
+  const handleLogout = async () => {
+    const result = await send("post", "/bonded-user-service/auth/logout");
+    if (result?.errors) {
+      return;
+    }
+    removeUserData();
+    router.push({ pathname: "/getStarted/login" });
   };
   return (
     <SafeAreaView>
@@ -131,12 +141,23 @@ const ProfileScreen: React.FC = () => {
                 Reading
               </Chip>
               <Chip style={[tw.bgBlue200, tw.mY2, tw.roundedFull]}>Praise</Chip>
-              <Chip style={[tw.bgGray300, tw.mY2, tw.roundedFull]}>Camping</Chip>
+              <Chip style={[tw.bgGray300, tw.mY2, tw.roundedFull]}>
+                Camping
+              </Chip>
               <Chip style={[tw.bgIndigo200, tw.mY2, tw.roundedFull]}>
                 Church
               </Chip>
             </View>
           </View>
+          <Divider style={[tw.bgGray500, tw.m4]} />
+          <Button
+            onPress={handleLogout}
+            mode="contained"
+            style={[tw.mX4, tw.mY2, tw.bgRed600, tw.textWhite]}
+            loading={loading}
+          >
+            Logout
+          </Button>
         </View>
       </ScrollView>
     </SafeAreaView>

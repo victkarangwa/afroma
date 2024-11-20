@@ -8,7 +8,7 @@ import ButtonComponent from "@/components/Button";
 import TextComponent from "@/components/Text";
 import { introText } from "@/constants/text";
 import Input from "@/components/input";
-import { Button, Divider, Modal, Portal, TextInput } from "react-native-paper";
+import { Button, Divider, Portal, TextInput } from "react-native-paper";
 import { Link, useRouter } from "expo-router";
 import Separator from "@/components/Separator";
 import showToast from "@/utils/toast";
@@ -16,16 +16,16 @@ import Toast from "react-native-toast-message";
 import AuthScreenLayout from "@/components/AuthScreensLayout";
 import { useForm, Controller, SubmitHandler } from "react-hook-form";
 import useApiRequest from "@/hooks/useApiRequest";
+import { ApiResponse } from "@/types";
+import Modal from "@/components/Modal";
+import LocalStorage from "@/utils/storage";
+import localStore from "@/utils/localValues";
+import { removeUserData } from "@/utils";
 
 type FormData = {
   username: string;
   password: string;
 };
-
-interface ApiResponse {
-  data: any;
-  [key: string]: any;
-}
 
 const LoginScreen: React.FC = () => {
   const router = useRouter();
@@ -41,15 +41,16 @@ const LoginScreen: React.FC = () => {
     },
   });
 
-  const [credentials, setCredentials] = useState("");
   const [visible, setVisible] = React.useState(false);
 
-  const { loading, send } = useApiRequest<ApiResponse>();
+  const { loading, send, error } = useApiRequest<ApiResponse>();
 
   const handleLogin = async (credentials: FormData) => {
+    // remove user data -- to be revamped
+    removeUserData();
+
     // convert username and password to basic auth
     const basicAuth = btoa(`${credentials.username}:${credentials.password}`);
-    setCredentials(basicAuth);
     const result = await send(
       "post",
       "/bonded-user-service/auth/login",
@@ -61,50 +62,23 @@ const LoginScreen: React.FC = () => {
         },
       }
     );
+    console.log("--", result, credentials);
     if (result?.errors) {
       return setVisible(true);
     }
-
-    console.log("------", result);
+    LocalStorage.setItem(localStore.token, result?.otpToken);
     router.push({ pathname: "/getStarted/otp" });
   };
 
   const handleModal = () => setVisible(false);
   return (
     <AuthScreenLayout>
-      <Portal>
-        <Modal
-          visible={visible}
-          onDismiss={handleModal}
-          contentContainerStyle={[
-            tw.bgWhite,
-            tw.p8,
-            tw.roundedL,
-            tw.mX8,
-            tw.h1_2,
-          ]}
-        >
-          <Ionicons
-            name="close-circle-outline"
-            size={36}
-            color="red"
-            style={[tw.mT2, tw.textCenter]}
-          />
-          <TextComponent
-            variant="titleMedium"
-            style={[tw.textCenter, tw.fontBold, tw.pY4]}
-          >
-            The credentials you provided are incorrect
-          </TextComponent>
-          <TextComponent style={[tw.textCenter]}>
-            Check that your credentials are the same as the ones you used to
-            sign up
-          </TextComponent>
-          <Button mode="outlined" onPress={handleModal} style={[tw.mY6]}>
-            Try Again
-          </Button>
-        </Modal>
-      </Portal>
+      <Modal
+        title="Error"
+        description={error ?? "An error occurred. Please try again."}
+        visible={visible}
+        onDismiss={handleModal}
+      />
       <View style={[tw.bgPink100, tw.hFull]}>
         <View style={[tw.flex, tw.justifyCenter, tw.itemsCenter, tw.pX8]}>
           <Image

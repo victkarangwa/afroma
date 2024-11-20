@@ -12,15 +12,57 @@ import { Button, Divider, TextInput } from "react-native-paper";
 import { Link, useRouter } from "expo-router";
 import Separator from "@/components/Separator";
 import OTPTextView from "react-native-otp-textinput";
+import useApiRequest from "@/hooks/useApiRequest";
+import { ApiResponse } from "@/types";
+import Modal from "@/components/Modal";
+import localStore from "@/utils/localValues";
+import LocalStorage from "@/utils/storage";
+import { useForm } from "react-hook-form";
+
+type FormData = {
+  code: string;
+};
 
 const OtpScreen: React.FC = () => {
   const router = useRouter();
-  const handleOtp = () => {
-    console.log("Pressed");
+
+  const {
+    control,
+    formState: { errors },
+    handleSubmit,
+  } = useForm<FormData>({
+    defaultValues: {
+      code: "",
+    },
+  });
+
+  const { loading, send, error } = useApiRequest<ApiResponse>();
+
+  const [visible, setVisible] = React.useState(false);
+  const [code, setCode] = React.useState("");
+
+  const handleOtp = async () => {
+    const token = LocalStorage.getItem(localStore.otpToken);
+    const result = await send("post", "/bonded-user-service/auth/login-auth2", {
+      code,
+    });
+    console.log("------", result, errors);
+    if (result?.errors) {
+      return setVisible(true);
+    }
+
     router.push({ pathname: "/(tabs)" });
   };
+
+  const handleModal = () => setVisible(false);
   return (
     <View style={[tw.bgPink100, tw.hFull]}>
+      <Modal
+        title="OTP Error"
+        description={error ?? "An error occured while verifying your OTP"}
+        visible={visible}
+        onDismiss={handleModal}
+      />
       <View style={[tw.flex, tw.justifyCenter, tw.itemsCenter, tw.pX8]}>
         <Image
           source={require("../../assets/images/bonded_logo.png")}
@@ -39,22 +81,29 @@ const OtpScreen: React.FC = () => {
             variant="labelSmall"
             style={[tw.textWhite, tw.mX8, tw.textCenter, tw.pT2]}
           >
-            Enter the OTP sent to your phone number
+            Enter the OTP sent to your Email/phone number
           </TextComponent>
         </View>
         <OTPTextView
-          handleTextChange={(e) => console.log(e)}
+          handleTextChange={setCode}
           textInputStyle={StyleSheet.flatten([
             tw.bgGray100,
-            tw.h12,
-            tw.w12,
-            tw.mX2,
+            tw.h10,
+            tw.w10,
+            // tw.mX2,
             tw.rounded,
           ])}
+          inputCount={6}
           tintColor={"#757fb4"}
         />
       </View>
-      <Button onPress={handleOtp} mode="contained" style={[tw.mX8, tw.mY2]}>
+      <Button
+        onPress={handleSubmit(handleOtp)}
+        mode="contained"
+        style={[tw.mX8, tw.mY2]}
+        labelStyle={[tw.textBlack]}
+        loading={loading}
+      >
         Verify
       </Button>
 

@@ -10,8 +10,8 @@ const useApiRequest = <T>(
   const getResponse = async (
     reqType: "get" | "put" | "post" | "patch" | "delete" ,
     url: string ,
-    data: any ,
-    config: object
+    data?: any ,
+    config?: object
   ) => {
     if (reqType === "get") {
       Object.values(data).forEach((element) => {

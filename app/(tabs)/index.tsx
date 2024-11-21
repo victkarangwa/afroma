@@ -55,7 +55,6 @@ const ProfileScreen: React.FC = () => {
       "/bonded-user-service/settings/profile-fields"
     );
 
-    console.log("___PROFILE-FIELDS___", result);
     if (result?.errors) {
       return;
     }
@@ -118,6 +117,9 @@ const ProfileScreen: React.FC = () => {
             placeholder={getCustomPlaceholder(field.fieldName).placeholder}
             textColor="black"
             containerStyles={[tw.borderGray700]}
+            onChangeText={(text) => {
+              setUserInput({ ...userInput, [fieldName]: text });
+            }}
           />
         );
     }
@@ -125,16 +127,23 @@ const ProfileScreen: React.FC = () => {
 
   const updateMyProfile = async () => {
     const otherDetails = transformToOtherDetails(userInput);
-    console.log("------", userInput, otherDetails);
-    const result = await send("patch", "/bonded-user-service/users/profile", {
-      otherDetails: JSON.stringify(otherDetails),
-    });
+    console.log("---otherDetails---", otherDetails, userInput);
+    const data = {
+      otherDetails: otherDetails,
+    };
+    const result = await send(
+      "put",
+      "/bonded-user-service/users/profile",
+      data
+    );
 
-    console.log("___UPDATE-PROFILE___", result);
+    // console.log("___UPDATE-PROFILE___", result);
     if (result?.errors) {
       return setVisible(true);
     }
-    // router.push("/home");
+    setUserInput({});
+    setOpenBottomSheet(false);
+    router.push(`/profile?refresh=${new Date().getTime()}`);
   };
 
   return (

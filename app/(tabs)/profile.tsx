@@ -1,6 +1,6 @@
 import { ThemedView } from "@/components/ThemedView";
 import { Ionicons } from "@expo/vector-icons";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   View,
   StyleSheet,
@@ -15,7 +15,7 @@ import TextComponent from "@/components/Text";
 import { introText } from "@/constants/text";
 import Input from "@/components/input";
 import { Button, Chip, Divider, TextInput } from "react-native-paper";
-import { Link, useRouter } from "expo-router";
+import { Link, useLocalSearchParams, useRouter } from "expo-router";
 import Separator from "@/components/Separator";
 import OTPTextView from "react-native-otp-textinput";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -23,19 +23,22 @@ import CircularProgress from "react-native-circular-progress-indicator";
 import { gateUserAge, removeUserData } from "@/utils";
 import useApiRequest from "@/hooks/useApiRequest";
 import { ApiResponse } from "@/types";
+import { constantUserData, profileTabs } from "@/constants";
 
 const ProfileScreen: React.FC = () => {
   const router = useRouter();
+
+  const params = useLocalSearchParams();
 
   const { loading, send } = useApiRequest<ApiResponse>();
 
   const [profile, setProfile] = useState<any>({});
   const [profileFields, setProfileFields] = useState<any>([]);
+  const [activeTab, setActiveTab] = useState(0);
 
   const getMyProfile = async () => {
     const result = await send("get", "/bonded-user-service/users/me");
 
-    console.log("___PROFILE___", result);
     if (result?.errors) {
       handleLogout();
       return;
@@ -46,7 +49,7 @@ const ProfileScreen: React.FC = () => {
   useEffect(() => {
     getMyProfile();
     getProfileField();
-  }, []);
+  }, [params.refresh]);
 
   const handleLogout = async () => {
     const result = await send("post", "/bonded-user-service/auth/logout");
@@ -63,11 +66,15 @@ const ProfileScreen: React.FC = () => {
       "/bonded-user-service/settings/profile-fields"
     );
 
-    console.log("___PROFILE-FIELDS___", result);
+    // console.log("___PROFILE-FIELDS___", result);
     if (result?.errors) {
       return;
     }
     setProfileFields(result);
+  };
+
+  const handleTabChange = (tab: number) => {
+    setActiveTab(tab);
   };
 
   return (
@@ -95,7 +102,14 @@ const ProfileScreen: React.FC = () => {
               ]}
             />
           </View>
-          <View style={[tw.pT20]}>
+          <View style={[tw.flex, tw.flexRow, tw.justifyCenter]}>
+            <View style={[tw.bgPink700, tw.mT12, tw.w1_3, , tw.roundedFull]}>
+              <TextComponent style={[tw.textCenter, tw.pY1, tw.fontBold]}>
+                20% Complete
+              </TextComponent>
+            </View>
+          </View>
+          <View style={[tw.pT4]}>
             <View>
               <TextComponent style={[tw.textCenter, tw.text2xl, tw.fontBold]}>
                 {profile?.firstname} {profile?.lastname}
@@ -118,75 +132,99 @@ const ProfileScreen: React.FC = () => {
             ]}
           >
             <TextComponent variant="labelLarge" style={[tw.fontBlack]}>
-              Almost There!
+              About Me
             </TextComponent>
             <View style={[tw.flex, tw.flexRow, tw.justifyBetween]}>
-              <View style={[tw.w3_4]}>
+              <View style={[]}>
                 <TextComponent variant="bodyMedium">
-                  Your profile is 32% complete! Complete your profile to find
-                  the one meant for you!
+                  {profile?.bio}
                 </TextComponent>
               </View>
-              <View>
-                <CircularProgress
-                  value={32}
-                  radius={38}
-                  valueSuffix="%"
-                  activeStrokeWidth={10}
-                  inActiveStrokeWidth={10}
-                  activeStrokeColor={"#eca899"}
-                  inActiveStrokeColor={"#e4e1f7"}
-                  duration={2000}
-                  dashedStrokeConfig={{
-                    count: 100,
-                    width: 2,
-                  }}
-                />
-              </View>
             </View>
-            <Button mode="outlined" style={[tw.mT4]}>
-              Complete My Profile
-            </Button>
+
           </View>
 
-          {profileFields?.map((field: any, index: number) => {
-            const label = field.fieldName.replace(/\_/g, " ");
-            return (
-              <View key={index} style={[tw.mX4]}>
-                <TextComponent variant="labelLarge" style={[tw.fontBlack, tw.capitalize]}>
-                  {label}
+          <View
+            style={[
+              tw.flex,
+              tw.flexRow,
+              tw.justifyBetween,
+              tw.mX4,
+              tw.bgGray200,
+              tw.p2,
+              tw.rounded,
+            ]}
+          >
+            {profileTabs.map((tab, index) => (
+              <TouchableOpacity
+                key={index}
+                onPress={() => handleTabChange(index)}
+                style={[
+                  activeTab === index && tw.bgWhite,
+                  tw.shadowLg,
+                  tw.rounded,
+                  tw.w1_2,
+                ]}
+              >
+                <TextComponent
+                  style={[
+                    tw.pY2,
+                    tw.pX4,
+                    activeTab === index && tw.fontBold,
+                    tw.textBlack,
+                    tw.textCenter,
+                  ]}
+                >
+                  {tab.title}
                 </TextComponent>
-                <TextComponent variant="bodyMedium" style={[tw.textGray600]}>
-                  {profile[field.fieldName] ?? "No data yet"}
-                </TextComponent>
-                <Divider style={[tw.bgGray500, tw.mY4]} />
-              </View>);
-          })}
-
-          {/* <View style={[tw.mX4]}>
-            <TextComponent variant="labelLarge" style={[tw.fontBlack]}>
-              Interest
-            </TextComponent>
-            <View style={[tw.flex, tw.flexRow, tw.justifyAround, tw.flexWrap]}>
-              <Chip style={[tw.bgBlue200, tw.mY2, tw.roundedFull]}>Travel</Chip>
-              <Chip style={[tw.bgGray300, tw.mY2, tw.roundedFull]}>Food</Chip>
-              <Chip style={[tw.bgIndigo200, tw.mY2, tw.roundedFull]}>
-                Movies
-              </Chip>
-              <Chip style={[tw.bgRed100, tw.mY2, tw.roundedFull]}>Music</Chip>
-              <Chip style={[tw.bgPurple200, tw.mY2, tw.roundedFull]}>
-                Reading
-              </Chip>
-              <Chip style={[tw.bgBlue200, tw.mY2, tw.roundedFull]}>Praise</Chip>
-              <Chip style={[tw.bgGray300, tw.mY2, tw.roundedFull]}>
-                Camping
-              </Chip>
-              <Chip style={[tw.bgIndigo200, tw.mY2, tw.roundedFull]}>
-                Church
-              </Chip>
-            </View>
-          </View> */}
-          <Divider style={[tw.bgGray500, tw.m4]} />
+              </TouchableOpacity>
+            ))}
+          </View>
+          <View style={[tw.bgWhite, tw.mX4, tw.rounded, tw.pY4]}>
+            {profileTabs[activeTab].content === "otherDetails"
+              ? profileFields?.map((field: any, index: number) => {
+                  const label = field.fieldName.replace(/\_/g, " ");
+                  return (
+                    <View key={index} style={[tw.mX4]}>
+                      <TextComponent
+                        variant="labelLarge"
+                        style={[tw.fontBlack, tw.capitalize]}
+                      >
+                        {label}
+                      </TextComponent>
+                      <TextComponent
+                        variant="bodyMedium"
+                        style={[tw.textGray600]}
+                      >
+                        {/* { profile[field.fieldName] ?? "No data yet"} */}
+                        {profile.otherDetails?.find(
+                          (detail: any) => detail.fieldName === field.fieldName
+                        )?.selectedValues ?? "No data yet"}
+                      </TextComponent>
+                      <Divider style={[tw.bgGray500, tw.mY4]} />
+                    </View>
+                  );
+                })
+              : profileTabs[activeTab].content.map(
+                  (field: string, index: number) => (
+                    <View key={index} style={[tw.mX4]}>
+                      <TextComponent
+                        variant="labelLarge"
+                        style={[tw.fontBlack, tw.capitalize]}
+                      >
+                        {field}
+                      </TextComponent>
+                      <TextComponent
+                        variant="bodyMedium"
+                        style={[tw.textGray600]}
+                      >
+                        {profile[field] ?? "No data yet"}
+                      </TextComponent>
+                      <Divider style={[tw.bgGray500, tw.mY4]} />
+                    </View>
+                  )
+                )}
+          </View>
           <Button
             onPress={handleLogout}
             mode="contained"

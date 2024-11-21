@@ -91,7 +91,10 @@ const SignupScreen: React.FC = () => {
       description: "Account created successfully",
       status: "success",
       btnText: "Contrinue to login",
-      onDismiss: () => router.push({ pathname: "/getStarted/login" }),
+      onDismiss: () => {
+        router.push({ pathname: "/getStarted/login" });
+        setVisible(false);
+      },
     });
   };
   return (

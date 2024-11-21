@@ -10,6 +10,7 @@ interface Props extends TextInputProps {
   placeholder?: string;
   icon?: string;
   containerStyles?: any;
+  theme?: any;
 }
 
 const Input = ({
@@ -19,6 +20,7 @@ const Input = ({
   icon,
   onChangeText,
   containerStyles,
+  theme,
   ...rest
 }: Props) => {
   return (
@@ -41,6 +43,7 @@ const Input = ({
             placeholder: "gray",
             onSurfaceVariant: "gray",
           },
+          ...theme,
         }}
         label={label}
         secureTextEntry={label === "Password"}

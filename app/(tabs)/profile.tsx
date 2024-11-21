@@ -87,11 +87,12 @@ const ProfileScreen: React.FC = () => {
               style={[tw.wFull, tw.h48]}
             />
           </View>
+
           <View
             style={[tw.relative, tw.flex, tw.justifyCenter, tw.itemsCenter]}
           >
             <Image
-              source={require("../../assets/images/b_lady.jpg")}
+              source={require("../../assets/images/default_avatar.jpg")}
               style={[
                 tw.absolute,
                 tw.w32,
@@ -121,6 +122,18 @@ const ProfileScreen: React.FC = () => {
               </TextComponent>
             </View>
           </View>
+          <TouchableOpacity
+            style={[tw.flex, tw.flexRow, tw.justifyEnd]}
+            onPress={() => {
+              router.push(`/form/profile?tab=${activeTab}`);
+            }}
+          >
+            <Ionicons
+              name="create-outline"
+              size={24}
+              style={[tw.mX4, tw.textPink700]}
+            />
+          </TouchableOpacity>
           <View
             style={[
               tw.bgWhite,
@@ -141,7 +154,6 @@ const ProfileScreen: React.FC = () => {
                 </TextComponent>
               </View>
             </View>
-
           </View>
 
           <View

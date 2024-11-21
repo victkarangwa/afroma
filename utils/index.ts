@@ -19,43 +19,43 @@ export const removeUserData = async () => {
 export const getCustomPlaceholder = (fieldName: string) => {
   let placeholder, title, description;
 
-  if (fieldName.includes("bio")) {
+  if (fieldName?.includes("bio")) {
     return {
       placeholder: "Add a bio to introduce yourself",
       title: "Write a bio to introduce yourself",
       description: "Tell people about yourself. Don't be shy!",
     };
-  } else if (fieldName.includes("phone")) {
+  } else if (fieldName?.includes("phone")) {
     return {
       placeholder: "Enter your phone number",
       title: "Add your phone number",
       description: "Your phone number will be visible to your connections",
     };
-  } else if (fieldName.includes("family_plan")) {
+  } else if (fieldName?.includes("family_plan")) {
     return {
       placeholder: "Add your family plan",
       title: "Add your family plan",
       description: "Tell people about your family plan",
     };
-  } else if (fieldName.includes("education")) {
+  } else if (fieldName?.includes("education")) {
     return {
       placeholder: "Add your education",
       title: "Where di you go to school?",
       description: "Tell people about your education",
     };
-  } else if (fieldName.includes("communication_style")) {
+  } else if (fieldName?.includes("communication_style")) {
     return {
       placeholder: "Add your communication style",
       title: "What's your communication style?",
       description: "Tell people about how you usually communicate",
     };
-  } else if (fieldName.includes("language")) {
+  } else if (fieldName?.includes("language")) {
     return {
       placeholder: "Add your language",
       title: "What language(s) do you speak?",
       description: "Tell people about the languages you speak",
     };
-  } else if (fieldName.includes("looking_for")) {
+  } else if (fieldName?.includes("looking_for")) {
     return {
       placeholder: "Update what you're looking for",
       title: "Tell people what you're looking for",

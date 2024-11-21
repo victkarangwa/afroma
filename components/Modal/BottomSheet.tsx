@@ -26,6 +26,17 @@ const BottomModal = ({ children }: { children: ReactNode }) => {
         ref={bottomSheetRef}
         onChange={handleSheetChanges}
         snapPoints={["50%", "100%"]}
+        backdropComponent={({ animatedIndex }) => (
+          <View
+            style={[
+              tw.flex1,
+              tw.bgBlack,
+              tw.opacity50,
+              tw.absolute,
+              tw.inset0,
+            ]}
+          />
+        )}
       >
         <BottomSheetView style={[tw.mX4]} >
           {children}

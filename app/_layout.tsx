@@ -85,7 +85,11 @@ export default function RootLayout() {
               <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
               <Stack.Screen
                 name="form/profile"
-                options={{ headerShown: false }}
+                options={{
+                  headerTitle: "Edit Profile",
+                  headerTitleAlign: "center",
+                  // Remove the top space for the header
+                }}
               />
               <Stack.Screen name="+not-found" />
             </Stack>

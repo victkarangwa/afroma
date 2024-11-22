@@ -43,6 +43,9 @@ const ProfileScreen: React.FC = () => {
       handleLogout();
       return;
     }
+    if (!result.bio || !result.dateOfBirth || !result.gender) {
+      router.push(`/form/profile?tab=${activeTab}`);
+    }
     setProfile(result);
   };
 
@@ -93,7 +96,8 @@ const ProfileScreen: React.FC = () => {
           >
             <Image
               src={
-                profile?.gallery?.find((img: any) => !img.featured)?.thumbnailUrl
+                profile?.gallery?.find((img: any) => !img.featured)
+                  ?.thumbnailUrl
               }
               style={[
                 tw.absolute,

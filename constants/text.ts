@@ -8,12 +8,20 @@ export const introText = [
     title: "Bond and Meet",
     description:
       "When you both feel a connection, make it official and start bonding",
-      icon: "heart-outline",
+    icon: "heart-outline",
   },
   {
     title: "Safe and Secure",
     description:
       "Your privacy and safety matter to us. We prioritize a respectful experience.",
-      icon: "lock-closed-outline",
+    icon: "lock-closed-outline",
+  },
+];
+
+export const profileFillIntroText = [
+  {
+    field: "bio",
+    description:
+      "Tell your matches about yourself. This is your chance to shine!. Start with your name, age, and location.",
   },
 ];

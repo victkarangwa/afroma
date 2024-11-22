@@ -12,7 +12,7 @@ import { tw } from "react-native-tailwindcss";
 import { heightPercentageToDP } from "react-native-responsive-screen";
 import ButtonComponent from "@/components/Button";
 import TextComponent from "@/components/Text";
-import { introText } from "@/constants/text";
+import { introText, profileFillIntroText } from "@/constants/text";
 import Input from "@/components/input";
 import { Button, Chip, Divider, TextInput } from "react-native-paper";
 import { Link, useLocalSearchParams, useRouter } from "expo-router";
@@ -23,6 +23,7 @@ import CircularProgress from "react-native-circular-progress-indicator";
 import {
   convertImgToBase64,
   gateUserAge,
+  getProfileCompletion,
   prepareImgForUpload,
   removeUserData,
   separateTextWithSpace,
@@ -101,7 +102,7 @@ const ProfileScreen: React.FC = () => {
     if (result?.errors) {
       return;
     }
-    console.log("---dds", result)
+    console.log("---dds", result);
     setUpdatedProfile({ ...updatedProfile, featuredPhoto: result });
   };
 
@@ -178,7 +179,7 @@ const ProfileScreen: React.FC = () => {
               style={[tw.textWhite, tw.absolute, tw._mT20]}
             /> */}
               <TextComponent style={[tw.textCenter, tw.pY1, tw.fontBold]}>
-                20% Complete
+                {getProfileCompletion(profileFields, profile)}% Complete
               </TextComponent>
             </View>
           </View>
@@ -228,7 +229,7 @@ const ProfileScreen: React.FC = () => {
             <View style={[tw.flex, tw.flexRow, tw.justifyBetween]}>
               <View style={[]}>
                 <TextComponent variant="bodyMedium">
-                  {profile?.bio}
+                  {profile?.bio ?? profileFillIntroText[0].description}
                 </TextComponent>
               </View>
             </View>
@@ -274,6 +275,20 @@ const ProfileScreen: React.FC = () => {
             {profileTabs[activeTab].content === "otherDetails"
               ? profileFields?.map((field: any, index: number) => {
                   const label = field.fieldName.replace(/\_/g, " ");
+                  const selectedVal = profile.otherDetails?.find(
+                    (detail: any) => detail.fieldName === field.fieldName
+                  )?.selectedValues;
+                  let value;
+                  try {
+                    const parsedVal = JSON.parse(selectedVal);
+                    value = Array.isArray(parsedVal)
+                      ? parsedVal.join(", ")
+                      : selectedVal;
+                  } catch (error) {
+                    // Assume it's not an array
+                    value = selectedVal;
+                  }
+
                   return (
                     <View key={index} style={[tw.mX4]}>
                       <TextComponent
@@ -287,9 +302,7 @@ const ProfileScreen: React.FC = () => {
                         style={[tw.textGray600]}
                       >
                         {/* { profile[field.fieldName] ?? "No data yet"} */}
-                        {profile.otherDetails?.find(
-                          (detail: any) => detail.fieldName === field.fieldName
-                        )?.selectedValues ?? "No set yet"}
+                        {value ?? "No set yet"}
                       </TextComponent>
                       <Divider style={[tw.bgGray500, tw.mY4]} />
                     </View>

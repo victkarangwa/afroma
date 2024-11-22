@@ -2,6 +2,7 @@ import RNFS from "react-native-fs";
 
 import localStore from "./localValues";
 import LocalStorage from "./storage";
+import { profileTabs } from "@/constants";
 
 export const separateTextWithSpace = (text: string) => {
   if (text === "firstname") return "first name";
@@ -137,4 +138,44 @@ export const prepareImgForUpload = (
     fileContent: imgBase64,
   };
   return data;
+};
+
+interface otherDetails {
+  fieldName: string;
+  fieldType: string;
+  possibleValues: string;
+  maxSize: number;
+}
+
+interface profileFields {
+  fieldName: string;
+  selectedValues: string;
+}
+
+export const getProfileCompletion = (
+  allFields: otherDetails[],
+  profile: profileFields[]
+) => {
+  const basicFields = profileTabs[0].content.length;
+  const totalFields = allFields.length + basicFields;
+  let completedFields = 0;
+
+  // check if the basic fields ["firstname", "lastname", "gender", "dateOfBirth", "bio"] are in the profile object
+  for (const field of profileTabs[0].content) {
+    if (field in profile) {
+      completedFields++;
+    }
+  }
+
+  // check if the other details are in the profile object
+  for (const field of allFields) {
+    if (profile?.otherDetails?.some((p) => p.fieldName === field.fieldName)) {
+      completedFields++;
+    }
+  }
+
+  const percentage = (completedFields / totalFields) * 100;
+
+  // return rounded percentage
+  return Math.round(percentage);
 };

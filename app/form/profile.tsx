@@ -38,6 +38,7 @@ import BottomModal from "@/components/Modal/BottomSheet";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import ModalComponent from "@/components/Modal";
 import { profileTabs } from "@/constants";
+import PictureForm from "./pictures";
 
 const ProfileScreen: React.FC = () => {
   const router = useRouter();
@@ -50,8 +51,9 @@ const ProfileScreen: React.FC = () => {
   const [selectedField, setSelectedField] = useState<any>(null);
   const [userInput, setUserInput] = useState<any>({});
   const [visible, setVisible] = React.useState(false);
+  const [profile, setProfile] = useState<any>({});
 
-  const getMyProfile = async () => {
+  const geProfileFields = async () => {
     const result = await send(
       "get",
       "/bonded-user-service/settings/profile-fields"
@@ -63,7 +65,17 @@ const ProfileScreen: React.FC = () => {
     setProfileFields(result);
   };
 
+  const getMyProfile = async () => {
+    const result = await send("get", "/bonded-user-service/users/me");
+
+    if (result?.errors) {
+      return;
+    }
+    setProfile(result);
+  };
+
   useEffect(() => {
+    geProfileFields();
     getMyProfile();
   }, []);
 
@@ -174,7 +186,7 @@ const ProfileScreen: React.FC = () => {
         onDismiss={() => setVisible(false)}
       />
       <GestureHandlerRootView>
-        <TextComponent style={[tw.textXl, tw.fontBold, tw.textPink700, tw.pX4]}>
+        <TextComponent style={[tw.textXl, tw.fontBold, tw.textPink700, tw.p4, tw.textCenter]}>
           Let's get to know you better
         </TextComponent>
         <ScrollView style={[tw.mX4]}>
@@ -225,7 +237,8 @@ const ProfileScreen: React.FC = () => {
               })}
             </View>
           ) : (
-            <View>
+            <View style={[tw.flex]}>
+              <PictureForm profile={profile} />
               {profileTabs[0].content.map((field: string, index) => {
                 return (
                   <TouchableOpacity

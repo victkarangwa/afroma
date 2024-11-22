@@ -1,3 +1,5 @@
+import RNFS from "react-native-fs";
+
 import localStore from "./localValues";
 import LocalStorage from "./storage";
 
@@ -72,22 +74,21 @@ export const getCustomPlaceholder = (fieldName: string) => {
 
 export const transformToOtherDetails = (userInput) => {
   const otherDetails = [];
-    
-  for (const [fieldName, selectedValues] of Object.entries(userInput)) {
-      // Determine the value to send to the backend
-      const backendValue = Array.isArray(selectedValues) 
-          ? JSON.stringify(selectedValues)  // Convert array to a string
-          : selectedValues;                 // Keep string as it is
-      
-      // Add the transformed object to the array
-      otherDetails.push({
-          fieldName: fieldName,
-          selectedValues: backendValue
-      });
-  }
-  
-  return otherDetails;
 
+  for (const [fieldName, selectedValues] of Object.entries(userInput)) {
+    // Determine the value to send to the backend
+    const backendValue = Array.isArray(selectedValues)
+      ? JSON.stringify(selectedValues) // Convert array to a string
+      : selectedValues; // Keep string as it is
+
+    // Add the transformed object to the array
+    otherDetails.push({
+      fieldName: fieldName,
+      selectedValues: backendValue,
+    });
+  }
+
+  return otherDetails;
 };
 
 export const gateUserAge = (dob: string) => {
@@ -98,9 +99,41 @@ export const gateUserAge = (dob: string) => {
   const monthDifference = today.getMonth() - birthDate.getMonth();
 
   // If the birthday hasn't occurred yet this year, subtract one from the age
-  if (monthDifference < 0 || (monthDifference === 0 && today.getDate() < birthDate.getDate())) {
-      age--;
+  if (
+    monthDifference < 0 ||
+    (monthDifference === 0 && today.getDate() < birthDate.getDate())
+  ) {
+    age--;
   }
 
   return age;
-}
+};
+
+export const convertImgToBase64 = async (fileUri: string) => {
+  const data = await fetch(fileUri);
+  const blob = await data.blob();
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(blob);
+    reader.onloadend = () => {
+      const base64data = reader.result;
+      //  remove the base64 prefix
+      const base64 = base64data?.toString().split(",")[1];
+      resolve(base64);
+    };
+  });
+};
+
+export const prepareImgForUpload = (
+  imgBase64: string,
+  ft = false,
+  type = "PHOTO"
+) => {
+  const data = {
+    mediaType: type,
+    featured: ft,
+    fileContent: imgBase64,
+  };
+  return data;
+};
+

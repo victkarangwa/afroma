@@ -88,7 +88,13 @@ export default function RootLayout() {
                 options={{
                   headerTitle: "Edit Profile",
                   headerTitleAlign: "center",
-                  // Remove the top space for the header
+                }}
+              />
+              <Stack.Screen
+                name="form/pictures"
+                options={{
+                  headerTitle: "Add Pictures",
+                  headerTitleAlign: "center",
                 }}
               />
               <Stack.Screen name="+not-found" />

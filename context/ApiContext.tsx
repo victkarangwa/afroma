@@ -30,7 +30,6 @@ export const ApiProvider = ({ children }: ApiProviderProps) => {
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
-  console.log("----", path)
 
   const request = async <T,>(
     reqType: RequestType,

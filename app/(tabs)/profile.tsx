@@ -92,7 +92,9 @@ const ProfileScreen: React.FC = () => {
             style={[tw.relative, tw.flex, tw.justifyCenter, tw.itemsCenter]}
           >
             <Image
-              source={require("../../assets/images/default_avatar.jpg")}
+              src={
+                profile?.gallery?.find((img: any) => !img.featured)?.thumbnailUrl
+              }
               style={[
                 tw.absolute,
                 tw.w32,
@@ -110,6 +112,18 @@ const ProfileScreen: React.FC = () => {
               </TextComponent>
             </View>
           </View>
+          <TouchableOpacity
+            style={[tw.m4, tw.absolute, tw.right0, tw.top0]}
+            onPress={() => {
+              router.push(`/form/pictures`);
+            }}
+          >
+            <Ionicons
+              name="add-circle-outline"
+              size={30}
+              style={[tw.textWhite]}
+            />
+          </TouchableOpacity>
           <View style={[tw.pT4]}>
             <View>
               <TextComponent style={[tw.textCenter, tw.text2xl, tw.fontBold]}>

@@ -290,17 +290,29 @@ const SignupScreen: React.FC = () => {
             <TextComponent> Signup with Facebook</TextComponent>
           </Button>
         </View>
-        <View style={[tw.mT4]}>
+        <View style={[tw.mT4, tw.flex, tw.justifyCenter]}>
           <TextComponent
             variant="labelSmall"
             style={[tw.textCenter, tw.textWhite, tw.opacity75]}
           >
             Already have an account?
-            <Link href="/getStarted/login" style={[tw.textBlue500]}>
+            <Link href="/getStarted/login" style={[tw.textYellow400]}>
               {" "}
               Login
             </Link>
           </TextComponent>
+          <TextComponent
+          variant="labelSmall"
+          style={[tw.textCenter, tw.textWhite, tw.opacity75, tw.pY4, tw.mX12]}
+        >
+          By signing up, you agree to our {" "}
+          <Link href="/getStarted" style={[tw.textBlue500, tw.underline, tw.textYellow400]}>
+            Terms of Service
+          </Link> and {" "}
+          <Link href="/getStarted" style={[tw.textBlue500, tw.underline, tw.textYellow400]}>
+            Privacy Policy
+          </Link>
+        </TextComponent>
         </View>
       </View>
     </AuthScreenLayout>

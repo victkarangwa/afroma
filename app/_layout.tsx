@@ -15,7 +15,6 @@ import Toast from "react-native-toast-message";
 import { ApiProvider, UserProvider } from "@/context";
 import LocalStorage from "@/utils/storage";
 
-
 // Ignore all warnings
 LogBox.ignoreAllLogs();
 
@@ -35,8 +34,8 @@ export default function RootLayout() {
       if (loaded) {
         try {
           await SplashScreen.hideAsync();
-
-          if (await LocalStorage.getItem("token")) {
+          const token = await LocalStorage.getItem("token");
+          if (token && token !== undefined) {
             router.replace({ pathname: "/(tabs)" });
             return;
           }

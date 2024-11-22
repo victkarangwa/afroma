@@ -23,7 +23,7 @@ export const profileTabs = [
       },
       {
         field: "education",
-        icon: "business-outline",
+        icon: "school-outline",
       },
       {
         field: "family_plan",
@@ -64,6 +64,18 @@ export const profileTabs = [
       {
         field: "sleeping_habits",
         icon: "bed-outline",
+      },
+      {
+        field: "location",
+        icon: "location-outline",
+      },
+      {
+        field: "time",
+        icon: "time-outline",
+      },
+      {
+        field: "house",
+        icon: "business-outline",
       },
     ],
   },

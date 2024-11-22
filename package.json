@@ -54,6 +54,7 @@
     "react-native-svg": "^15.9.0",
     "react-native-tailwindcss": "^1.1.11",
     "react-native-toast-message": "^2.2.1",
+    "react-native-ui-datepicker": "^2.0.4",
     "react-native-web": "~0.19.10"
   },
   "devDependencies": {

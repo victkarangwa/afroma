@@ -7,13 +7,17 @@ import { useFonts } from "expo-font";
 import { router, Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { useEffect } from "react";
-import { useColorScheme } from "react-native";
+import { useColorScheme, LogBox } from "react-native";
 import { PaperProvider } from "react-native-paper";
 import "react-native-reanimated";
 import { StatusBar } from "expo-status-bar";
 import Toast from "react-native-toast-message";
 import { ApiProvider, UserProvider } from "@/context";
 import LocalStorage from "@/utils/storage";
+
+
+// Ignore all warnings
+LogBox.ignoreAllLogs();
 
 export const unstable_settings = {
   // Ensure any route can link back to `/`

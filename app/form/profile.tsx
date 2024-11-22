@@ -32,6 +32,7 @@ const ProfileScreen: React.FC = () => {
   const [userInput, setUserInput] = useState<any>({});
   const [visible, setVisible] = React.useState(false);
   const [profile, setProfile] = useState<any>({});
+  const [updatedProfile, setUpdatedProfile] = useState<any>(null);
 
   const geProfileFields = async () => {
     const result = await send(
@@ -57,7 +58,7 @@ const ProfileScreen: React.FC = () => {
   useEffect(() => {
     geProfileFields();
     getMyProfile();
-  }, []);
+  }, [updatedProfile]);
 
   const getFieldType = (field: any, type?: string, defaultValue?: string) => {
     const { fieldName, fieldType, possibleValues } = field;
@@ -138,6 +139,13 @@ const ProfileScreen: React.FC = () => {
   };
 
   const updateMyProfile = async () => {
+
+    const existingProfile = profileTabs[0].content.reduce((acc: any, field: string) => {
+      acc[field] = profile[field];
+      return acc;
+    }
+    , {});
+
     let data;
     if (Number(params.tab) === 1) {
       const otherDetails = transformToOtherDetails(userInput);
@@ -145,7 +153,9 @@ const ProfileScreen: React.FC = () => {
         otherDetails: otherDetails,
       };
     } else {
-      data = { ...userInput, otherDetails: [] };
+      data = { 
+        ...existingProfile,
+        ...userInput, otherDetails: [] };
     }
     const result = await send(
       "put",
@@ -155,6 +165,7 @@ const ProfileScreen: React.FC = () => {
     if (result?.errors) {
       return setVisible(true);
     }
+    setUpdatedProfile(result);
     setUserInput({});
     setOpenBottomSheet(false);
     router.push(`/profile?refresh=${new Date().getTime()}`);

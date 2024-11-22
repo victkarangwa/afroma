@@ -20,11 +20,18 @@ import Separator from "@/components/Separator";
 import OTPTextView from "react-native-otp-textinput";
 import { SafeAreaView } from "react-native-safe-area-context";
 import CircularProgress from "react-native-circular-progress-indicator";
-import { gateUserAge, removeUserData, separateTextWithSpace } from "@/utils";
+import {
+  convertImgToBase64,
+  gateUserAge,
+  prepareImgForUpload,
+  removeUserData,
+  separateTextWithSpace,
+} from "@/utils";
 import useApiRequest from "@/hooks/useApiRequest";
 import { ApiResponse } from "@/types";
 import { constantUserData, profileTabs } from "@/constants";
 import moment from "moment";
+import * as ImagePicker from "expo-image-picker";
 
 const ProfileScreen: React.FC = () => {
   const router = useRouter();
@@ -36,6 +43,9 @@ const ProfileScreen: React.FC = () => {
   const [profile, setProfile] = useState<any>({});
   const [profileFields, setProfileFields] = useState<any>([]);
   const [activeTab, setActiveTab] = useState(0);
+  const [updatedProfile, setUpdatedProfile] = useState<any>({
+    featuredPhoto: null,
+  });
 
   const getMyProfile = async () => {
     const result = await send("get", "/bonded-user-service/users/me");
@@ -53,7 +63,7 @@ const ProfileScreen: React.FC = () => {
   useEffect(() => {
     getMyProfile();
     getProfileField();
-  }, [params.refresh]);
+  }, [params.refresh, updatedProfile.featuredPhoto]);
 
   const handleLogout = async () => {
     const result = await send("post", "/bonded-user-service/auth/logout");
@@ -81,54 +91,103 @@ const ProfileScreen: React.FC = () => {
     setActiveTab(tab);
   };
 
+  const updateProfilePicture = async (data: any) => {
+    const result = await send(
+      "post",
+      "/bonded-user-service/media/upload",
+      data
+    );
+
+    if (result?.errors) {
+      return;
+    }
+    console.log("---dds", result)
+    setUpdatedProfile({ ...updatedProfile, featuredPhoto: result });
+  };
+
+  const pickImage = async () => {
+    // Request permission to access the media library
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== "granted") {
+      alert("Sorry, we need media library permissions to make this work!");
+      return;
+    }
+
+    // Launch the media library
+    const result = (await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.All, // Options: Images, Videos, or All
+      allowsEditing: true, // Let the user edit the media
+      aspect: [4, 3], // Aspect ratio if editing
+      quality: 1, // Image quality (0 to 1)
+    })) as any;
+
+    const base64 = (await convertImgToBase64(result.assets[0].uri)) as string;
+
+    const data = prepareImgForUpload(base64, true);
+
+    updateProfilePicture(data);
+
+    // convert it to base64
+  };
+
   return (
     <SafeAreaView>
       <ScrollView>
         <View style={[tw.hFull, tw.mB8]}>
-          <View style={[tw.flex, tw.justifyCenter, tw.itemsCenter]}>
+          <View
+            style={[
+              tw.flex,
+              tw.justifyCenter,
+              tw.itemsCenter,
+              tw.bgPink100,
+              tw.roundedB,
+            ]}
+          >
             <Image
-              source={require("../../assets/images/c_photo.jpeg")}
+              // source={require("../../assets/images/c_photo.jpeg")}
               style={[tw.wFull, tw.h48]}
             />
           </View>
 
-          <View
-            style={[tw.relative, tw.flex, tw.justifyCenter, tw.itemsCenter]}
-          >
-            <Image
-              src={
-                profile?.gallery?.find((img: any) => !img.featured)
-                  ?.thumbnailUrl ?? "../../assets/images/default_avatar.jpg"
-              }
-              style={[
-                tw.absolute,
-                tw.w32,
-                tw.h32,
-                tw.roundedFull,
-                tw.border4,
-                tw.borderWhite,
-              ]}
-            />
-          </View>
+          <TouchableOpacity onPress={pickImage}>
+            <View
+              style={[tw.relative, tw.flex, tw.justifyCenter, tw.itemsCenter]}
+            >
+              <Image
+                src={
+                  profile?.gallery?.find((img: any) => img.featured)
+                    ?.thumbnailUrl
+                }
+                source={require("../../assets/images/default_avatar.jpg")}
+                style={[
+                  tw.absolute,
+                  tw.w32,
+                  tw.h32,
+                  tw.roundedFull,
+                  tw.border4,
+                  tw.borderPink700,
+                ]}
+              />
+            </View>
+          </TouchableOpacity>
           <View style={[tw.flex, tw.flexRow, tw.justifyCenter]}>
             <View style={[tw.bgPink700, tw.mT12, tw.w1_3, , tw.roundedFull]}>
+              {/* <Ionicons
+              name="pencil-outline"
+              size={30}
+              style={[tw.textWhite, tw.absolute, tw._mT20]}
+            /> */}
               <TextComponent style={[tw.textCenter, tw.pY1, tw.fontBold]}>
                 20% Complete
               </TextComponent>
             </View>
           </View>
-          <TouchableOpacity
-            style={[tw.m4, tw.absolute, tw.right0, tw.top0]}
-            onPress={() => {
-              router.push(`/form/pictures`);
-            }}
-          >
-            <Ionicons
-              name="add-circle-outline"
-              size={30}
-              style={[tw.textWhite]}
+          <View style={[tw.m4, tw.absolute, tw.flex]}>
+            <Image
+              source={require("../../assets/images/bonded_logo.png")}
+              style={[tw.absolute, tw.w24, tw.h24, tw._m6]}
             />
-          </TouchableOpacity>
+          </View>
           <View style={[tw.pT4]}>
             <View>
               <TextComponent style={[tw.textCenter, tw.text2xl, tw.fontBold]}>
@@ -249,7 +308,9 @@ const ProfileScreen: React.FC = () => {
                         variant="bodyMedium"
                         style={[tw.textGray600]}
                       >
-                        {field === "dateOfBirth" ? moment(profile[field]).format("MMM DD, YYYY"):  profile[field] ?? "No data yet"}
+                        {field === "dateOfBirth"
+                          ? moment(profile[field]).format("MMM DD, YYYY")
+                          : profile[field] ?? "No data yet"}
                       </TextComponent>
                       <Divider style={[tw.bgGray500, tw.mY4]} />
                     </View>

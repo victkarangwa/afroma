@@ -81,7 +81,7 @@ const ModalComponent = (props: ModalProps) => {
           {title}
         </TextComponent>
         <TextComponent style={[tw.textCenter]}>{description}</TextComponent>
-        <Button mode="outlined" onPress={onDismiss} style={[tw.mY6]}>
+        <Button mode="outlined"  onPress={onDismiss} style={[tw.mY6]}>
           {btnText}
         </Button>
       </Modal>

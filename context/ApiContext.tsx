@@ -50,7 +50,7 @@ export const ApiProvider = ({ children }: ApiProviderProps) => {
       let errors = "";
       if  (status === 401 && !path.includes("login")) {
         removeUserData();
-        router.push({ pathname: "/getStarted/login" });
+        // router.replace({ pathname: "/getStarted/login" });
       } else {
         setError(message);
         errors = message;

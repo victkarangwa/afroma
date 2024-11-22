@@ -18,9 +18,9 @@ const ProfileScreen: React.FC = () => {
     if (result?.errors) {
       return;
     }
-    if (!result.bio || !result.dateOfBirth || !result.gender) {
-      router.push(`/form/profile?tab=0`);
-    }
+    // if (!result.bio || !result.dateOfBirth || !result.gender) {
+    //   router.push(`/form/profile?tab=0`);
+    // }
   };
 
   useEffect(() => {

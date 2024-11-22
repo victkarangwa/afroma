@@ -116,7 +116,6 @@ const ProfileScreen: React.FC<ProfileScreenProps> = () => {
   // Find me available slots if the gallery is not full (max 6 images)
   const slots = Array.from({ length: 6 - gallery.length });
 
-
   return (
     <View style={[tw.bgGray100]}>
       <ModalComponent
@@ -147,8 +146,8 @@ const ProfileScreen: React.FC<ProfileScreenProps> = () => {
               />
             </TouchableOpacity>
           ))}
-          {slots.map((item) => (
-            <View style={[tw.bgGray400, tw.rounded, tw.m1]}>
+          {slots.map((item, index) => (
+            <View style={[tw.bgGray400, tw.rounded, tw.m1]} key={index}>
               <TouchableOpacity
                 style={[
                   tw.w24,
@@ -161,7 +160,7 @@ const ProfileScreen: React.FC<ProfileScreenProps> = () => {
               >
                 <Ionicons name="add-outline" size={24} color="black" />
               </TouchableOpacity>
-              {loading && <Spinner />}
+              {loading && index === 0 && <Spinner />}
             </View>
           ))}
         </View>

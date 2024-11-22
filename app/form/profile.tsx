@@ -19,6 +19,7 @@ import { Button, Checkbox, RadioButton } from "react-native-paper";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { tw } from "react-native-tailwindcss";
 import PictureForm from "./pictures";
+import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 
 const ProfileScreen: React.FC = () => {
   const router = useRouter();
@@ -50,6 +51,7 @@ const ProfileScreen: React.FC = () => {
     const result = await send("get", "/bonded-user-service/users/me");
 
     if (result?.errors) {
+      console.log("---", result?.errors);
       return;
     }
     setProfile(result);
@@ -139,12 +141,13 @@ const ProfileScreen: React.FC = () => {
   };
 
   const updateMyProfile = async () => {
-
-    const existingProfile = profileTabs[0].content.reduce((acc: any, field: string) => {
-      acc[field] = profile[field];
-      return acc;
-    }
-    , {});
+    const existingProfile = profileTabs[0].content.reduce(
+      (acc: any, field: string) => {
+        acc[field] = profile[field];
+        return acc;
+      },
+      {}
+    );
 
     let data;
     if (Number(params.tab) === 1) {
@@ -153,9 +156,11 @@ const ProfileScreen: React.FC = () => {
         otherDetails: otherDetails,
       };
     } else {
-      data = { 
+      data = {
         ...existingProfile,
-        ...userInput, otherDetails: [] };
+        ...userInput,
+        otherDetails: [],
+      };
     }
     const result = await send(
       "put",
@@ -271,8 +276,10 @@ const ProfileScreen: React.FC = () => {
                           {separateTextWithSpace(field)}
                         </TextComponent>
                         <TextComponent style={[tw.mY2]}>
-                          {profile[field] ??
-                            getCustomPlaceholder(field).placeholder}
+                          {field === "dateOfBirth"
+                            ? profile[field]?.split("T")[0]
+                            : profile[field] ??
+                              getCustomPlaceholder(field).placeholder}
                         </TextComponent>
                       </View>
                       <View style={[tw.flex, tw.itemsCenter, tw.justifyCenter]}>
@@ -323,15 +330,23 @@ const ProfileScreen: React.FC = () => {
                 }
               </TextComponent>
             </View>
-            {Number(params.tab) === 1 ? (
-              <View>{getFieldType(selectedField)}</View>
-            ) : (
-              profileTabs[0].content.map((field: string, index: number) => (
-                <View key={index}>
-                  {getFieldType(field, null, profile[field])}
-                </View>
-              ))
-            )}
+            <KeyboardAwareScrollView>
+              {Number(params.tab) === 1 ? (
+                <View>{getFieldType(selectedField)}</View>
+              ) : (
+                profileTabs[0].content.map((field: string, index: number) => (
+                  <View key={index}>
+                    {getFieldType(
+                      field,
+                      null,
+                      field === "dateOfBirth"
+                        ? profile[field]?.split("T")[0]
+                        : profile[field]
+                    )}
+                  </View>
+                ))
+              )}
+            </KeyboardAwareScrollView>
             <View style={[tw.mY4]}>
               <Button
                 mode="outlined"

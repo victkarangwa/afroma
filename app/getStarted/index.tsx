@@ -15,6 +15,7 @@ import { useForm, Controller, SubmitHandler } from "react-hook-form";
 import useApiRequest from "@/hooks/useApiRequest";
 import { ApiResponse } from "@/types";
 import Modal from "@/components/Modal";
+import PhoneNumberInput from "@/components/input/phone";
 
 type FormData = {
   name: string;
@@ -72,18 +73,20 @@ const SignupScreen: React.FC = () => {
     const result = await send("post", "/bonded-user-service/users/register", {
       name,
       email,
-      phone_number,
+      phone_number: phone_number.slice(1),
       password,
     });
+
     if (result?.errors) {
       setModalInfo({
         title: "Error",
-        description: error || "An error occurred. Please try again.",
+        description: result?.errors || "An error occurred. Please try again.",
         status: "error",
         btnText: "Try Again",
         onDismiss: () => setVisible(false),
       });
-      return setVisible(true);
+      setVisible(true);
+      return;
     }
     setVisible(true);
     setModalInfo({
@@ -144,11 +147,36 @@ const SignupScreen: React.FC = () => {
             }}
             name="phone_number"
             render={({ field: { onChange, onBlur, value } }) => (
-              <Input
-                label="Phone"
-                left={<TextInput.Icon icon="cellphone" color="gray" />}
-                onBlur={onBlur}
-                onChangeText={(value) => onChange(value)}
+              // <Input
+              //   label="Phone"
+              //   left={<TextInput.Icon icon="cellphone" color="gray" />}
+              //   onBlur={onBlur}
+              //   onChangeText={(value) => onChange(value)}
+              // />
+              <PhoneNumberInput
+                // onChangeText={onChange}
+                onChangeFormattedText={onChange}
+                withDarkTheme={true}
+                containerStyle={[
+                  tw.bgTransparent,
+                  tw.border,
+                  tw.borderPink700,
+                  tw.rounded,
+                  tw.wFull
+                ]}
+                textContainerStyle={[
+                  tw.bgTransparent,
+                  tw.pY3,
+                  tw.roundedR,
+                ]}
+                textInputStyle={[tw.textWhite]}
+                codeTextStyle={[tw.textWhite]}
+                textInputProps={{
+                  placeholder: "Phone",
+                  placeholderTextColor: "gray",
+                  style: [tw.textBase, tw.textWhite],
+                }}
+                countryPickerButtonStyle={[tw.textWhite]}
               />
             )}
           />

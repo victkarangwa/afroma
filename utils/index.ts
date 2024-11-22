@@ -4,6 +4,8 @@ import localStore from "./localValues";
 import LocalStorage from "./storage";
 
 export const separateTextWithSpace = (text: string) => {
+  if (text === "firstname") return "first name";
+  if (text === "lastname") return "last name";
   return text.replace(/([A-Z])/g, " $1").trim();
 };
 
@@ -136,4 +138,3 @@ export const prepareImgForUpload = (
   };
   return data;
 };
-

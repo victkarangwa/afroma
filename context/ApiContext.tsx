@@ -48,10 +48,7 @@ export const ApiProvider = ({ children }: ApiProviderProps) => {
       const message =
         err?.data?.message || "Something went wrong. Please try again.";
       let errors = "";
-      if (status === 400) {
-        setError(message.errors.join(", "));
-        errors = message.errors.join(", ");
-      } else if (status === 401 && !path.includes("login")) {
+      if  (status === 401 && !path.includes("login")) {
         removeUserData();
         router.push({ pathname: "/getStarted/login" });
       } else {

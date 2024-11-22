@@ -1,43 +1,23 @@
-import { ThemedView } from "@/components/ThemedView";
-import { Ionicons } from "@expo/vector-icons";
-import React, { useEffect, useState } from "react";
-import {
-  View,
-  StyleSheet,
-  TouchableOpacity,
-  Image,
-  ScrollView,
-} from "react-native";
-import { tw } from "react-native-tailwindcss";
-import { heightPercentageToDP } from "react-native-responsive-screen";
-import ButtonComponent from "@/components/Button";
-import TextComponent from "@/components/Text";
-import { introText } from "@/constants/text";
 import Input from "@/components/input";
-import {
-  Button,
-  Checkbox,
-  Chip,
-  Divider,
-  RadioButton,
-  TextInput,
-} from "react-native-paper";
-import { Link, useLocalSearchParams, useRouter } from "expo-router";
-import Separator from "@/components/Separator";
-import OTPTextView from "react-native-otp-textinput";
-import { SafeAreaView } from "react-native-safe-area-context";
-import CircularProgress from "react-native-circular-progress-indicator";
-import {
-  getCustomPlaceholder,
-  removeUserData,
-  transformToOtherDetails,
-} from "@/utils";
+import ModalComponent from "@/components/Modal";
+import BottomModal from "@/components/Modal/BottomSheet";
+import TextComponent from "@/components/Text";
+import { profileTabs } from "@/constants";
 import useApiRequest from "@/hooks/useApiRequest";
 import { ApiResponse } from "@/types";
-import BottomModal from "@/components/Modal/BottomSheet";
+import {
+  getCustomPlaceholder,
+  separateTextWithSpace,
+  transformToOtherDetails,
+} from "@/utils";
+import { Ionicons } from "@expo/vector-icons";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import React, { useEffect, useState } from "react";
+import { ScrollView, TouchableOpacity, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
-import ModalComponent from "@/components/Modal";
-import { profileTabs } from "@/constants";
+import { Button, Checkbox, RadioButton } from "react-native-paper";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { tw } from "react-native-tailwindcss";
 import PictureForm from "./pictures";
 
 const ProfileScreen: React.FC = () => {
@@ -79,7 +59,7 @@ const ProfileScreen: React.FC = () => {
     getMyProfile();
   }, []);
 
-  const getFieldType = (field: any, type?: string) => {
+  const getFieldType = (field: any, type?: string, defaultValue?: string) => {
     const { fieldName, fieldType, possibleValues } = field;
     switch (fieldType ?? type) {
       case "multiSelect":
@@ -128,7 +108,9 @@ const ProfileScreen: React.FC = () => {
       default:
         return (
           <Input
-            label={Number(params.tab) === 1 ? field.fieldName : field}
+            label={separateTextWithSpace(
+              Number(params.tab) === 1 ? field.fieldName : field
+            )}
             placeholder={
               getCustomPlaceholder(
                 Number(params.tab) === 1 ? field.fieldName : field
@@ -136,6 +118,7 @@ const ProfileScreen: React.FC = () => {
             }
             textColor="black"
             containerStyles={[tw.borderGray700]}
+            defaultValue={defaultValue}
             onChangeText={(text) => {
               setUserInput({
                 ...userInput,
@@ -186,7 +169,9 @@ const ProfileScreen: React.FC = () => {
         onDismiss={() => setVisible(false)}
       />
       <GestureHandlerRootView>
-        <TextComponent style={[tw.textXl, tw.fontBold, tw.textPink700, tw.p4, tw.textCenter]}>
+        <TextComponent
+          style={[tw.textXl, tw.fontBold, tw.textPink700, tw.p4, tw.textCenter]}
+        >
           Let's get to know you better
         </TextComponent>
         <ScrollView style={[tw.mX4]}>
@@ -221,7 +206,10 @@ const ProfileScreen: React.FC = () => {
                           {label}
                         </TextComponent>
                         <TextComponent style={[tw.textSm, tw.mY2]}>
-                          {getCustomPlaceholder(field.fieldName).placeholder}
+                          {profile?.otherDetails?.find(
+                            (det) => det.fieldName === field.fieldName
+                          )?.selectedValues ??
+                            getCustomPlaceholder(field.fieldName).placeholder}
                         </TextComponent>
                       </View>
                       <View style={[tw.flex, tw.itemsCenter, tw.justifyCenter]}>
@@ -239,7 +227,7 @@ const ProfileScreen: React.FC = () => {
           ) : (
             <View style={[tw.flex]}>
               <PictureForm profile={profile} />
-              {profileTabs[0].content.map((field: string, index) => {
+              {profileTabs[0].content.map((field: string, index: number) => {
                 return (
                   <TouchableOpacity
                     key={index}
@@ -269,10 +257,11 @@ const ProfileScreen: React.FC = () => {
                             tw.capitalize,
                           ]}
                         >
-                          {field}
+                          {separateTextWithSpace(field)}
                         </TextComponent>
                         <TextComponent style={[tw.mY2]}>
-                          {getCustomPlaceholder(field).placeholder}
+                          {profile[field] ??
+                            getCustomPlaceholder(field).placeholder}
                         </TextComponent>
                       </View>
                       <View style={[tw.flex, tw.itemsCenter, tw.justifyCenter]}>
@@ -298,6 +287,7 @@ const ProfileScreen: React.FC = () => {
                   setOpenBottomSheet(false);
                   setUserInput({});
                 }}
+                children={undefined}
               />
             </View>
             <View>
@@ -326,7 +316,9 @@ const ProfileScreen: React.FC = () => {
               <View>{getFieldType(selectedField)}</View>
             ) : (
               profileTabs[0].content.map((field: string, index: number) => (
-                <View key={index}>{getFieldType(field)}</View>
+                <View key={index}>
+                  {getFieldType(field, null, profile[field])}
+                </View>
               ))
             )}
             <View style={[tw.mY4]}>

@@ -20,10 +20,11 @@ import Separator from "@/components/Separator";
 import OTPTextView from "react-native-otp-textinput";
 import { SafeAreaView } from "react-native-safe-area-context";
 import CircularProgress from "react-native-circular-progress-indicator";
-import { gateUserAge, removeUserData } from "@/utils";
+import { gateUserAge, removeUserData, separateTextWithSpace } from "@/utils";
 import useApiRequest from "@/hooks/useApiRequest";
 import { ApiResponse } from "@/types";
 import { constantUserData, profileTabs } from "@/constants";
+import moment from "moment";
 
 const ProfileScreen: React.FC = () => {
   const router = useRouter();
@@ -97,7 +98,7 @@ const ProfileScreen: React.FC = () => {
             <Image
               src={
                 profile?.gallery?.find((img: any) => !img.featured)
-                  ?.thumbnailUrl
+                  ?.thumbnailUrl ?? "../../assets/images/default_avatar.jpg"
               }
               style={[
                 tw.absolute,
@@ -229,7 +230,7 @@ const ProfileScreen: React.FC = () => {
                         {/* { profile[field.fieldName] ?? "No data yet"} */}
                         {profile.otherDetails?.find(
                           (detail: any) => detail.fieldName === field.fieldName
-                        )?.selectedValues ?? "No data yet"}
+                        )?.selectedValues ?? "No set yet"}
                       </TextComponent>
                       <Divider style={[tw.bgGray500, tw.mY4]} />
                     </View>
@@ -242,13 +243,13 @@ const ProfileScreen: React.FC = () => {
                         variant="labelLarge"
                         style={[tw.fontBlack, tw.capitalize]}
                       >
-                        {field}
+                        {separateTextWithSpace(field)}
                       </TextComponent>
                       <TextComponent
                         variant="bodyMedium"
                         style={[tw.textGray600]}
                       >
-                        {profile[field] ?? "No data yet"}
+                        {field === "dateOfBirth" ? moment(profile[field]).format("MMM DD, YYYY"):  profile[field] ?? "No data yet"}
                       </TextComponent>
                       <Divider style={[tw.bgGray500, tw.mY4]} />
                     </View>

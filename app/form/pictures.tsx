@@ -116,7 +116,6 @@ const ProfileScreen: React.FC<ProfileScreenProps> = () => {
   // Find me available slots if the gallery is not full (max 6 images)
   const slots = Array.from({ length: 6 - gallery.length });
 
-  console.log("---fff-", profile?.gallery);
 
   return (
     <View style={[tw.bgGray100]}>

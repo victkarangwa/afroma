@@ -33,6 +33,7 @@ import { ApiResponse } from "@/types";
 import { constantUserData, profileTabs } from "@/constants";
 import moment from "moment";
 import * as ImagePicker from "expo-image-picker";
+import Spinner from "@/components/Spinner";
 
 const ProfileScreen: React.FC = () => {
   const router = useRouter();
@@ -134,6 +135,7 @@ const ProfileScreen: React.FC = () => {
   return (
     <SafeAreaView>
       <ScrollView>
+      {loading && <Spinner />}
         <View style={[tw.hFull, tw.mB8]}>
           <View
             style={[
@@ -295,7 +297,7 @@ const ProfileScreen: React.FC = () => {
                         <Ionicons
                           name={
                             profileTabs[activeTab]?.icons?.find(
-                              (icon) => icon.field === field.fieldName
+                              (icon) => field.fieldName.includes(icon.field)
                             )?.icon
                           }
                           size={24}

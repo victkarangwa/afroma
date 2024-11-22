@@ -290,7 +290,19 @@ const ProfileScreen: React.FC = () => {
                   }
 
                   return (
-                    <View key={index} style={[tw.mX4]}>
+                    <View key={index} style={[tw.mX4, tw.mY2, tw.flex, tw.flexRow]}>
+                      <View style={[tw.mR4]}>
+                        <Ionicons
+                          name={
+                            profileTabs[activeTab]?.icons?.find(
+                              (icon) => icon.field === field.fieldName
+                            )?.icon
+                          }
+                          size={24}
+                          style={[tw.textGray600, tw.mY2]}
+                        />
+                      </View>
+                      <View>
                       <TextComponent
                         variant="labelLarge"
                         style={[tw.fontBlack, tw.capitalize]}
@@ -304,6 +316,7 @@ const ProfileScreen: React.FC = () => {
                         {/* { profile[field.fieldName] ?? "No data yet"} */}
                         {value ?? "No set yet"}
                       </TextComponent>
+                      </View>
                       <Divider style={[tw.bgGray500, tw.mY4]} />
                     </View>
                   );

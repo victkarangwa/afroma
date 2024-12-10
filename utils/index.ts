@@ -3,6 +3,7 @@ import RNFS from "react-native-fs";
 import localStore from "./localValues";
 import LocalStorage from "./storage";
 import { profileTabs } from "@/constants";
+import moment from "moment";
 
 export const separateTextWithSpace = (text: string) => {
   if (text === "firstname") return "first name";
@@ -178,4 +179,16 @@ export const getProfileCompletion = (
 
   // return rounded percentage
   return Math.round(percentage);
+};
+
+export const generateChatId = (userId1: number, userId2: number) => {
+  return [userId1, userId2].sort().join("_");
+};
+
+export const convertSecondsToTime = (timestamp) => {
+// Convert Firebase Timestamp to JavaScript Date
+const date = timestamp?.toDate();
+
+// Format the date using Moment.js
+return moment(date).format("HH:mm A"); // Format as 24-hour time, e.g., "14:30"
 };

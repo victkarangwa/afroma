@@ -69,9 +69,6 @@ const ProfileScreen: React.FC = () => {
 
   const handleLogout = async () => {
     const result = await send("post", "/bonded-user-service/auth/logout");
-    if (result?.errors) {
-      return;
-    }
     removeUserData();
     router.push({ pathname: "/getStarted/login" });
   };
@@ -103,7 +100,6 @@ const ProfileScreen: React.FC = () => {
     if (result?.errors) {
       return;
     }
-    console.log("---dds", result);
     setUpdatedProfile({ ...updatedProfile, featuredPhoto: result });
   };
 
@@ -348,7 +344,7 @@ const ProfileScreen: React.FC = () => {
           <Button
             onPress={handleLogout}
             mode="contained"
-            style={[tw.mX4, tw.mY2, tw.bgRed600, tw.textWhite]}
+            style={[tw.mX4, tw.mT2, tw.mB12, tw.bgRed600, tw.textWhite]}
             loading={loading}
           >
             Logout

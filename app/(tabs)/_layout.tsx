@@ -15,23 +15,40 @@ export default function TabLayout() {
         tabBarActiveTintColor: Colors[colorScheme ?? "light"].activeText,
         tabBarInactiveTintColor: Colors[colorScheme ?? "light"].inactiveText,
         headerShown: false,
+        // tabBarStyle: {
+        //   backgroundColor: "#1d1b2c",
+        // },
         tabBarStyle: {
-          backgroundColor: "#1d1b2c",
+          backgroundColor: '#2e2b42', // Set background color
+          borderTopColor: 'transparent',
+          position: 'absolute', // Ensures the bar is "detached"
+          bottom: 10, // Position above the bottom of the screen
+          marginHorizontal: 10, // Add space on the sides
+          paddingVertical: 5, // Add padding between the bar and the screen
+          borderRadius: 10, // Round the edges
+          shadowColor: '#000', // Add shadow for iOS
+          shadowOffset: { width: 0, height: 5 },
+          shadowOpacity: 0.1,
+          shadowRadius: 5,
+          elevation: 5, // Add shadow for Android
+          height: 60, // Set the height
         },
+
         tabBarLabelStyle: {
           fontSize: 14,
-          // color: "#fff",
         },
         tabBarIconStyle: {
           color: "#fff",
         },
       }}
-      sceneContainerStyle={{backgroundColor: "#fafaff"}}
+      sceneContainerStyle={{ backgroundColor: "#fafaff" }}
     >
       <Tabs.Screen
         name="index"
         options={{
-          title: "Home",
+          tabBarLabel: () => {
+            return null;
+          },
           tabBarIcon: ({ color, focused }) => (
             <TabBarIcon
               name={focused ? "home" : "home-outline"}
@@ -41,12 +58,56 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
+        name="search"
+        options={{
+          tabBarLabel: () => {
+            return null;
+          },
+          tabBarIcon: ({ color, focused }) => (
+            <TabBarIcon
+              name={focused ? "search" : "search-outline"}
+              color={color}
+            />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="chats"
+        options={{
+          tabBarLabel: () => {
+            return null;
+          },
+          tabBarIcon: ({ color, focused }) => (
+            <TabBarIcon
+              name={focused ? "chatbubble" : "chatbubble-outline"}
+              color={color}
+            />
+          ),
+        }}
+      />
+      <Tabs.Screen
         name="profile"
         options={{
-          title: "Profile",
+          tabBarLabel: () => {
+            return null;
+          },
           tabBarIcon: ({ color, focused }) => (
             <TabBarIcon
               name={focused ? "person" : "person-outline"}
+              color={color}
+            />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="settings"
+        options={{
+          tabBarLabel: () => {
+            return null;
+          },
+          tabBarIcon: ({ color, focused }) => (
+            <TabBarIcon
+              name={focused ? "settings" : "settings-outline"}
               color={color}
             />
           ),

@@ -11,6 +11,7 @@ module.exports = {
     extend: {
       colors: {
         pink100: "#1d1b2c",
+        pink400: '#ffece8',
         pink700: "#eca899",
         blue100: "#7ea8d0",
         purple100: "#715056",

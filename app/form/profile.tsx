@@ -51,7 +51,6 @@ const ProfileScreen: React.FC = () => {
     const result = await send("get", "/bonded-user-service/users/me");
 
     if (result?.errors) {
-      console.log("---", result?.errors);
       return;
     }
     setProfile(result);
@@ -168,6 +167,7 @@ const ProfileScreen: React.FC = () => {
       data
     );
     if (result?.errors) {
+      console.log("---", data);
       return setVisible(true);
     }
     setUpdatedProfile(result);

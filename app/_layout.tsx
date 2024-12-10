@@ -84,7 +84,7 @@ export default function RootLayout() {
               <Stack.Screen
                 name="getStarted/otp"
                 options={{ headerShown: false }}
-              />
+              /> 
               <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
               <Stack.Screen
                 name="form/profile"
@@ -97,6 +97,21 @@ export default function RootLayout() {
                 name="form/pictures"
                 options={{
                   headerTitle: "Add Pictures",
+                  headerTitleAlign: "center",
+                }}
+              />
+              <Stack.Screen
+                name="chats/room"
+                options={{ headerShown: false }}
+              />
+               <Stack.Screen
+                name="match/index"
+                options={{ headerShown: false }}
+              />
+              <Stack.Screen
+                name="payment/index"
+                options={{
+                  headerTitle: "Payment Required",
                   headerTitleAlign: "center",
                 }}
               />

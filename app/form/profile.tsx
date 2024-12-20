@@ -2,24 +2,34 @@ import Input from "@/components/input";
 import ModalComponent from "@/components/Modal";
 import BottomModal from "@/components/Modal/BottomSheet";
 import TextComponent from "@/components/Text";
-import { profileTabs } from "@/constants";
+import { genders, profileTabs } from "@/constants";
 import useApiRequest from "@/hooks/useApiRequest";
 import { ApiResponse } from "@/types";
 import {
   getCustomPlaceholder,
   separateTextWithSpace,
-  transformToOtherDetails,
+  transformToProfileAnswer,
 } from "@/utils";
 import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
-import { ScrollView, TouchableOpacity, View } from "react-native";
+import {
+  Platform,
+  ScrollView,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { Button, Checkbox, RadioButton } from "react-native-paper";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { tw } from "react-native-tailwindcss";
 import PictureForm from "./pictures";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
+import DateTimePicker from "@react-native-community/datetimepicker";
+import moment from "moment";
+import Spinner from "@/components/Spinner";
+import DropDownPicker from "react-native-dropdown-picker";
 
 const ProfileScreen: React.FC = () => {
   const router = useRouter();
@@ -33,12 +43,18 @@ const ProfileScreen: React.FC = () => {
   const [userInput, setUserInput] = useState<any>({});
   const [visible, setVisible] = React.useState(false);
   const [profile, setProfile] = useState<any>({});
+  const [profileAnswers, setProfileAnswers] = useState<any>({});
   const [updatedProfile, setUpdatedProfile] = useState<any>(null);
+  const [date, setDate] = useState(new Date());
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [loadingProfile, setLoadingProfile] = useState(false);
+  const [openSlect, setOpenSect] = useState(false);
+  const [currentStep, setCurrentStep] = useState(0);
 
   const geProfileFields = async () => {
     const result = await send(
       "get",
-      "/bonded-user-service/settings/profile-fields"
+      "/bonded-user-service/settings/profile-questions"
     );
 
     if (result?.errors) {
@@ -47,7 +63,7 @@ const ProfileScreen: React.FC = () => {
     setProfileFields(result);
   };
 
-  const getMyProfile = async () => {
+  const getMyBasicProfile = async () => {
     const result = await send("get", "/bonded-user-service/users/me");
 
     if (result?.errors) {
@@ -56,57 +72,109 @@ const ProfileScreen: React.FC = () => {
     setProfile(result);
   };
 
+  const getMyProfileAnswers = async () => {
+    setLoadingProfile(true);
+    const result = await send(
+      "get",
+      "/bonded-user-service/user-profiling/answers"
+    );
+
+    if (result?.errors) {
+      return;
+    }
+    setProfileAnswers(result);
+    setLoadingProfile(false);
+  };
+
   useEffect(() => {
     geProfileFields();
-    getMyProfile();
+    getMyBasicProfile();
+    getMyProfileAnswers();
   }, [updatedProfile]);
 
   const getFieldType = (field: any, type?: string, defaultValue?: string) => {
-    const { fieldName, fieldType, possibleValues } = field;
+    const { id, fieldType, options } = field;
     switch (fieldType ?? type) {
       case "multiSelect":
-        return JSON.parse(possibleValues).map(
-          (value: string, index: number) => (
-            <View key={index} style={[tw.mY2]}>
-              <Checkbox.Item
-                status={
-                  userInput[fieldName]?.includes(value)
-                    ? "checked"
-                    : "unchecked"
-                }
-                label={value}
-                onPress={() => {
-                  const currentValues = userInput[fieldName] || [];
-                  const updatedValues = currentValues.includes(value)
-                    ? currentValues.filter((item: string) => item !== value) // Remove if already selected
-                    : [...currentValues, value]; // Add if not selected
+        return options.map((opt: any, index: number) => (
+          <View key={index} style={[tw.mYPx]}>
+            <Checkbox.Item
+              status={userInput[id]?.includes(opt.id) ? "checked" : "unchecked"}
+              label={opt.optionText}
+              onPress={() => {
+                const currentValues = userInput[id] || [];
+                const updatedValues = currentValues.includes(opt.id)
+                  ? currentValues.filter((item: string) => item !== opt.id) // Remove if already selected
+                  : [...currentValues, opt.id]; // Add if not selected
 
-                  setUserInput({ ...userInput, [fieldName]: updatedValues });
-                }}
-              />
-            </View>
-          )
-        );
+                setUserInput({ ...userInput, [id]: updatedValues });
+              }}
+            />
+          </View>
+        ));
 
       case "singleSelect":
         return (
           <RadioButton.Group
-            value={userInput[fieldName]}
+            value={userInput[id]}
             onValueChange={(newValue) => {
-              setUserInput({ ...userInput, [fieldName]: newValue });
+              setUserInput({ ...userInput, [id]: newValue });
             }}
           >
-            {JSON.parse(possibleValues).map((value: string, index: number) => (
+            {options.map((opt: any, index: number) => (
               <View
                 key={index}
                 style={[tw.rounded, tw.p2, tw.bgGray200, tw.mT2]}
               >
-                <RadioButton.Item label={value} value={value} />
+                <RadioButton.Item label={opt.optionText} value={opt.id} />
               </View>
             ))}
           </RadioButton.Group>
         );
       case "date":
+        return (
+          <Input
+            label="Select Date"
+            textColor="black"
+            containerStyles={[tw.borderGray700]}
+            value={moment(date).format("YYYY-MM-DD")}
+            onPress={() => setShowDatePicker(true)}
+            onChange={() => setShowDatePicker(true)}
+            theme={{
+              colors: {
+                primary: "black",
+                placeholder: "gray",
+                onSurfaceVariant: "gray",
+              },
+            }}
+          />
+        );
+      case "select":
+        return (
+          <View
+            style={[tw.flex, tw.flexRow, tw.justifyBetween, tw.itemsCenter]}
+          >
+            <DropDownPicker
+              // onValueChange={(value) => {
+              //   setUserInput({ ...userInput, [id]: value });
+              // }}
+              searchTextInputStyle={[tw.bgRed400]}
+              open={openSlect}
+              value={userInput[id]}
+              setOpen={setOpenSect}
+              setValue={(value) => null}
+              items={options.map((opt: any) => ({
+                label: opt.optionText,
+                value: opt.optionText,
+              }))}
+              onSelectItem={(item) => {
+                setUserInput({ ...userInput, [id]: item.value });
+              }}
+              placeholder={`Select ${id}`}
+              // placeholder={{ label: "Select Gender", value: null }}
+            />
+          </View>
+        );
       default:
         return (
           <Input
@@ -149,35 +217,69 @@ const ProfileScreen: React.FC = () => {
     );
 
     let data;
+    let result;
     if (Number(params.tab) === 1) {
-      const otherDetails = transformToOtherDetails(userInput);
-      data = {
-        otherDetails: otherDetails,
-      };
+      const profileAnswers = transformToProfileAnswer(userInput);
+
+      console.log("-----", profileAnswers[0].answerOptionIds, profileAnswers);
+      data = profileAnswers;
+      result = await send(
+        "post",
+        "/bonded-user-service/user-profiling/save/answers",
+        data
+      );
     } else {
       data = {
         ...existingProfile,
         ...userInput,
-        otherDetails: [],
+        // otherDetails: [],
       };
+      result = await send("put", "/bonded-user-service/users/profile", data);
     }
-    const result = await send(
-      "put",
-      "/bonded-user-service/users/profile",
-      data
-    );
     if (result?.errors) {
-      console.log("---", data);
       return setVisible(true);
     }
     setUpdatedProfile(result);
     setUserInput({});
     setOpenBottomSheet(false);
-    router.push(`/profile?refresh=${new Date().getTime()}`);
+    router.push(`/profile?refresh=${new Date().getTime()}&tab=${params.tab}`);
+  };
+
+  const onDateChange = (event, selectedDate) => {
+    const currentDate = selectedDate || date;
+    setShowDatePicker(Platform.OS === "ios"); // Keep picker open for iOS
+    setDate(currentDate);
+    setUserInput({
+      ...userInput,
+      dateOfBirth: moment(currentDate).format("YYYY-MM-DD"),
+    });
+  };
+
+  const handleContinue = async (action: string) => {
+    if (action === "next") {
+      if (currentStep === profileFields.length - 1) {
+        return;
+      } else {
+        setCurrentStep(currentStep + 1);
+      }
+    } else {
+      if (currentStep !== 0) setCurrentStep(currentStep - 1);
+    }
   };
 
   return (
     <SafeAreaView style={[tw.bgGray100, tw.hFull]}>
+      {/* <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+        <Button onPress={() => setShowDatePicker(true)}>Pick a Date</Button> */}
+      {showDatePicker && (
+        <DateTimePicker
+          value={date}
+          mode="date"
+          display="default"
+          onChange={onDateChange}
+        />
+      )}
+      {/* </View> */}
       <ModalComponent
         title="Error"
         description={error ?? "An error occurred. Please try again."}
@@ -186,116 +288,195 @@ const ProfileScreen: React.FC = () => {
       />
       <GestureHandlerRootView>
         <TextComponent
-          style={[tw.textXl, tw.fontBold, tw.textPink700, tw.p4, tw.textCenter]}
+          style={[tw.textXl, tw.fontBold, tw.textBlack, tw.p2, tw.textCenter]}
         >
-          Let's get to know you better
+          {profileFields[currentStep]?.title}
         </TextComponent>
-        <ScrollView style={[tw.mX4]}>
-          {Number(params.tab) === 1 ? (
-            <View>
-              {profileFields?.map((field: any, index: number) => {
-                const label = field.fieldName.replace(/\_/g, " ");
-                return (
-                  <TouchableOpacity
-                    key={index}
-                    style={[tw.mY1]}
-                    onPress={() => {
-                      setSelectedField(field);
-                      setOpenBottomSheet(true);
-                    }}
-                  >
-                    <View
-                      style={[
-                        tw.bgWhite,
-                        tw.pX3,
-                        tw.pX2,
-                        tw.rounded,
-                        tw.flex,
-                        tw.flexRow,
-                        tw.justifyBetween,
-                      ]}
-                    >
-                      <View>
-                        <TextComponent
-                          style={[tw.fontBold, tw.mY1, tw.capitalize]}
+        <View style={[tw.flex, tw.flexRow, tw.justifyAround, tw.itemsCenter]}>
+          <TouchableOpacity
+            onPress={() => handleContinue("back")}
+            style={[
+              tw.mY4,
+              tw.p2,
+              { backgroundColor: "#38364a" },
+              tw.roundedFull,
+              tw.shadow2xl,
+            ]}
+          >
+            <Ionicons name="arrow-back" size={24} style={[tw.textPink700]} />
+          </TouchableOpacity>
+          <View style={[tw.relative, tw.w2_4]}>
+            <View
+              style={[
+                tw.absolute,
+                tw.h2,
+                tw.wFull,
+                tw.roundedFull,
+                tw.bgBlack,
+                tw.opacity25,
+              ]}
+            ></View>
+            <View
+              style={[
+                tw.h2,
+                {
+                  width: `${((currentStep + 1) / profileFields.length) * 100}%`,
+                },
+                tw.roundedFull,
+                tw.bgPink100,
+              ]}
+            ></View>
+          </View>
+          <TouchableOpacity
+            onPress={() => handleContinue("next")}
+            style={[
+              tw.mY4,
+              tw.p2,
+              { backgroundColor: "#38364a" },
+              tw.roundedFull,
+              tw.shadow2xl,
+            ]}
+          >
+            <Ionicons name="arrow-forward" size={24} style={[tw.textPink700]} />
+          </TouchableOpacity>
+        </View>
+        {loadingProfile ? (
+          <Spinner />
+        ) : (
+          <ScrollView style={[tw.mX4]}>
+            {Number(params.tab) === 1 ? (
+              // profileFields.map((group: any, index: number) => {
+              //   return (
+              <View style={[tw.mY3]}>
+                {/* <Text style={[tw.fontBold, tw.textBase, tw.pY2]}>
+                  {profileFields[currentStep]?.title}
+                </Text> */}
+                <View>
+                  {profileFields[currentStep]?.questions.map(
+                    (qn: any, index: number) => {
+                      // const label = field.fieldName.replace(/\_/g, " ");
+                      return (
+                        <TouchableOpacity
+                          key={index}
+                          style={[tw.mYPx]}
+                          onPress={() => {
+                            setSelectedField(qn);
+                            setOpenBottomSheet(true);
+                          }}
                         >
-                          {label}
-                        </TextComponent>
-                        <TextComponent style={[tw.textSm, tw.mY2]}>
-                          {profile?.otherDetails?.find(
-                            (det) => det.fieldName === field.fieldName
-                          )?.selectedValues ??
-                            getCustomPlaceholder(field.fieldName).placeholder}
-                        </TextComponent>
-                      </View>
-                      <View style={[tw.flex, tw.itemsCenter, tw.justifyCenter]}>
-                        <Ionicons
-                          name="chevron-forward-outline"
-                          size={24}
-                          color="gray"
-                        />
-                      </View>
-                    </View>
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
-          ) : (
-            <View style={[tw.flex]}>
-              <PictureForm profile={profile} />
-              {profileTabs[0].content.map((field: string, index: number) => {
-                return (
-                  <TouchableOpacity
-                    key={index}
-                    style={[tw.mY1]}
-                    onPress={() => {
-                      setSelectedField(field);
-                      setOpenBottomSheet(true);
-                    }}
-                  >
-                    <View
-                      style={[
-                        tw.bgWhite,
-                        tw.pX3,
-                        tw.pX2,
-                        tw.rounded,
-                        tw.flex,
-                        tw.flexRow,
-                        tw.justifyBetween,
-                      ]}
+                          <View
+                            style={[
+                              tw.bgWhite,
+                              tw.pX3,
+                              tw.pX2,
+                              tw.rounded,
+                              tw.flex,
+                              tw.flexRow,
+                              tw.justifyBetween,
+                            ]}
+                          >
+                            <View style={[tw.p3, tw.w3_4]}>
+                              <TextComponent
+                                style={[tw.textSm, tw.mY1, tw.capitalize]}
+                              >
+                                {qn.question}
+                              </TextComponent>
+                              <TextComponent style={[tw.textXs, tw.fontBold]}>
+                                {profileAnswers
+                                  .find((answer: any) => answer.id === qn.id)
+                                  ?.answers.map((answer: any) => answer.text)
+                                  .join(", ") ??
+                                  getCustomPlaceholder(qn.question).placeholder}
+                              </TextComponent>
+                              {/* <TextComponent style={[tw.textSm, tw.mY2]}>
+                                {profile?.otherDetails?.find(
+                                  (det) => det.fieldName === field.fieldName
+                                )?.selectedValues ??
+                                  getCustomPlaceholder(field.fieldName)
+                                    .placeholder}
+                              </TextComponent> */}
+                            </View>
+                            <View
+                              style={[
+                                tw.flex,
+                                tw.itemsCenter,
+                                tw.justifyCenter,
+                              ]}
+                            >
+                              <Ionicons
+                                name="chevron-forward-outline"
+                                size={24}
+                                color="gray"
+                              />
+                            </View>
+                          </View>
+                        </TouchableOpacity>
+                      );
+                    }
+                  )}
+                </View>
+              </View>
+            ) : (
+              //   );
+              // })
+              <View style={[tw.flex]}>
+                <PictureForm profile={profile} />
+                {profileTabs[0].content.map((field: string, index: number) => {
+                  return (
+                    <TouchableOpacity
+                      key={index}
+                      style={[tw.mY1]}
+                      onPress={() => {
+                        setSelectedField(field);
+                        setOpenBottomSheet(true);
+                      }}
                     >
-                      <View>
-                        <TextComponent
-                          style={[
-                            tw.textBase,
-                            tw.fontBold,
-                            tw.mY1,
-                            tw.capitalize,
-                          ]}
+                      <View
+                        style={[
+                          tw.bgWhite,
+                          tw.pX3,
+                          tw.pX2,
+                          tw.rounded,
+                          tw.flex,
+                          tw.flexRow,
+                          tw.justifyBetween,
+                        ]}
+                      >
+                        <View>
+                          <TextComponent
+                            style={[
+                              tw.textBase,
+                              tw.fontBold,
+                              tw.mY1,
+                              tw.capitalize,
+                            ]}
+                          >
+                            {separateTextWithSpace(field)}
+                          </TextComponent>
+                          <TextComponent style={[tw.mY2]}>
+                            {field === "dateOfBirth"
+                              ? profile[field]?.split("T")[0]
+                              : profile[field] ??
+                                getCustomPlaceholder(field).placeholder}
+                          </TextComponent>
+                        </View>
+                        <View
+                          style={[tw.flex, tw.itemsCenter, tw.justifyCenter]}
                         >
-                          {separateTextWithSpace(field)}
-                        </TextComponent>
-                        <TextComponent style={[tw.mY2]}>
-                          {field === "dateOfBirth"
-                            ? profile[field]?.split("T")[0]
-                            : profile[field] ??
-                              getCustomPlaceholder(field).placeholder}
-                        </TextComponent>
+                          <Ionicons
+                            name="chevron-forward-outline"
+                            size={24}
+                            color="gray"
+                          />
+                        </View>
                       </View>
-                      <View style={[tw.flex, tw.itemsCenter, tw.justifyCenter]}>
-                        <Ionicons
-                          name="chevron-forward-outline"
-                          size={24}
-                          color="gray"
-                        />
-                      </View>
-                    </View>
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
-          )}
-        </ScrollView>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            )}
+          </ScrollView>
+        )}
         {openBottomSheet && (
           <BottomModal>
             <View style={[tw.flex, tw.flexRow, tw.justifyEnd]}>
@@ -311,11 +492,12 @@ const ProfileScreen: React.FC = () => {
             <View>
               <TextComponent style={[tw.textXl, tw.fontBold, tw.textCenter]}>
                 {
-                  getCustomPlaceholder(
-                    Number(params.tab) === 1
-                      ? selectedField.fieldName
-                      : selectedField
-                  ).title
+                  // getCustomPlaceholder(
+                  //   Number(params.tab) === 1
+                  //     ? selectedField.fieldName
+                  //     : selectedField
+                  // ).title
+                  selectedField.question
                 }
               </TextComponent>
               <TextComponent
@@ -324,7 +506,7 @@ const ProfileScreen: React.FC = () => {
                 {
                   getCustomPlaceholder(
                     Number(params.tab) === 1
-                      ? selectedField.fieldName
+                      ? selectedField.question
                       : selectedField
                   ).description
                 }
@@ -332,13 +514,27 @@ const ProfileScreen: React.FC = () => {
             </View>
             <KeyboardAwareScrollView>
               {Number(params.tab) === 1 ? (
-                <View>{getFieldType(selectedField)}</View>
+                <ScrollView
+                  contentContainerStyle={{ flexGrow: 1 }}
+                  style={[tw.pB8, { height: "70%" }]}
+                >
+                  {getFieldType(selectedField)}
+                </ScrollView>
               ) : (
                 profileTabs[0].content.map((field: string, index: number) => (
                   <View key={index}>
                     {getFieldType(
-                      field,
-                      null,
+                      field === "gender"
+                        ? {
+                            id: "gender",
+                            options: genders,
+                          }
+                        : field,
+                      field === "dateOfBirth"
+                        ? "date"
+                        : field === "gender"
+                        ? "select"
+                        : "text",
                       field === "dateOfBirth"
                         ? profile[field]?.split("T")[0]
                         : profile[field]

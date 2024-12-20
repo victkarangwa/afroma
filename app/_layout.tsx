@@ -40,7 +40,7 @@ export default function RootLayout() {
             return;
           }
           // if (router.canDismiss()) router.dismissAll();
-          router.replace({ pathname: "/starters" });
+          router.replace({ pathname: "/getStarted/accountType" });
         } catch (error) {
           console.error("Initialization Error:", error);
         }
@@ -84,7 +84,7 @@ export default function RootLayout() {
               <Stack.Screen
                 name="getStarted/otp"
                 options={{ headerShown: false }}
-              /> 
+              />
               <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
               <Stack.Screen
                 name="form/profile"
@@ -104,7 +104,7 @@ export default function RootLayout() {
                 name="chats/room"
                 options={{ headerShown: false }}
               />
-               <Stack.Screen
+              <Stack.Screen
                 name="match/index"
                 options={{ headerShown: false }}
               />
@@ -114,6 +114,11 @@ export default function RootLayout() {
                   headerTitle: "Payment Required",
                   headerTitleAlign: "center",
                 }}
+              />
+              <Stack.Screen
+                name="getStarted/accountType"
+                options={{ headerShown: false }}
+                // Add go back to the previous screen
               />
               <Stack.Screen name="+not-found" />
             </Stack>

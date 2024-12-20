@@ -23,76 +23,167 @@ export const removeUserData = async () => {
 };
 
 export const getCustomPlaceholder = (fieldName: string) => {
-  let placeholder, title, description;
-
-  if (fieldName?.includes("bio")) {
-    return {
-      placeholder: "Add a bio to introduce yourself",
-      title: "Write a bio to introduce yourself",
-      description: "Tell people about yourself. Don't be shy!",
-    };
-  } else if (fieldName?.includes("phone")) {
-    return {
-      placeholder: "Enter your phone number",
-      title: "Add your phone number",
-      description: "Your phone number will be visible to your connections",
-    };
-  } else if (fieldName?.includes("family_plan")) {
-    return {
-      placeholder: "Add your family plan",
-      title: "Add your family plan",
-      description: "Tell people about your family plan",
-    };
-  } else if (fieldName?.includes("education")) {
-    return {
-      placeholder: "Add your education",
-      title: "Where di you go to school?",
-      description: "Tell people about your education",
-    };
-  } else if (fieldName?.includes("communication_style")) {
-    return {
-      placeholder: "Add your communication style",
-      title: "What's your communication style?",
-      description: "Tell people about how you usually communicate",
-    };
-  } else if (fieldName?.includes("language")) {
-    return {
-      placeholder: "Add your language",
-      title: "What language(s) do you speak?",
-      description: "Tell people about the languages you speak",
-    };
-  } else if (fieldName?.includes("looking_for")) {
-    return {
-      placeholder: "Update what you're looking for",
-      title: "Tell people what you're looking for",
-      description: "People will see this when they view your profile",
-    };
-  } else {
-    return {
-      placeholder: "Add your " + separateTextWithSpace(fieldName),
-      title: "Add your " + separateTextWithSpace(fieldName),
-      description: "Tell people about your " + separateTextWithSpace(fieldName),
-    };
+  switch (fieldName) {
+    case "What is your marital status?":
+      return {
+        placeholder: "Select your marital status",
+        title: "What is your marital status?",
+        description:
+          "Share your current marital status to assess compatibility.",
+      };
+    case "Do you have children already?":
+      return {
+        placeholder: "Do you have children?",
+        title: "Do you have children already?",
+        description: "Specify if you have children or are open to having more.",
+      };
+    case "How many children would you like to have?":
+      return {
+        placeholder: "How many children would you like?",
+        title: "How many children would you like to have?",
+        description: "Indicate your preferred number of children.",
+      };
+    case "What type of parenting arrangement do you prefer?":
+      return {
+        placeholder: "Describe your ideal parenting arrangement",
+        title: "What type of parenting arrangement do you prefer?",
+        description: "Choose your ideal co-parenting setup.",
+      };
+    case "What parenting style do you follow or believe in?":
+      return {
+        placeholder: "Describe your parenting style",
+        title: "What parenting style do you follow or believe in?",
+        description: "Describe your parenting philosophy and approach.",
+      };
+    case "What values would you prioritize in raising children?":
+      return {
+        placeholder: "Select values you prioritize in raising children",
+        title: "What values would you prioritize in raising children?",
+        description:
+          "Highlight the core values you want to instill in your children.",
+      };
+    case "Are you open to co-parenting with multiple partners?":
+      return {
+        placeholder: "Are you open to multiple co-parenting partners?",
+        title: "Are you open to co-parenting with multiple partners?",
+        description: "Indicate your stance on co-parenting arrangements.",
+      };
+    case "How do you feel about vaccinations for children?":
+      return {
+        placeholder: "Enter your opinion on child vaccinations",
+        title: "How do you feel about vaccinations for children?",
+        description: "State your perspective on child vaccinations.",
+      };
+    case "What type of schooling do you prefer for children?":
+      return {
+        placeholder: "Describe your schooling preference",
+        title: "What type of schooling do you prefer for children?",
+        description:
+          "Identify your preferred educational pathway for children.",
+      };
+    case "Is your family supportive and will they be involved in the co-parenting journey?":
+      return {
+        placeholder: "Describe your family's involvement",
+        title:
+          "Is your family supportive and will they be involved in the co-parenting journey?",
+        description:
+          "Explain your family’s level of involvement in co-parenting.",
+      };
+    case "What is your highest level of education?":
+      return {
+        placeholder: "Enter your highest education level",
+        title: "What is your highest level of education?",
+        description: "Mention the highest degree or qualification you hold.",
+      };
+    case "What is your primary language?":
+      return {
+        placeholder: "Enter your primary language",
+        title: "What is your primary language?",
+        description: "State your first language for effective communication.",
+      };
+    case "What other languages do you speak?":
+      return {
+        placeholder: "Enter other languages you speak",
+        title: "What other languages do you speak?",
+        description: "List any additional languages you are fluent in.",
+      };
+    case "Where do you currently live?":
+      return {
+        placeholder: "Enter your current location",
+        title: "Where do you currently live?",
+        description: "Provide details about your current place of residence.",
+      };
+    case "Are you open to relocating for co-parenting?":
+      return {
+        placeholder: "Are you open to relocation?",
+        title: "Are you open to relocating for co-parenting?",
+        description: "Specify your willingness to move for co-parenting.",
+      };
+    case "What is your current employment status?":
+      return {
+        placeholder: "Enter your employment status",
+        title: "What is your current employment status?",
+        description: "Share your current work status or career situation.",
+      };
+    case "What is your approximate income range?":
+      return {
+        placeholder: "Enter your income range",
+        title: "What is your approximate income range?",
+        description: "Indicate your income range for financial transparency.",
+      };
+    case "What are your physical activity habits?":
+      return {
+        placeholder: "Describe your physical activity habits",
+        title: "What are your physical activity habits?",
+        description:
+          "Share your usual level of physical activity or exercise routine.",
+      };
+    case "What is your political affiliation or worldview?":
+      return {
+        placeholder: "Enter your political affiliation",
+        title: "What is your political affiliation or worldview?",
+        description: "Describe your political beliefs or affiliations.",
+      };
+    case "Are you open to a romantic relationship with your co-parent?":
+      return {
+        placeholder: "Are you open to romance?",
+        title: "Are you open to a romantic relationship with your co-parent?",
+        description:
+          "Indicate if you are open to romance alongside co-parenting.",
+      };
+    default:
+      return {
+        placeholder: "Provide an answer",
+        title: fieldName,
+        description: "Please provide details for: " + fieldName,
+      };
   }
 };
 
-export const transformToOtherDetails = (userInput) => {
-  const otherDetails = [];
+// export const transformToOtherDetails = (userInput) => {
+//   const otherDetails = [];
 
-  for (const [fieldName, selectedValues] of Object.entries(userInput)) {
-    // Determine the value to send to the backend
-    const backendValue = Array.isArray(selectedValues)
-      ? JSON.stringify(selectedValues) // Convert array to a string
-      : selectedValues; // Keep string as it is
+//   for (const [fieldName, selectedValues] of Object.entries(userInput)) {
+//     // Determine the value to send to the backend
+//     const backendValue = Array.isArray(selectedValues)
+//       ? JSON.stringify(selectedValues) // Convert array to a string
+//       : selectedValues; // Keep string as it is
 
-    // Add the transformed object to the array
-    otherDetails.push({
-      fieldName: fieldName,
-      selectedValues: backendValue,
-    });
-  }
+//     // Add the transformed object to the array
+//     otherDetails.push({
+//       fieldName: fieldName,
+//       selectedValues: backendValue,
+//     });
+//   }
 
-  return otherDetails;
+//   return otherDetails;
+// };
+
+export const transformToProfileAnswer = (userInput: any) => {
+  return Object.entries(userInput).map(([key, value]) => ({
+    profileQuestionId: parseInt(key, 10),
+    answerOptionIds: Array.isArray(value) ? value : [value],
+  }));
 };
 
 export const gateUserAge = (dob: string) => {
@@ -186,9 +277,9 @@ export const generateChatId = (userId1: number, userId2: number) => {
 };
 
 export const convertSecondsToTime = (timestamp) => {
-// Convert Firebase Timestamp to JavaScript Date
-const date = timestamp?.toDate();
+  // Convert Firebase Timestamp to JavaScript Date
+  const date = timestamp?.toDate();
 
-// Format the date using Moment.js
-return moment(date).format("HH:mm A"); // Format as 24-hour time, e.g., "14:30"
+  // Format the date using Moment.js
+  return moment(date).format("HH:mm A"); // Format as 24-hour time, e.g., "14:30"
 };

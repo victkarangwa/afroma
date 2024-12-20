@@ -7,6 +7,8 @@ import LocalStorage from '@/utils/storage'
 const authRequestInterceptor = async (settings: any) => {
   const token = await LocalStorage.getItem<string>(config.token)
 
+  // console.log("=-=-=-=-", token) 
+
   if (token) settings.headers.Authorization = token
   settings.headers.Origin = Constants.expoConfig?.extra?.origin
   return settings

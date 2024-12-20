@@ -9,7 +9,7 @@ import TextComponent from "@/components/Text";
 import { introText } from "@/constants/text";
 import Input from "@/components/input";
 import { Button, Divider, TextInput } from "react-native-paper";
-import { Link, useRouter } from "expo-router";
+import { Link, useLocalSearchParams, useRouter } from "expo-router";
 import AuthScreenLayout from "@/components/AuthScreensLayout";
 import { useForm, Controller, SubmitHandler } from "react-hook-form";
 import useApiRequest from "@/hooks/useApiRequest";
@@ -26,6 +26,10 @@ type FormData = {
 };
 const SignupScreen: React.FC = () => {
   const router = useRouter();
+  const params = useLocalSearchParams();
+  const { profileFields } = params;
+
+  console.log("----Parsed--", JSON.parse(profileFields));
   const { loading, send, error } = useApiRequest<ApiResponse>();
 
   const [visible, setVisible] = React.useState(false);
@@ -70,12 +74,20 @@ const SignupScreen: React.FC = () => {
   }) => {
     const { name, email, phone_number, password } = data;
 
-    const result = await send("post", "/bonded-user-service/users/register", {
+    const otherFields = JSON.parse(profileFields);
+
+    const req = {
       name,
       email,
       phone_number: phone_number.slice(1),
       password,
-    });
+      ...otherFields,
+    };
+    const result = await send(
+      "post",
+      "/bonded-user-service/users/register",
+      req
+    );
 
     if (result?.errors) {
       setModalInfo({
@@ -162,13 +174,9 @@ const SignupScreen: React.FC = () => {
                   tw.border,
                   tw.borderPink700,
                   tw.rounded,
-                  tw.wFull
+                  tw.wFull,
                 ]}
-                textContainerStyle={[
-                  tw.bgTransparent,
-                  tw.pY3,
-                  tw.roundedR,
-                ]}
+                textContainerStyle={[tw.bgTransparent, tw.pY3, tw.roundedR]}
                 textInputStyle={[tw.textWhite]}
                 codeTextStyle={[tw.textWhite]}
                 textInputProps={{
@@ -302,17 +310,24 @@ const SignupScreen: React.FC = () => {
             </Link>
           </TextComponent>
           <TextComponent
-          variant="labelSmall"
-          style={[tw.textCenter, tw.textWhite, tw.opacity75, tw.pY4, tw.mX12]}
-        >
-          By signing up, you agree to our {" "}
-          <Link href="/getStarted" style={[tw.textBlue500, tw.underline, tw.textYellow400]}>
-            Terms of Service
-          </Link> and {" "}
-          <Link href="/getStarted" style={[tw.textBlue500, tw.underline, tw.textYellow400]}>
-            Privacy Policy
-          </Link>
-        </TextComponent>
+            variant="labelSmall"
+            style={[tw.textCenter, tw.textWhite, tw.opacity75, tw.pY4, tw.mX12]}
+          >
+            By signing up, you agree to our{" "}
+            <Link
+              href="/getStarted"
+              style={[tw.textBlue500, tw.underline, tw.textYellow400]}
+            >
+              Terms of Service
+            </Link>{" "}
+            and{" "}
+            <Link
+              href="/getStarted"
+              style={[tw.textBlue500, tw.underline, tw.textYellow400]}
+            >
+              Privacy Policy
+            </Link>
+          </TextComponent>
         </View>
       </View>
     </AuthScreenLayout>

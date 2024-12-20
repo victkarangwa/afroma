@@ -34,6 +34,7 @@ import { constantUserData, profileTabs } from "@/constants";
 import moment from "moment";
 import * as ImagePicker from "expo-image-picker";
 import Spinner from "@/components/Spinner";
+import { Text } from "react-native";
 
 const ProfileScreen: React.FC = () => {
   const router = useRouter();
@@ -44,27 +45,41 @@ const ProfileScreen: React.FC = () => {
 
   const [profile, setProfile] = useState<any>({});
   const [profileFields, setProfileFields] = useState<any>([]);
-  const [activeTab, setActiveTab] = useState(0);
+  const [activeTab, setActiveTab] = useState(params?.tab ?? 0);
   const [updatedProfile, setUpdatedProfile] = useState<any>({
     featuredPhoto: null,
   });
+  const [profileAnswers, setProfileAnswers] = useState<any>({});
 
-  const getMyProfile = async () => {
+  const getMyBasicProfile = async () => {
     const result = await send("get", "/bonded-user-service/users/me");
 
     if (result?.errors) {
       handleLogout();
       return;
     }
-    if (!result.bio || !result.dateOfBirth || !result.gender) {
-      router.push(`/form/profile?tab=${activeTab}`);
-    }
+    // if (!result.dateOfBirth || !result.gender) {
+    //   router.push(`/form/profile?tab=${activeTab}`);
+    // }
     setProfile(result);
   };
 
+  const getMyProfileAnswers = async () => {
+    const result = await send(
+      "get",
+      "/bonded-user-service/user-profiling/answers"
+    );
+
+    if (result?.errors) {
+      return;
+    }
+    setProfileAnswers(result);
+  };
+
   useEffect(() => {
-    getMyProfile();
+    getMyBasicProfile();
     getProfileField();
+    getMyProfileAnswers();
   }, [params.refresh, updatedProfile.featuredPhoto]);
 
   const handleLogout = async () => {
@@ -76,7 +91,7 @@ const ProfileScreen: React.FC = () => {
   const getProfileField = async () => {
     const result = await send(
       "get",
-      "/bonded-user-service/settings/profile-fields"
+      "/bonded-user-service/settings/profile-questions"
     );
 
     // console.log("___PROFILE-FIELDS___", result);
@@ -131,7 +146,7 @@ const ProfileScreen: React.FC = () => {
   return (
     <SafeAreaView>
       <ScrollView>
-      {loading && <Spinner />}
+        {loading && <Spinner />}
         <View style={[tw.hFull, tw.mB8]}>
           <View
             style={[
@@ -249,7 +264,7 @@ const ProfileScreen: React.FC = () => {
                 key={index}
                 onPress={() => handleTabChange(index)}
                 style={[
-                  activeTab === index && tw.bgWhite,
+                  activeTab == index && tw.bgWhite,
                   tw.shadowLg,
                   tw.rounded,
                   tw.w1_2,
@@ -269,57 +284,107 @@ const ProfileScreen: React.FC = () => {
               </TouchableOpacity>
             ))}
           </View>
-          <View style={[tw.bgWhite, tw.mX4, tw.rounded, tw.pY4]}>
+          <View style={[tw.mX4, tw.rounded, tw.pY4]}>
             {profileTabs[activeTab].content === "otherDetails"
-              ? profileFields?.map((field: any, index: number) => {
-                  const label = field.fieldName.replace(/\_/g, " ");
-                  const selectedVal = profile.otherDetails?.find(
-                    (detail: any) => detail.fieldName === field.fieldName
-                  )?.selectedValues;
-                  let value;
-                  try {
-                    const parsedVal = JSON.parse(selectedVal);
-                    value = Array.isArray(parsedVal)
-                      ? parsedVal.join(", ")
-                      : selectedVal;
-                  } catch (error) {
-                    // Assume it's not an array
-                    value = selectedVal;
-                  }
-
+              ? profileFields.map((group: any, index: number) => {
                   return (
-                    <View key={index} style={[tw.mX4, tw.mY2, tw.flex, tw.flexRow]}>
-                      <View style={[tw.mR4]}>
-                        <Ionicons
-                          name={
-                            profileTabs[activeTab]?.icons?.find(
-                              (icon) => field.fieldName.includes(icon.field)
-                            )?.icon
-                          }
-                          size={24}
-                          style={[tw.textGray600, tw.mY2]}
-                        />
-                      </View>
+                    <View style={[tw.pY5, tw.pX2, tw.mY1, tw.bgWhite]}>
+                      <Text style={[tw.fontBold, tw.textBase]}>
+                        {group.title}
+                      </Text>
+
                       <View>
-                      <TextComponent
-                        variant="labelLarge"
-                        style={[tw.fontBlack, tw.capitalize]}
-                      >
-                        {label}
-                      </TextComponent>
-                      <TextComponent
-                        variant="bodyMedium"
-                        style={[tw.textGray600]}
-                      >
-                        {/* { profile[field.fieldName] ?? "No data yet"} */}
-                        {value ?? "No set yet"}
-                      </TextComponent>
+                        {group.questions.map((qn: any, index: number) => {
+                          return (
+                            <View
+                              key={index}
+                              style={[tw.mX4, tw.mY2, tw.flex, tw.flexRow]}
+                            >
+                              <View style={[tw.mR4]}>
+                                <Ionicons
+                                  name={
+                                    profileTabs[activeTab]?.icons?.find(
+                                      (icon) => qn.question.includes(icon.field)
+                                    )?.icon
+                                  }
+                                  size={24}
+                                  style={[tw.textGray600, tw.mY2]}
+                                />
+                              </View>
+                              <View>
+                                <TextComponent
+                                  variant="labelLarge"
+                                  style={[tw.textXs, tw.capitalize]}
+                                >
+                                  {qn.question}
+                                </TextComponent>
+                                <TextComponent
+                                  variant="bodyMedium"
+                                  style={[tw.textGray600]}
+                                >
+                                  {profileAnswers
+                                    ?.find((answer: any) => answer.id === qn.id)
+                                    ?.answers.map((answer: any) => answer.text)
+                                    .join(", ") ?? "No set yet"}
+                                </TextComponent>
+                              </View>
+                              <Divider style={[tw.bgGray500, tw.mY4]} />
+                            </View>
+                          );
+                        })}
                       </View>
-                      <Divider style={[tw.bgGray500, tw.mY4]} />
                     </View>
                   );
                 })
-              : profileTabs[activeTab].content.map(
+              : // profileFields?.map((field: any, index: number) => {
+                //     const label = field.fieldName.replace(/\_/g, " ");
+                //     const selectedVal = profile.otherDetails?.find(
+                //       (detail: any) => detail.fieldName === field.fieldName
+                //     )?.selectedValues;
+                //     let value;
+                //     try {
+                //       const parsedVal = JSON.parse(selectedVal);
+                //       value = Array.isArray(parsedVal)
+                //         ? parsedVal.join(", ")
+                //         : selectedVal;
+                //     } catch (error) {
+                //       // Assume it's not an array
+                //       value = selectedVal;
+                //     }
+
+                //     return (
+                //       <View key={index} style={[tw.mX4, tw.mY2, tw.flex, tw.flexRow]}>
+                //         <View style={[tw.mR4]}>
+                //           <Ionicons
+                //             name={
+                //               profileTabs[activeTab]?.icons?.find(
+                //                 (icon) => field.fieldName.includes(icon.field)
+                //               )?.icon
+                //             }
+                //             size={24}
+                //             style={[tw.textGray600, tw.mY2]}
+                //           />
+                //         </View>
+                //         <View>
+                //         <TextComponent
+                //           variant="labelLarge"
+                //           style={[tw.fontBlack, tw.capitalize]}
+                //         >
+                //           {label}
+                //         </TextComponent>
+                //         <TextComponent
+                //           variant="bodyMedium"
+                //           style={[tw.textGray600]}
+                //         >
+                //           {/* { profile[field.fieldName] ?? "No data yet"} */}
+                //           {value ?? "No set yet"}
+                //         </TextComponent>
+                //         </View>
+                //         <Divider style={[tw.bgGray500, tw.mY4]} />
+                //       </View>
+                //     );
+                //   })
+                profileTabs[activeTab].content.map(
                   (field: string, index: number) => (
                     <View key={index} style={[tw.mX4]}>
                       <TextComponent

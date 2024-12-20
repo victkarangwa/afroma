@@ -3,10 +3,12 @@ import useApiRequest from "@/hooks/useApiRequest";
 import { ApiResponse } from "@/types";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import React, { useRef, useState } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import { Image, StyleSheet, View, TouchableOpacity } from "react-native";
 import Swiper from "react-native-deck-swiper";
 import { tw } from "react-native-tailwindcss";
+import Spinner from "../Spinner";
+import CircularProgress from "react-native-circular-progress-indicator";
 
 type SwipeType = "like" | "dislike" | "bookmark";
 
@@ -26,9 +28,17 @@ interface SwiperComponentProps {
 const SwiperComponent = ({
   parameter = "all",
   data,
+  setUserRate,
+  userRate,
+  setSelectedMatch,
+  setShowModal,
 }: {
   parameter?: string;
   data: SwiperComponentProps[];
+  setUserRate: React.Dispatch<React.SetStateAction<number | null>>;
+  userRate: number | null;
+  setSelectedMatch: React.Dispatch<React.SetStateAction<ApiResponse | null>>;
+  setShowModal: React.Dispatch<React.SetStateAction<boolean>>;
 }) => {
   const router = useRouter();
   const swiperRef = useRef<Swiper<SwiperComponentProps> | null>(null);
@@ -36,18 +46,21 @@ const SwiperComponent = ({
   null;
 
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [loadRating, setLoadRating] = useState(false);
+  const [rating, setRating] = useState<number | null>(null);
 
   const handleSwipe = async (id: number, swipeType: SwipeType) => {
     try {
+      setRating(null);
+      setUserRate(null);
       const swipedId = data[id]?.id;
       const result = await send("post", "/bonded-user-service/matches/swipes", {
         swipedId,
         swipeType,
       });
 
-      console.log("====REQ====>", swipedId,
-        swipeType,);
-      if(result?.paymentRequired) {
+      console.log("====REQ====>", swipedId, swipeType);
+      if (result?.paymentRequired) {
         router.push({
           pathname: "/payment",
           params: { user: JSON.stringify(data[id]) },
@@ -65,6 +78,24 @@ const SwiperComponent = ({
       console.log("==ERROR===>", error);
     }
   };
+
+  // const viewRating = async (swippedCardId: number) => {
+  //   setLoadRating(true);
+  //   const userId = data[swippedCardId]?.id;
+  //   const result = await send(
+  //     "get",
+  //     `/bonded-user-service/matches/rate/${userId}`
+  //   );
+  //   setRating(result?.rate);
+  //   setUserRate(result?.rate);
+  //   console.log("==RATING===>", result);
+  //   setLoadRating(false);
+  // };
+
+  const onMatchClick = (id: number) => {
+    setSelectedMatch(data[id]);
+    setShowModal(true);
+  }
 
   const actionBtn: {
     id: number;
@@ -107,7 +138,7 @@ const SwiperComponent = ({
         return (
           <View style={styles.card}>
             <View style={[{ height: "65%" }, tw.relative]}>
-              <View
+             {parameter !== "all" && <View
                 style={[
                   tw.flex,
                   tw.flexRow,
@@ -126,11 +157,39 @@ const SwiperComponent = ({
               >
                 <Ionicons name="location-outline" size={16} />
                 <TextComponent style={[tw.textPink100, tw.textXs, tw.fontBold]}>
-                  {parameter === "all"
-                    ? card?.location
-                    : `${card?.distance?.toFixed(0)} km`}
+                  { `${card?.distance?.toFixed(0)} km`}
                 </TextComponent>
-              </View>
+              </View>}
+              <TouchableOpacity
+                style={[
+                  tw.flex,
+                  tw.flexRow,
+                  tw.itemsCenter,
+                  tw.bgPink100,
+                  tw.roundedFull,
+                  tw.textPink700,
+                  tw.absolute,
+                  tw.right0,
+                  tw.bottom0,
+                  tw.m6,
+                  tw.pX2,
+                  tw.pY2,
+                  tw.z10,
+                ]}
+                disabled={loadRating}
+                onPress={() => onMatchClick(currentIndex)}
+              >
+                <CircularProgress
+                  value={card?.matchingResult?.matchingRate}
+                  radius={20}
+                  activeStrokeWidth={5}
+                  inActiveStrokeWidth={5}
+                  activeStrokeColor={"#eca899"}
+                  titleStyle={{ fontSize: 12 }}
+                  progressValueColor="#eca899"
+                  titleColor={'white'}
+                />
+              </TouchableOpacity>
               <Image
                 src={
                   card?.mediaList.find((img: any) => img.featured)?.thumbnailUrl
@@ -144,7 +203,7 @@ const SwiperComponent = ({
               <TextComponent style={[tw.textXl, tw.textPink100, tw.fontBold]}>
                 {card?.firstName} {card?.middleName}, {card?.age}
               </TextComponent>
-              <View style={[tw.flex, tw.flexRow, tw.mY2]}>
+              {/* <View style={[tw.flex, tw.flexRow, tw.mY2]}>
                 {card?.relationshipStatus && (
                   <View style={[tw.flex, tw.flexRow, tw.itemsCenter]}>
                     <Ionicons
@@ -167,8 +226,8 @@ const SwiperComponent = ({
                     {fPlan ?? "No family plan"}
                   </TextComponent>
                 </View>
-              </View>
-              <View style={[tw.mY2, tw.flex, tw.flexRow]}>
+              </View> */}
+              {/* <View style={[tw.mY2, tw.flex, tw.flexRow]}>
                 {card?.interests?.map((int) => (
                   <TextComponent
                     key={int}
@@ -185,7 +244,7 @@ const SwiperComponent = ({
                     {int}
                   </TextComponent>
                 ))}
-              </View>
+              </View> */}
               <View>
                 <View style={[tw.flex, tw.flexRow, tw.justifyAround]}>
                   {actionBtn.map((btn) => (
@@ -228,7 +287,7 @@ const styles = StyleSheet.create({
     ...tw.flexCol,
     ...tw.roundedLg,
     ...tw.bgGray200,
-    height: 600,
+    height: 500,
     width: 300,
     marginTop: -200,
   },

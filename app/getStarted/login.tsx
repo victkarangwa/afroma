@@ -163,7 +163,7 @@ const LoginScreen: React.FC = () => {
           style={[tw.textCenter, tw.textWhite, tw.opacity75]}
         >
           Don't have an account yet?
-          <Link href="/getStarted" style={[tw.textBlue500]}>
+          <Link href="/getStarted/accountType" style={[tw.textBlue500]}>
             {" "}
             Signup
           </Link>

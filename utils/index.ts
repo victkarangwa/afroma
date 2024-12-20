@@ -283,3 +283,9 @@ export const convertSecondsToTime = (timestamp) => {
   // Format the date using Moment.js
   return moment(date).format("HH:mm A"); // Format as 24-hour time, e.g., "14:30"
 };
+
+export const convertToMilliseconds = (timestamp: any) => {
+  const milliseconds =
+    timestamp.seconds * 1000 + Math.floor(timestamp.nanoseconds / 1000000);
+  return milliseconds;
+};

@@ -58,9 +58,6 @@ const ProfileScreen: React.FC = () => {
       handleLogout();
       return;
     }
-    // if (!result.dateOfBirth || !result.gender) {
-    //   router.push(`/form/profile?tab=${activeTab}`);
-    // }
     setProfile(result);
   };
 

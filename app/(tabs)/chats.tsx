@@ -61,7 +61,7 @@ const ChatsScreen: React.FC = () => {
         );
 
 
-        console.log("-----", userId)
+        // console.log("-----", userId)
 
         const chatsSnapshot = await getDocs(chatsQuery);
         const userChats: Array<{

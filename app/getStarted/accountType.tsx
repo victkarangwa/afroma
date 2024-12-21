@@ -76,15 +76,16 @@ const AccountTypeScreen: React.FC = () => {
   };
   return (
     <View style={[tw.bgPink100, tw.hFull]}>
-      {showDatePicker && (
-        <DateTimePicker
-          value={date}
-          mode="date"
-          display="default"
-          onChange={onDateChange}
-          style={[tw.bgWhite]}
-        />
-      )}
+      {showDatePicker &&
+        profileRegistrationFields[currentStep].fieldType !== "singleSelect" && (
+          <DateTimePicker
+            value={date}
+            mode="date"
+            display="spinner"
+            onChange={onDateChange}
+            style={[tw.bgWhite]}
+          />
+        )}
       <View style={[tw.flex, tw.itemsCenter, tw.pX8]}>
         <Image
           source={require("../../assets/images/bonded_logo.png")}
@@ -92,72 +93,71 @@ const AccountTypeScreen: React.FC = () => {
         />
       </View>
       {/* <KeyboardAwareScrollView> */}
-        <View style={[tw.mB8]} key={profileRegistrationFields[currentStep].id}>
-          <TextComponent
-            style={[
-              tw.textWhite,
-              tw.textLg,
-              tw.mX4,
-              tw.mY2,
-              tw.textCenter,
-              tw.fontBold,
-            ]}
-          >
-            {profileRegistrationFields[currentStep].label}
-          </TextComponent>
-          <View
-            style={[
-              tw.flex,
-              tw.flexRow,
-              tw.justifyCenter,
-              tw.itemsCenter,
-              tw.mY6,
-            ]}
-          >
-            {profileRegistrationFields[currentStep].fieldType ===
-            "singleSelect" ? (
-              profileRegistrationFields[currentStep]?.options?.map(
-                (opt, index) => (
-                  <TouchableOpacity
-                    key={index}
-                    style={[
-                      tw.border,
-                      tw.borderPink700,
-                      // tw.w1_12,
-                      tw.mX2,
-                      tw.rounded,
-                      tw.mPx,
-                      profileFields[
-                        profileRegistrationFields[currentStep].field as any
-                      ] === opt.value
-                        ? tw.bgPink700
-                        : tw.bgTransparent,
-                    ]}
-                    onPress={() => {
-                      setProfileFields({
-                        ...profileFields,
-                        [profileRegistrationFields[currentStep].field]:
-                          opt.value,
-                      });
-                    }}
-                  >
-                    <TextComponent style={[tw.p3, tw.textWhite, tw.textCenter]}>
-                      {opt.optionText}
-                    </TextComponent>
-                  </TouchableOpacity>
-                )
+      <View style={[tw.mB8]} key={profileRegistrationFields[currentStep].id}>
+        <TextComponent
+          style={[
+            tw.textWhite,
+            tw.textLg,
+            tw.mX4,
+            tw.mY2,
+            tw.textCenter,
+            tw.fontBold,
+          ]}
+        >
+          {profileRegistrationFields[currentStep].label}
+        </TextComponent>
+        <View
+          style={[
+            tw.flex,
+            tw.flexRow,
+            tw.justifyCenter,
+            tw.itemsCenter,
+            tw.mY6,
+          ]}
+        >
+          {profileRegistrationFields[currentStep].fieldType ===
+          "singleSelect" ? (
+            profileRegistrationFields[currentStep]?.options?.map(
+              (opt, index) => (
+                <TouchableOpacity
+                  key={index}
+                  style={[
+                    tw.border,
+                    tw.borderPink700,
+                    // tw.w1_12,
+                    tw.mX2,
+                    tw.rounded,
+                    tw.mPx,
+                    profileFields[
+                      profileRegistrationFields[currentStep].field as any
+                    ] === opt.value
+                      ? tw.bgPink700
+                      : tw.bgTransparent,
+                  ]}
+                  onPress={() => {
+                    setProfileFields({
+                      ...profileFields,
+                      [profileRegistrationFields[currentStep].field]: opt.value,
+                    });
+                  }}
+                >
+                  <TextComponent style={[tw.p3, tw.textWhite, tw.textCenter]}>
+                    {opt.optionText}
+                  </TextComponent>
+                </TouchableOpacity>
               )
-            ) : (
-              <View style={[tw.w3_4]}>
-                <Input
-                  label="Date of Birth"
-                  value={moment(date).format("YYYY-MM-DD")}
-                  onPress={() => setShowDatePicker(true)}
-                />
-              </View>
-            )}
-          </View>
+            )
+          ) : (
+            <View style={[tw.w3_4]}>
+              <Input
+                label="Date of Birth"
+                value={moment(date).format("YYYY-MM-DD")}
+                onPress={() => setShowDatePicker(true)}
+              />
+            </View>
+          )}
         </View>
+      </View>
       {/* </KeyboardAwareScrollView> */}
       <View style={[tw.mY16]}>
         <View style={[tw.flex, tw.flexRow, tw.justifyAround, tw.itemsCenter]}>

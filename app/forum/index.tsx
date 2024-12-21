@@ -8,89 +8,96 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { tw } from "react-native-tailwindcss";
 import {
   addDoc,
+  arrayRemove,
+  arrayUnion,
   collection,
+  doc,
   getDocs,
+  increment,
   onSnapshot,
   orderBy,
   query,
   serverTimestamp,
+  updateDoc,
 } from "firebase/firestore";
 import { db } from "@/configs/firebaseConfig";
 import moment from "moment";
 import { convertSecondsToTime, convertToMilliseconds } from "@/utils";
+import Placeholder from "@/components/Skeleton";
+import LocalStorage from "@/utils/storage";
+import config from "@/utils/localValues";
 
 const ForumScreen: React.FC = () => {
   const router = useRouter();
-
-  interface Thread {
-    id: string;
-    [key: string]: any;
-  }
-
-  const [threads, setThreads] = useState<Thread[]>([]);
+  const [threads, setThreads] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [userId, setUserId] = useState<number | null>(null);
 
   useEffect(() => {
-    const fetchForumData = async () => {
-      try {
-        // Step 1: Fetch all threads
-        const threadsRef = collection(db, "threads");
-        const threadsSnapshot = await getDocs(threadsRef);
+    setLoading(true);
+    const fetchThreads = async () => {
+      const user: number | null = await LocalStorage.getItem(config.userId);
+      console.log("User ID", user);
+      setUserId(Number(user));
+      const threadsRef = collection(db, "threads");
+      const postsRef = collection(db, "posts");
+      const postsQuery = query(postsRef, orderBy("created_at", "asc"));
 
-        // Create a map of thread_id to thread data (id and title)
-        const threadsMap: { [key: string]: { id: string; title: string } } =
-          threadsSnapshot.docs.reduce((map, doc) => {
-            const threadData = doc.data();
-            map[doc.id] = { id: doc.id, title: threadData.title };
-            return map;
-          }, {});
+      // Listener for threads and posts
+      const unsubscribeThreads = onSnapshot(threadsRef, (threadsSnapshot) => {
+        const threadsMap = threadsSnapshot.docs.reduce((map, doc) => {
+          const threadData = doc.data();
+          map[doc.id] = { id: doc.id, title: threadData.title };
+          return map;
+        }, {} as { [key: string]: { id: string; title: string } });
 
-        // Step 2: Fetch all posts
-        const postsRef = collection(db, "posts");
-        const postsQuery = query(postsRef, orderBy("created_at", "asc"));
-        const postsSnapshot = await getDocs(postsQuery);
+        const unsubscribePosts = onSnapshot(postsQuery, (postsSnapshot) => {
+          const enhancedPosts = postsSnapshot.docs.map((doc) => {
+            const postData = doc.data();
+            const threadInfo = threadsMap[postData.thread_id] || {};
+            return {
+              post_id: doc.id,
+              ...postData,
+              thread: threadInfo, // Add thread info here
+            };
+          });
 
-        // Step 3: Add thread info (id and title) to each post
-        const enhancedPosts = postsSnapshot.docs.map((doc) => {
-          const postData = doc.data();
-          const threadInfo = threadsMap[postData.thread_id] || {};
-          return {
-            post_id: doc.id,
-            ...postData,
-            thread: threadInfo, // Add thread info here
-          };
+          setThreads(enhancedPosts);
+          setLoading(false);
+
+          console.log("-----", enhancedPosts);
         });
-        console.log("======", enhancedPosts[0].created_at);
-        setThreads(enhancedPosts);
-      } catch (error) {
-        console.error("Error fetching forum data:", error);
-      }
-    };
 
-    fetchForumData();
+        // Cleanup posts listener on unmount
+        return () => unsubscribePosts();
+      });
+
+      // Cleanup threads listener on unmount
+      return () => unsubscribeThreads();
+    };
+    fetchThreads();
   }, [db]);
 
-  const categories = [
-    {
-      id: 1,
-      name: "Tending",
-    },
-    {
-      id: 2,
-      name: "General",
-    },
-    {
-      id: 3,
-      name: "Family",
-    },
-    {
-      id: 4,
-      name: "Support",
-    },
-  ];
+  const updatePostLikes = async (postId, incrementValue = 1) => {
+    try {
+      const postRef = doc(db, "posts", postId);
 
-  const openSpecificForum = () => {
-    router.navigate("/forum/specificPost");
+      // Increment likes count
+      await updateDoc(postRef, {
+        likes: incrementValue > 0 ? increment(incrementValue) : increment(-1),
+        liked_by: incrementValue > 0 ? arrayUnion(userId) : arrayRemove(userId),
+      });
+
+      console.log("Post likes updated successfully.");
+    } catch (error) {
+      console.error("Error updating post likes:", error);
+    }
   };
+
+  const openSpecificForum = (postId) => {
+    router.navigate(`/forum/specificPost?postId=${postId}`);
+  };
+
   return (
     <View style={[tw.bgPink100, tw.wFull, tw.flex, tw.itemsCenter]}>
       <View style={[tw.bgPink100, tw.wFull]}>
@@ -130,163 +137,173 @@ const ForumScreen: React.FC = () => {
             { borderTopLeftRadius: 50, borderTopRightRadius: 50 },
           ]}
         >
-          {/* Tags for categories */}
-          <View
-            style={[
-              tw.flex,
-              tw.flexRow,
-              tw.justifyCenter,
-              tw.flexWrap,
-              tw.wFull,
-            ]}
-          >
-            {categories.map((category) => (
-              <TouchableOpacity
-                key={category.id}
-                style={[
-                  tw.bgGray300,
-                  tw.p2,
-                  tw.m2,
-                  tw.roundedLg,
-                  tw.flex,
-                  tw.justifyCenter,
-                ]}
-              >
-                <TextComponent style={[tw.textGray500, tw.fontBold]}>
-                  {category.name}
-                </TextComponent>
-              </TouchableOpacity>
-            ))}
-          </View>
-
           {/* Forum posts */}
-          {threads.map((thread) => {
-            return (
-              <TouchableOpacity
-                style={[tw.roundedLg, tw.bgWhite, tw.m2, tw.p4]}
-                onPress={openSpecificForum}
-              >
-                <View
-                  style={[
-                    tw.bgWhite,
-                    tw.flex,
-                    tw.flexRow,
-                    tw.justifyStart,
-
-                    tw.shadowXl,
-                  ]}
-                >
-                  <Image
-                    src={thread?.created_by?.photo}
-                    source={require("../../assets/images/default_avatar.jpg")}
-                    style={[
-                      tw.w12,
-                      tw.h12,
-                      tw.roundedFull,
-                      tw.mR2,
-                      tw.mY1,
-                      tw.border2,
-                      tw.borderPink700,
-                    ]}
-                  />
-                  <View style={[tw.flex, tw.justifyCenter]}>
-                    <TextComponent style={[tw.fontBold, tw.textLeft]}>
-                      {thread?.thread?.title}
-                    </TextComponent>
+          {!loading ? (
+            threads?.length ? (
+              threads.map((thread) => {
+                return (
+                  <TouchableOpacity
+                    style={[tw.roundedLg, tw.bgWhite, tw.m2, tw.p4]}
+                    onPress={() => openSpecificForum(thread.post_id)}
+                  >
                     <View
                       style={[
-                        tw.textLeft,
-                        tw.textGray500,
+                        tw.bgWhite,
                         tw.flex,
                         tw.flexRow,
                         tw.justifyStart,
-                        tw.itemsCenter,
+
+                        // tw.shadowXl,
                       ]}
                     >
-                      <TextComponent style={[tw.textLeft, tw.textGray500]}>
-                        {thread?.created_by?.name}
-                      </TextComponent>
-
-                      <Ionicons
-                        name="radio-button-on"
-                        size={12}
-                        style={[tw.textGray400, tw.mX2]}
+                      <Image
+                        src={thread?.created_by?.photo}
+                        source={require("../../assets/images/default_avatar.jpg")}
+                        style={[
+                          tw.w12,
+                          tw.h12,
+                          tw.roundedFull,
+                          tw.mR2,
+                          tw.mY1,
+                          tw.border2,
+                          tw.borderPink700,
+                        ]}
                       />
-                      <TextComponent style={[tw.textLeft, tw.textGray500]}>
-                        {moment(
-                          convertToMilliseconds(thread?.created_at)
-                        ).fromNow()}
+                      <View style={[tw.flex, tw.justifyCenter]}>
+                        <TextComponent style={[tw.fontBold, tw.textLeft]}>
+                          {thread?.thread?.title}
+                        </TextComponent>
+                        <View
+                          style={[
+                            tw.textLeft,
+                            tw.textGray500,
+                            tw.flex,
+                            tw.flexRow,
+                            tw.justifyStart,
+                            tw.itemsCenter,
+                          ]}
+                        >
+                          <TextComponent style={[tw.textLeft, tw.textGray500]}>
+                            {thread?.created_by?.name}
+                          </TextComponent>
+
+                          <Ionicons
+                            name="radio-button-on"
+                            size={12}
+                            style={[tw.textGray400, tw.mX2]}
+                          />
+                          <TextComponent style={[tw.textLeft, tw.textGray500]}>
+                            {moment(
+                              convertToMilliseconds(
+                                thread?.created_at ?? {
+                                  seconds: 0,
+                                  nanoseconds: 0,
+                                }
+                              )
+                            ).fromNow()}
+                          </TextComponent>
+                        </View>
+                      </View>
+                    </View>
+                    <View>
+                      <TextComponent style={tw.textGray600}>
+                        {thread.content?.substring(0, 200)}...
                       </TextComponent>
                     </View>
-                  </View>
-                </View>
-                <View>
-                  <TextComponent style={tw.textGray600}>
-                    {thread.content}
-                  </TextComponent>
-                </View>
-                <View style={[tw.flex, tw.flexRow, tw.justifyBetween, tw.mT2]}>
-                  <TouchableOpacity
-                    style={[
-                      tw.textGray500,
-                      tw.flex,
-                      tw.flexRow,
-                      tw.itemsCenter,
-                    ]}
-                  >
-                    <Ionicons
-                      name="thumbs-up-outline"
-                      size={24}
-                      style={[tw.textLeft, tw.textGray500]}
-                    />
-                    <TextComponent
-                      style={[tw.textLeft, tw.textGray500, tw.pX2]}
+                    <View
+                      style={[tw.flex, tw.flexRow, tw.mT2]}
                     >
-                      12 votes
-                    </TextComponent>
+                      <TouchableOpacity
+                        style={[
+                          tw.textGray500,
+                          tw.flex,
+                          tw.flexRow,
+                          tw.itemsCenter,
+                        ]}
+                        onPress={() =>
+                          updatePostLikes(
+                            thread.post_id,
+                            thread?.liked_by?.includes(userId) ? -1 : 1
+                          )
+                        }
+                      >
+                        <Ionicons
+                          name={
+                            thread?.liked_by?.includes(userId)
+                              ? "heart"
+                              : "heart-outline"
+                          }
+                          size={24}
+                          style={[tw.textLeft, tw.textGray500]}
+                        />
+                        <TextComponent
+                          style={[tw.textLeft, tw.textGray500, tw.pX2]}
+                        >
+                          {thread?.likes} likes
+                        </TextComponent>
+                      </TouchableOpacity>
+                      {/* <TouchableOpacity
+                        style={[
+                          tw.textGray500,
+                          tw.flex,
+                          tw.flexRow,
+                          tw.itemsCenter,
+                        ]}
+                      >
+                        <Ionicons
+                          name="chatbox-outline"
+                          size={24}
+                          style={[tw.textLeft, tw.textGray500]}
+                        />
+                        <TextComponent
+                          style={[tw.textLeft, tw.textGray500, tw.pX2]}
+                        >
+                          7 replies
+                        </TextComponent>
+                      </TouchableOpacity> */}
+                      <TouchableOpacity
+                        style={[
+                          tw.textGray500,
+                          tw.flex,
+                          tw.flexRow,
+                          tw.itemsCenter,
+                          tw.mX4
+                        ]}
+                      >
+                        <Ionicons
+                          name="eye-outline"
+                          size={24}
+                          style={[tw.textLeft, tw.textGray500]}
+                        />
+                        <TextComponent
+                          style={[tw.textLeft, tw.textGray500, tw.pX2]}
+                        >
+                          {thread?.views}
+                        </TextComponent>
+                      </TouchableOpacity>
+                    </View>
                   </TouchableOpacity>
-                  <TouchableOpacity
-                    style={[
-                      tw.textGray500,
-                      tw.flex,
-                      tw.flexRow,
-                      tw.itemsCenter,
-                    ]}
-                  >
-                    <Ionicons
-                      name="chatbox-outline"
-                      size={24}
-                      style={[tw.textLeft, tw.textGray500]}
-                    />
-                    <TextComponent
-                      style={[tw.textLeft, tw.textGray500, tw.pX2]}
-                    >
-                      7 replies
-                    </TextComponent>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={[
-                      tw.textGray500,
-                      tw.flex,
-                      tw.flexRow,
-                      tw.itemsCenter,
-                    ]}
-                  >
-                    <Ionicons
-                      name="eye-outline"
-                      size={24}
-                      style={[tw.textLeft, tw.textGray500]}
-                    />
-                    <TextComponent
-                      style={[tw.textLeft, tw.textGray500, tw.pX2]}
-                    >
-                      300 views
-                    </TextComponent>
-                  </TouchableOpacity>
-                </View>
-              </TouchableOpacity>
-            );
-          })}
+                );
+              })
+            ) : (
+              <View style={[tw.flex, tw.itemsCenter, tw.justifyCenter, tw.mY4]}>
+                <TextComponent
+                  style={[tw.textGray500, tw.textXl, tw.mY4, tw.textCenter]}
+                >
+                  No forum posts available
+                </TextComponent>
+                <TextComponent style={[tw.textGray500]}>
+                  Forum posts will appear here when you create a new post
+                </TextComponent>
+              </View>
+            )
+          ) : (
+            <View>
+              {[1, 2, 3].map((sk, index) => (
+                <Placeholder key={index} />
+              ))}
+            </View>
+          )}
         </View>
       </View>
     </View>

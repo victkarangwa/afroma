@@ -20,7 +20,7 @@ const NewPostScreen: React.FC = () => {
   const [user, setUser] = useState<any>({});
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [posting, setPosting] = useState<boolean>(false);
-  const [postSuccess, setPostSuccess] = useState<boolean>(null);
+  const [postSuccess, setPostSuccess] = useState<boolean>(false);
 
   const categories = [
     {
@@ -69,6 +69,7 @@ const NewPostScreen: React.FC = () => {
         updated_at: serverTimestamp(),
         views: 0,
         likes: 0,
+        liked_by: [],
       });
 
       // Reference to the posts collection (initial post in the thread)
@@ -79,6 +80,7 @@ const NewPostScreen: React.FC = () => {
         created_by: user,
         created_at: serverTimestamp(),
         likes: 0,
+        views: 0,
       });
 
       console.log("Thread created with ID:", threadDoc.id);
@@ -177,7 +179,7 @@ const NewPostScreen: React.FC = () => {
             <Button
               onPress={handleSend}
               mode="contained"
-              style={[tw.mX8, tw.mY6]}
+              style={[tw.mX8, tw.mY6, tw.textBlack]}
               loading={posting}
             >
               Post

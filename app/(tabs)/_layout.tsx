@@ -107,7 +107,7 @@ export default function TabLayout() {
           },
           tabBarIcon: ({ color, focused }) => (
             <TabBarIcon
-              name={focused ? "settings" : "settings-outline"}
+              name={focused ? "chatbubbles" : "chatbubbles-outline"}
               color={color}
             />
           ),

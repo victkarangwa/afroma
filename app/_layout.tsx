@@ -116,9 +116,26 @@ export default function RootLayout() {
                 }}
               />
               <Stack.Screen
+                name="forum/index"
+                options={{ headerShown: false }}
+              />
+              <Stack.Screen
+                name="forum/specificPost"
+                options={{
+                  headerTitle: "View Post",
+                  headerTitleAlign: "center",
+                }}
+              />
+              <Stack.Screen
+                name="forum/newPost"
+                options={{
+                  headerTitle: "Create Post",
+                  headerTitleAlign: "center",
+                }}
+              />
+              <Stack.Screen
                 name="getStarted/accountType"
                 options={{ headerShown: false }}
-                // Add go back to the previous screen
               />
               <Stack.Screen name="+not-found" />
             </Stack>

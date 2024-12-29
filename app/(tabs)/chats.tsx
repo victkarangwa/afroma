@@ -61,7 +61,7 @@ const ChatsScreen: React.FC = () => {
         );
 
 
-        console.log("-----", userId)
+        // console.log("-----", userId)
 
         const chatsSnapshot = await getDocs(chatsQuery);
         const userChats: Array<{
@@ -84,12 +84,12 @@ const ChatsScreen: React.FC = () => {
 
         const filteredSuggestions = matchSuggestions?.filter((user) => {
           return chats.some((chat) => {
-            console.log("---k--", chat.participants.includes(user.id.toString()));
+            // console.log("---k--", chat.participants.includes(user.id.toString()));
             return chat.participants.includes(user.id.toString());
           });
         });
 
-        console.log("--filteredSuggestions---", filteredSuggestions);
+        // console.log("--filteredSuggestions---", filteredSuggestions);
 
         setChattedUsers(filteredSuggestions);
       } catch (error) {

@@ -52,7 +52,7 @@ const ChatScreen = () => {
   const receiverId = userData?.id?.toString();
   const senderId = currentUserId?.toString();
 
-  console.log("----->", senderId, receiverId);
+  // console.log("----->", senderId, receiverId);
   useEffect(() => {
     const fetchChat = async () => {
       try {

@@ -9,6 +9,8 @@ export default ({ config }) => ({
     encryptionKey: process.env.ENCRYPTION_KEY,
     encryptionIV: process.env.ENCRYPTION_IV,
     origin: process.env.ORIGIN,
+    stripePublishableKey: process.env.STRIPE_PUBLISHABLE_KEY,
+    stripeSecretKey: process.env.STRIPE_SECRET_KEY,
     eas: {
       projectId: '24a4f53e-d857-4bb4-9a6a-87e1fd9e6e2b',
     },

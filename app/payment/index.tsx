@@ -1,13 +1,43 @@
 import ButtonComponent from "@/components/Button";
 import TextComponent from "@/components/Text";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import { tw } from "react-native-tailwindcss";
+import { StripeProvider, useStripe } from "@stripe/stripe-react-native";
+import Constants from "expo-constants";
 
 const PaymentScreen = () => {
   const [selectedTab, setSelectedTab] = useState(0);
 
   const paymentPlan = ["Monthly", "Yearly"];
+
+  const { initPaymentSheet, presentPaymentSheet } = useStripe();
+
+  const setup = async () => {
+    const { error } = await initPaymentSheet({
+      merchantDisplayName: "Bonded App",
+      paymentIntentClientSecret: Constants.expoConfig?.extra?.stripeSecretKey,
+    });
+    if (error) {
+      // handle error
+    }
+  };
+
+  useEffect(() => {
+    setup();
+  }, []);
+
+  const checkout = async () => {
+    const { error } = await presentPaymentSheet();
+
+    if (error) {
+      console.log("Error", error);
+      // handle error
+    } else {
+      console.log("Success");
+      // success
+    }
+  };
 
   const renderTabContent = () => {
     switch (selectedTab) {
@@ -39,50 +69,57 @@ const PaymentScreen = () => {
     setSelectedTab(tab);
   };
   return (
-    <View style={styles.container}>
-      <Text style={[styles.header, tw.textCenter]}>
-        Daily limit exceeded, upgrade your account
-      </Text>
-      <Text style={[styles.sectionTitle, tw.textCenter]}>Select Plan</Text>
-      <View
-        style={[
-          tw.flex,
-          tw.flexRow,
-          tw.justifyBetween,
-          tw.m4,
-          tw.bgGray200,
-          tw.p2,
-          tw.rounded,
-        ]}
-      >
-        {paymentPlan.map((plan, index) => (
-          <TouchableOpacity
-            key={index}
-            onPress={() => handleTabChange(index)}
-            style={[
-              selectedTab === index && tw.bgWhite,
-              tw.shadowLg,
-              tw.rounded,
-              tw.w1_2,
-            ]}
-          >
-            <TextComponent
+    <StripeProvider
+      publishableKey={Constants.expoConfig?.extra?.stripePublishableKey}
+      // merchantIdentifier="merchant.identifier" // required for Apple Pay
+    >
+      <View style={styles.container}>
+        <Text style={[styles.header, tw.textCenter]}>
+          Daily limit exceeded, upgrade your account
+        </Text>
+        <Text style={[styles.sectionTitle, tw.textCenter]}>Select Plan</Text>
+        <View
+          style={[
+            tw.flex,
+            tw.flexRow,
+            tw.justifyBetween,
+            tw.m4,
+            tw.bgGray200,
+            tw.p2,
+            tw.rounded,
+          ]}
+        >
+          {paymentPlan.map((plan, index) => (
+            <TouchableOpacity
+              key={index}
+              onPress={() => handleTabChange(index)}
               style={[
-                tw.pY2,
-                tw.pX4,
-                selectedTab === index && tw.fontBold,
-                tw.textBlack,
-                tw.textCenter,
+                selectedTab === index && tw.bgWhite,
+                tw.shadowLg,
+                tw.rounded,
+                tw.w1_2,
               ]}
             >
-              {plan}
-            </TextComponent>
-          </TouchableOpacity>
-        ))}
+              <TextComponent
+                style={[
+                  tw.pY2,
+                  tw.pX4,
+                  selectedTab === index && tw.fontBold,
+                  tw.textBlack,
+                  tw.textCenter,
+                ]}
+              >
+                {plan}
+              </TextComponent>
+            </TouchableOpacity>
+          ))}
+        </View>
+        {renderTabContent()}
+        <ButtonComponent mode="contained" onPress={checkout} style={[tw.mT8]}>
+          Upgrade
+        </ButtonComponent>
       </View>
-      {renderTabContent()}
-      <ButtonComponent mode='contained' style={[tw.mT8]}>Upgrade</ButtonComponent>
-    </View>
+    </StripeProvider>
   );
 };
 

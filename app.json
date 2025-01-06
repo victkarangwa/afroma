@@ -13,13 +13,15 @@
       "backgroundColor": "#1d1b2c"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "io.bonded.app"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "package": "io.bonded.app"
     },
     "web": {
       "bundler": "metro",
@@ -31,6 +33,7 @@
     ],
     "experiments": {
       "typedRoutes": true
-    }
+    },
+    "owner": "bondedapp"
   }
 }

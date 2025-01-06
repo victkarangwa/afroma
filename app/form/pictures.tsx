@@ -37,7 +37,6 @@ import {
 import useApiRequest from "@/hooks/useApiRequest";
 import { ApiResponse } from "@/types";
 import BottomModal from "@/components/Modal/BottomSheet";
-import { GestureHandlerRootView } from "react-native-gesture-handler";
 import ModalComponent from "@/components/Modal";
 import { profileTabs } from "@/constants";
 import * as ImagePicker from "expo-image-picker";

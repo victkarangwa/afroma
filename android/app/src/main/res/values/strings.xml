@@ -1,0 +1,8 @@
+<resources>
+  <string name="app_name">bonded</string>
+  <string name="expo_splash_screen_resize_mode" translatable="false">contain</string>
+  <string name="expo_splash_screen_status_bar_translucent" translatable="false">false</string>
+  <string name="expo_system_ui_user_interface_style" translatable="false">automatic</string>
+  <string name="facebook_app_id">1093284465705884</string>
+  <string name="facebook_client_token">eb3b4502aed28d536219401655bdd86d</string>
+</resources>

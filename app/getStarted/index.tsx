@@ -16,6 +16,10 @@ import useApiRequest from "@/hooks/useApiRequest";
 import { ApiResponse } from "@/types";
 import Modal from "@/components/Modal";
 import PhoneNumberInput from "@/components/input/phone";
+import {
+  onFacebookButtonPress,
+  onGoogleButtonPress,
+} from "@/components/SocialLogin";
 
 type FormData = {
   name: string;
@@ -29,7 +33,6 @@ const SignupScreen: React.FC = () => {
   const params = useLocalSearchParams();
   const { profileFields } = params;
 
-  console.log("----Parsed--", JSON.parse(profileFields));
   const { loading, send, error } = useApiRequest<ApiResponse>();
 
   const [visible, setVisible] = React.useState(false);
@@ -279,7 +282,11 @@ const SignupScreen: React.FC = () => {
             <View style={[tw.flex1, tw.bgGray100, tw.hPx, tw.opacity25]} />
           </View>
           <Button
-            onPress={() => console.log("Pressed")}
+            onPress={() =>
+              onGoogleButtonPress().then((res) =>
+                console.log("Signed in with Google!", res)
+              )
+            }
             mode="outlined"
             style={[tw.mX8, tw.mY2]}
             icon={"google"}
@@ -290,7 +297,11 @@ const SignupScreen: React.FC = () => {
             </TextComponent>
           </Button>
           <Button
-            onPress={() => console.log("Pressed")}
+            onPress={() =>
+              onFacebookButtonPress().then((res) =>
+                console.log("Signed in with Facebook!", res)
+              )
+            }
             mode="outlined"
             style={[tw.mX8, tw.mY2]}
             icon={"facebook"}

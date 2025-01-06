@@ -14,7 +14,7 @@ const firebaseConfig = {
   storageBucket: "bonded-e856b.firebasestorage.app",
   messagingSenderId: "720223876750",
   appId: "1:720223876750:web:835add7a7bffdac457bbdf",
-  measurementId: "G-CSY5RBJGQ6",
+  measurementId: "G-CSY5RBJGQ6"
 };
 
 // Initialize Firebase

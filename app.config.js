@@ -10,7 +10,7 @@ export default ({ config }) => ({
     encryptionIV: process.env.ENCRYPTION_IV,
     origin: process.env.ORIGIN,
     eas: {
-      projectId: 'ee79868d-5ee4-4cd3-adf2-0f0f849cd0cb',
+      projectId: '24a4f53e-d857-4bb4-9a6a-87e1fd9e6e2b',
     },
   },
 })

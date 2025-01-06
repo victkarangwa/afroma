@@ -21,6 +21,10 @@ import Modal from "@/components/Modal";
 import LocalStorage from "@/utils/storage";
 import localStore from "@/utils/localValues";
 import { removeUserData } from "@/utils";
+import {
+  onFacebookButtonPress,
+  onGoogleButtonPress,
+} from "@/components/SocialLogin";
 
 type FormData = {
   username: string;
@@ -140,7 +144,11 @@ const LoginScreen: React.FC = () => {
         </Button>
         <Separator text="OR" />
         <Button
-          onPress={() => console.log("Pressed")}
+          onPress={() =>
+            onGoogleButtonPress().then((res) =>
+              console.log("Signed in with Google!", res)
+            )
+          }
           mode="outlined"
           style={[tw.mX8, tw.mY2]}
           icon={"google"}
@@ -151,7 +159,11 @@ const LoginScreen: React.FC = () => {
           </TextComponent>
         </Button>
         <Button
-          onPress={() => console.log("Pressed")}
+          onPress={() =>
+            onFacebookButtonPress().then((res) =>
+              console.log("Signed in with Facebook!", res)
+            )
+          }
           mode="outlined"
           style={[tw.mX8, tw.mY2]}
           icon={"facebook"}

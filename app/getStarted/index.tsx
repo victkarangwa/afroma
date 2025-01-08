@@ -20,6 +20,8 @@ import {
   onFacebookButtonPress,
   onGoogleButtonPress,
 } from "@/components/SocialLogin";
+import LocalStorage from "@/utils/storage";
+import localStore from "@/utils/localValues";
 
 type FormData = {
   name: string;
@@ -36,6 +38,7 @@ const SignupScreen: React.FC = () => {
   const { loading, send, error } = useApiRequest<ApiResponse>();
 
   const [visible, setVisible] = React.useState(false);
+  const [isSocialNewAccount, setIsSocialNewAccount] = React.useState(false);
   const [modalInfo, setModalInfo] = React.useState<{
     title: string;
     description: string;
@@ -114,6 +117,39 @@ const SignupScreen: React.FC = () => {
         setVisible(false);
       },
     });
+  };
+
+  const continueWithSocial = async (type = "google", token: string) => {
+    try {
+      if (token) {
+        const result = await send(
+          "get",
+          `/bonded-user-service/socialmedia/auth/${type}`,
+          {
+            headers: {
+              accessToken: token,
+            },
+          }
+        );
+
+        if (result?.errors) {
+          setModalInfo({
+            title: "Error",
+            description:
+              result?.errors || "An error occurred. Please try again.",
+            status: "error",
+            btnText: "Try Again",
+            onDismiss: () => setVisible(false),
+          });
+          setVisible(true);
+          return;
+        }
+        LocalStorage.setItem(localStore.token, result?.tokenResponse?.otpToken);
+        router.push({ pathname: "/getStarted/otp" });
+      }
+    } catch (error) {
+      console.log("error", error, token);
+    }
   };
   return (
     <AuthScreenLayout>
@@ -269,6 +305,7 @@ const SignupScreen: React.FC = () => {
             style={[tw.mX8, tw.mY2]}
             labelStyle={[tw.textBlack]}
             loading={loading}
+            disabled={loading}
           >
             Get Started
           </Button>
@@ -283,14 +320,15 @@ const SignupScreen: React.FC = () => {
           </View>
           <Button
             onPress={() =>
-              onGoogleButtonPress().then((res) =>
-                console.log("Signed in with Google!", res)
-              )
+              onGoogleButtonPress().then((res) => {
+                if (res) continueWithSocial("google", res);
+              })
             }
             mode="outlined"
             style={[tw.mX8, tw.mY2]}
             icon={"google"}
             labelStyle={[tw.mL8]}
+            disabled={loading}
           >
             <TextComponent style={[tw.pL12]}>
               Signup with Google{"    "}
@@ -298,13 +336,14 @@ const SignupScreen: React.FC = () => {
           </Button>
           <Button
             onPress={() =>
-              onFacebookButtonPress().then((res) =>
-                console.log("Signed in with Facebook!", res)
-              )
+              onFacebookButtonPress().then((res) => {
+                if (res?.accessToken) continueWithSocial("facebook", res?.accessToken);
+              })
             }
             mode="outlined"
             style={[tw.mX8, tw.mY2]}
             icon={"facebook"}
+            disabled={loading}
           >
             <TextComponent> Signup with Facebook</TextComponent>
           </Button>

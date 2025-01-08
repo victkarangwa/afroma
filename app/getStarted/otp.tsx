@@ -45,7 +45,7 @@ const OtpScreen: React.FC = () => {
     const result = await send("post", "/bonded-user-service/auth/login-auth2", {
       code,
     });
-    console.log("___OTP___", result, errors);
+    console.log("___OTP_[]__", result, errors);
     if (result?.errors) {
       return setVisible(true);
     }
@@ -102,6 +102,7 @@ const OtpScreen: React.FC = () => {
         style={[tw.mX8, tw.mY2]}
         labelStyle={[tw.textBlack]}
         loading={loading}
+        disabled={loading}
       >
         Verify
       </Button>

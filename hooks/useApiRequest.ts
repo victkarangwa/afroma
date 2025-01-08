@@ -14,6 +14,7 @@ const useApiRequest = <T>(
     config?: object
   ) => {
     const result = await request<T>(reqType, url, data, config);
+    // console.log("-----", result)
     setResponseData(result);
     return result;
   };

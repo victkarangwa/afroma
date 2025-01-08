@@ -46,6 +46,19 @@ const LoginScreen: React.FC = () => {
   });
 
   const [visible, setVisible] = React.useState(false);
+  const [modalInfo, setModalInfo] = React.useState<{
+    title: string;
+    description: string;
+    status: "error" | "success" | "warning" | "info";
+    btnText: string;
+    onDismiss?: () => void;
+  }>({
+    title: "",
+    description: "",
+    status: "error",
+    btnText: "Try Again",
+    onDismiss: () => {},
+  });
 
   const { loading, send, error } = useApiRequest<ApiResponse>();
 
@@ -72,6 +85,47 @@ const LoginScreen: React.FC = () => {
     }
     LocalStorage.setItem(localStore.token, result?.otpToken);
     router.push({ pathname: "/getStarted/otp" });
+  };
+
+  const continueWithSocial = async (type = "google", token: string) => {
+    try {
+      if (token) {
+        const result = await send(
+          "get",
+          `/bonded-user-service/socialmedia/auth/${type}`,
+          {
+            headers: {
+              accessToken: token,
+            },
+          }
+        );
+
+        if (result?.errors) {
+          setModalInfo({
+            title: "Error",
+            description:
+              result?.errors || "An error occurred. Please try again.",
+            status: "error",
+            btnText: "Try Again",
+            onDismiss: () => setVisible(false),
+          });
+          setVisible(true);
+          return;
+        }
+        console.log("------", result);
+        if (!result.newAccount) {
+          LocalStorage.setItem(
+            localStore.token,
+            result?.tokenResponse?.otpToken
+          );
+          router.push({ pathname: "/getStarted/otp" });
+        } else {
+          router.push({ pathname: "/getStarted/accountType" });
+        }
+      }
+    } catch (error) {
+      console.log("error", error, token);
+    }
   };
 
   const handleModal = () => setVisible(false);
@@ -139,15 +193,16 @@ const LoginScreen: React.FC = () => {
           style={[tw.mX8, tw.mY2]}
           labelStyle={[tw.textBlack]}
           loading={loading}
+          disabled={loading}
         >
           Login
         </Button>
         <Separator text="OR" />
         <Button
           onPress={() =>
-            onGoogleButtonPress().then((res) =>
-              console.log("Signed in with Google!", res)
-            )
+            onGoogleButtonPress().then((res) => {
+              if (res) continueWithSocial("google", res);
+            })
           }
           mode="outlined"
           style={[tw.mX8, tw.mY2]}
@@ -160,9 +215,10 @@ const LoginScreen: React.FC = () => {
         </Button>
         <Button
           onPress={() =>
-            onFacebookButtonPress().then((res) =>
-              console.log("Signed in with Facebook!", res)
-            )
+            onFacebookButtonPress().then((res) => {
+              if (res?.accessToken)
+                continueWithSocial("facebook", res?.accessToken);
+            })
           }
           mode="outlined"
           style={[tw.mX8, tw.mY2]}

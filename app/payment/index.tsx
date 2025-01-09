@@ -5,18 +5,31 @@ import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import { tw } from "react-native-tailwindcss";
 import { StripeProvider, useStripe } from "@stripe/stripe-react-native";
 import Constants from "expo-constants";
+import useApiRequest from "@/hooks/useApiRequest";
+import { ApiResponse, Product } from "@/types";
 
 const PaymentScreen = () => {
+  const { loading, send, error } = useApiRequest<ApiResponse>();
+
   const [selectedTab, setSelectedTab] = useState(0);
+  const [intentClientSecret, setIntentClientSecret] = useState("");
+  const [products, setProducts] = useState<[]>([]);
 
   const paymentPlan = ["Monthly", "Yearly"];
 
   const { initPaymentSheet, presentPaymentSheet } = useStripe();
 
+  const getProducts = async () => {
+    const result = await send("get", "/bonded-user-service/products/list");
+    setProducts(result);
+    console.log("Products", result);
+  };
+
   const setup = async () => {
     const { error } = await initPaymentSheet({
       merchantDisplayName: "Bonded App",
-      paymentIntentClientSecret: Constants.expoConfig?.extra?.stripeSecretKey,
+      paymentIntentClientSecret:
+      intentClientSecret,
     });
     if (error) {
       // handle error
@@ -25,9 +38,28 @@ const PaymentScreen = () => {
 
   useEffect(() => {
     setup();
+    getProducts();
   }, []);
 
   const checkout = async () => {
+    const result = await send(
+      "post",
+      "/bonded-user-service/payments/create-payment-intent",
+      {
+        productId: 1,
+        quantity: 1,
+        description: "Premium Package",
+        metadata: {
+          additionalProp1: "Prop 1",
+          additionalProp2: "Prop 2",
+          additionalProp3: "Prop 3",
+        },
+      }
+    );
+    setIntentClientSecret(result?.clientSecret);
+
+    console.log("INTENT====>", result?.clientSecret);
+
     const { error } = await presentPaymentSheet();
 
     if (error) {
@@ -42,24 +74,21 @@ const PaymentScreen = () => {
   const renderTabContent = () => {
     switch (selectedTab) {
       case 0:
-        return (
-          <View style={styles.planContainer}>
-            <Text style={styles.planTitle}>Monthly Plan</Text>
-            <Text style={styles.planFeatures}>- Unlimited likes</Text>
-            <Text style={styles.planFeatures}>- View and share pictures</Text>
-            <Text style={styles.planAmount}>$9.99/month</Text>
+        return products.map((p: Product) => (
+          <View style={styles.planContainer} key={p?.id}>
+            <Text style={styles.planTitle}>{p.name}</Text>
+            <Text style={styles.planFeatures}>- {p.description}</Text>
+            <Text style={styles.planAmount}>{p.currency} {p.price}</Text>
           </View>
-        );
+        ));
       case 1:
-        return (
-          <View style={styles.planContainer}>
-            <Text style={styles.planTitle}>Yearly Plan</Text>
-            <Text style={styles.planFeatures}>- Video Calling</Text>
-            <Text style={styles.planFeatures}>- AI data processing</Text>
-            <Text style={styles.planAmount}>$99.99/year</Text>
-            <Text style={styles.recommendBadge}>Recommended</Text>
+        return products.map((p: Product) => (
+          <View style={styles.planContainer} key={p?.id}>
+            <Text style={styles.planTitle}>{p.name}</Text>
+            <Text style={styles.planFeatures}>- {p.description}</Text>
+            <Text style={styles.planAmount}>{p.currency} {p.price}</Text>
           </View>
-        );
+        ));
       default:
         return null;
     }
@@ -115,7 +144,12 @@ const PaymentScreen = () => {
           ))}
         </View>
         {renderTabContent()}
-        <ButtonComponent mode="contained" onPress={checkout} style={[tw.mT8]}>
+        <ButtonComponent
+          mode="contained"
+          loading={loading}
+          onPress={checkout}
+          style={[tw.mT8]}
+        >
           Upgrade
         </ButtonComponent>
       </View>
@@ -177,6 +211,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "bold",
     marginTop: 10,
+    textTransform: "uppercase",
   },
   recommendBadge: {
     marginTop: 10,

@@ -20,7 +20,7 @@ type Props = PropsWithChildren<{
 
 export default function ParallaxScrollView({
   children,
-  title='Bonded',
+  title='Parenti',
 }: Props) {
   const colorScheme = useColorScheme() ?? "light";
   const scrollRef = useAnimatedRef<Animated.ScrollView>();

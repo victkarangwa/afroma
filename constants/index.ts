@@ -119,7 +119,7 @@ export const profileTabs = [
         icon: "handshake-outline",
       },
       {
-        field: "What is your biggest motivation for joining Bonded?",
+        field: "What is your biggest motivation for joining Parenti?",
         icon: "rocket-outline",
       },
       {
@@ -196,3 +196,37 @@ export const profileRegistrationFields = [
     fieldType: "input",
   },
 ];
+
+export const paymentPlans = [
+    {
+      id: 4,
+      duration: "12 Months",
+      months: 12,
+      description:
+        "Annual plan – the ultimate value! Commit for a year and save the most.",
+      recommended: true,
+    },
+    {
+      id: 3,
+      duration: "6 Months",
+      months: 6,
+      description:
+        "Half-year commitment, great savings! Enjoy convenience and cost-effectiveness.",
+      recommended: false,
+    },
+    {
+      id: 2,
+      duration: "3 Months",
+      months: 3,
+      description:
+        "Quarterly plan for consistent savings. Best value for trying us out!",
+      recommended: false,
+    },
+    {
+      id: 1,
+      duration: "1 Month",
+      months: 1,
+      description: "Try it out for a month! Flexible and commitment-free.",
+      recommended: false,
+    },
+  ];

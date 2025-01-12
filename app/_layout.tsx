@@ -113,6 +113,7 @@ export default function RootLayout() {
                 options={{
                   headerTitle: "Payment Required",
                   headerTitleAlign: "center",
+                  headerStyle: { backgroundColor: "#eca899" },
                 }}
               />
               <Stack.Screen

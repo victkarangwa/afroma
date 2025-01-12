@@ -15,3 +15,13 @@ export interface SwiperProps {
   familyPlan?: string;
   interests?: string[];
 }
+
+export interface Product {
+  id: number;
+  name: string;
+  price: number;
+  currency: string;
+  description: string;
+  active: boolean;
+  createdAt: Date;
+}

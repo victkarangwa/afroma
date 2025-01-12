@@ -73,17 +73,13 @@ const HomeScreen: React.FC = () => {
     }, 3000);
   };
 
-  const navigate = ()=>{
-    router.push({pathname: "/payment"});
-  }
-
   return (
     <ScreenContainer showHeader={true} title="Home">
       <View style={[tw.flex, tw.flexRow]}>
         {tabs.map((tab, index) => (
           <Button
             key={index}
-            onPress={navigate}
+            onPress={() => onTabChange(index)}
             style={[
               tw.mX4,
               activeTab === index && tw.borderB2,

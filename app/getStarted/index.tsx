@@ -1,6 +1,6 @@
 import { ThemedView } from "@/components/ThemedView";
 import { Ionicons } from "@expo/vector-icons";
-import React from "react";
+import React, { useEffect } from "react";
 import { View, StyleSheet, TouchableOpacity, Image } from "react-native";
 import { tw } from "react-native-tailwindcss";
 import { heightPercentageToDP } from "react-native-responsive-screen";
@@ -22,6 +22,7 @@ import {
 } from "@/components/SocialLogin";
 import LocalStorage from "@/utils/storage";
 import localStore from "@/utils/localValues";
+import * as Location from "expo-location";
 
 type FormData = {
   name: string;
@@ -53,6 +54,7 @@ const SignupScreen: React.FC = () => {
     onDismiss: () => {},
   });
   const [socialMediaInfo, setSocialMediaInfo] = React.useState(null);
+  const [location, setLocation] = React.useState(null);
 
   const {
     control,
@@ -79,57 +81,73 @@ const SignupScreen: React.FC = () => {
     phone_number: string;
     password: string;
   }) => {
-    const { name, email, phone_number, password } = data;
+    try {
+      const { name, email, phone_number, password } = data;
 
-    const otherFields = JSON.parse(profileFields);
-    let req;
-    if (isSocialNewAccount) {
-      req = {
-        name: socialMediaInfo?.names,
-        email: socialMediaInfo?.email,
-        phone_number: phone_number.slice(1),
-        socialMediaSignup: true,
-        ...otherFields,
-      };
-    } else {
-      req = {
-        name,
-        email,
-        phone_number: phone_number.slice(1),
-        password,
-        ...otherFields,
-      };
-    }
-    // return console.log("-------", req);
-    const result = await send(
-      "post",
-      "/bonded-user-service/users/register",
-      req
-    );
+      console.log("----", 453);
 
-    console.log("------", req);
-    if (result?.errors) {
-      setModalInfo({
-        title: "Error",
-        description: result?.errors || "An error occurred. Please try again.",
-        status: "error",
-        btnText: "Try Again",
-        onDismiss: () => setVisible(false),
-      });
+      const otherFields = JSON.parse(profileFields);
+
+      let req;
+      if (isSocialNewAccount) {
+        req = {
+          name: socialMediaInfo?.names,
+          email: socialMediaInfo?.email,
+          phone_number: phone_number.slice(1),
+          socialMediaSignup: true,
+          latitude: location?.coords?.latitude,
+          longitude: location?.coords?.longitude,
+          ...otherFields,
+          dateOfBirth:
+            otherFields.dateOfBirth.slice(0, 10) + "T18:18:37.124+00:00",
+        };
+      } else {
+        req = {
+          name,
+          email,
+          phone_number: phone_number.slice(1),
+          password,
+          latitude: location?.coords?.latitude,
+          longitude: location?.coords?.longitude,
+          ...otherFields,
+          dateOfBirth:
+            otherFields.dateOfBirth.slice(0, 10) + "T18:18:37.124+00:00",
+        };
+      }
+      console.log("-------", req);
+      // return console.log("-------", req);
+      const result = await send(
+        "post",
+        "/bonded-user-service/users/register",
+        req
+      );
+
+      if (result?.errors) {
+        console.log("000000>", result)
+        setModalInfo({
+          title: "Error",
+          description: result?.errors || "An error occurred. Please try again.",
+          status: "error",
+          btnText: "Try Again",
+          onDismiss: () => setVisible(false),
+        });
+        setVisible(true);
+        return;
+      }
       setVisible(true);
-      return;
+      setModalInfo({
+        title: "Success",
+        description: "Account created successfully",
+        status: "success",
+        btnText: "Continue to login",
+        onDismiss: () => {
+          router.push({ pathname: "/getStarted/login" });
+          setVisible(false);
+        },
+      });
+    } catch (error) {
+      console.log("error", error);
     }
-    setVisible(true);
-    setModalInfo({
-      title: "Success",
-      description: "Account created successfully",
-      status: "success",
-      btnText: "Continue to login",
-      onDismiss: () => {
-        router.push({ pathname: "/getStarted/login" });
-        setVisible(false);
-      },
-    });
   };
 
   const continueWithSocial = async (type = "google", token: string) => {
@@ -173,6 +191,27 @@ const SignupScreen: React.FC = () => {
       console.log("error", error, token);
     }
   };
+
+  const getLocation = async () => {
+    try {
+      // Request permission to access location
+      let { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== "granted") {
+        console.log("Permission to access location was denied");
+        return;
+      }
+
+      // Get the current location
+      let currentLocation = await Location.getCurrentPositionAsync({});
+      setLocation(currentLocation);
+    } catch (error) {
+      console.log("error", error);
+    }
+  };
+
+  useEffect(() => {
+    getLocation();
+  }, []);
   return (
     <AuthScreenLayout>
       <Modal
@@ -187,8 +226,8 @@ const SignupScreen: React.FC = () => {
         <View style={[tw.bgPink100, tw.hFull, tw.flex, tw.flexCol]}>
           <View style={[tw.flex, tw.justifyCenter, tw.itemsCenter, tw.pX8]}>
             <Image
-              source={require("../../assets/images/bonded_logo.png")}
-              style={[tw.w64, tw.h64]}
+              source={require("../../assets/images/parenti_logo.png")}
+              style={[tw.w32, tw.h32, tw.mT24]}
             />
           </View>
           <View style={[tw.mX8, tw._m12, tw.mT2]}>
@@ -256,7 +295,7 @@ const SignupScreen: React.FC = () => {
         <View style={[tw.bgPink100, tw.hFull, tw.flex, tw.flexCol]}>
           <View style={[tw.flex, tw.justifyCenter, tw.itemsCenter, tw.pX8]}>
             <Image
-              source={require("../../assets/images/bonded_logo.png")}
+              source={require("../../assets/images/parenti_logo.png")}
               style={[tw.w64, tw.h64]}
             />
           </View>

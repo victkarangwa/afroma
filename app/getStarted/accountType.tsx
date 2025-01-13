@@ -87,8 +87,8 @@ const AccountTypeScreen: React.FC = () => {
       )}
       <View style={[tw.flex, tw.itemsCenter, tw.pX8]}>
         <Image
-          source={require("../../assets/images/bonded_logo.png")}
-          style={[tw.w64, tw.h64]}
+          source={require("../../assets/images/parenti_logo.png")}
+          style={[tw.w32, tw.h32, tw.mT24]}
         />
       </View>
       {/* <KeyboardAwareScrollView> */}

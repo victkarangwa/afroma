@@ -195,8 +195,8 @@ const ProfileScreen: React.FC = () => {
           </View>
           <View style={[tw.m4, tw.absolute, tw.flex]}>
             <Image
-              source={require("../../assets/images/bonded_logo.png")}
-              style={[tw.absolute, tw.w24, tw.h24, tw._m6]}
+              source={require("../../assets/images/parenti_logo.png")}
+              style={[tw.absolute, tw.w12, tw.h12, tw._m6]}
             />
           </View>
           <View style={[tw.pT4]}>

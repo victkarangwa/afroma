@@ -42,8 +42,8 @@ const ScreenContainer = ({
               {title}
             </TextComponent> */}
             <Image
-              source={require("../../assets/images/bonded_logo.png")}
-              style={[ tw.w24, tw.h24, tw._m6]}
+              source={require("../../assets/images/parenti_logo.png")}
+              style={[ tw.w12, tw.h12, tw._m6]}
             />
             <TouchableOpacity onPress={() => router.push("/settings")}>
               <Ionicons name="notifications-outline" size={28} color="white" />

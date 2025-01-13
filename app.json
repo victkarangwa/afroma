@@ -4,11 +4,11 @@
     "slug": "bonded",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
+    "icon": "./assets/images/parenti_logo.png",
     "scheme": "bonded",
     "userInterfaceStyle": "automatic",
     "splash": {
-      "image": "./assets/images/logo.jpeg",
+      "image": "./assets/images/parenti_logo.png",
       "resizeMode": "contain",
       "backgroundColor": "#1d1b2c"
     },

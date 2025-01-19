@@ -5,7 +5,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { tw } from "react-native-tailwindcss";
 import ForumScreen from "../forum";
 
-const SeetingsScreen: React.FC = () => {
+const ForumsScreen: React.FC = () => {
   return (
     <SafeAreaView style={[]}>
       <ForumScreen />
@@ -13,4 +13,4 @@ const SeetingsScreen: React.FC = () => {
   );
 };
 
-export default SeetingsScreen;
+export default ForumsScreen;

@@ -100,7 +100,7 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="settings"
+        name="forums"
         options={{
           tabBarLabel: () => {
             return null;

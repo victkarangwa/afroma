@@ -293,12 +293,12 @@ const SignupScreen: React.FC = () => {
         </View>
       ) : (
         <View style={[tw.bgPink100, tw.hFull, tw.flex, tw.flexCol]}>
-          <View style={[tw.flex, tw.justifyCenter, tw.itemsCenter, tw.pX8]}>
-            <Image
-              source={require("../../assets/images/parenti_logo.png")}
-              style={[tw.w64, tw.h64]}
-            />
-          </View>
+        <View style={[tw.flex, tw.justifyCenter, tw.itemsCenter, tw.pX8]}>
+          <Image
+            source={require("../../assets/images/parenti_logo.png")}
+            style={[tw.w32, tw.h32, tw.mY12]}
+          />
+        </View>
 
           <View style={[tw.mX8, tw._m12]}>
             <Controller

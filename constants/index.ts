@@ -200,34 +200,51 @@ export const profileRegistrationFields = [
 export const paymentPlans = [
   {
     id: 4,
-    duration: "12 Months",
+    duration: "Yearly",
     months: 12,
     description:
-      "Annual plan – the ultimate value! Commit for a year and save the most.",
+      "The ultimate value—12 months of uninterrupted access, saving you the most!",
     recommended: true,
+    price: {
+      parenting: 239.99,
+      publicFigure: 359.99,
+    },
   },
   {
     id: 3,
-    duration: "6 Months",
-    months: 6,
+    duration: "Quarterly",
+    months: 3,
     description:
-      "Half-year commitment, great savings! Enjoy convenience and cost-effectiveness.",
+      "Dive deeper with 3 months of premium benefits at a discounted rate",
     recommended: false,
+    price: {
+      parenting: 89.99,
+      publicFigure: 149.99,
+    },
   },
   {
     id: 2,
-    duration: "3 Months",
-    months: 3,
+    duration: "Monthly",
+    months: 1,
     description:
-      "Quarterly plan for consistent savings. Best value for trying us out!",
+      "Your go-to option for regular access—renewable every month with no long-term commitment.",
     recommended: false,
+    price: {
+      parenting: 39.99,
+      publicFigure: 59.99,
+    },
   },
   {
     id: 1,
-    duration: "1 Month",
+    duration: "Weekly",
     months: 1,
-    description: "Try it out for a month! Flexible and commitment-free.",
+    description:
+      "Perfect for trying us out or for short-term needs—flexible and hassle-free.",
     recommended: false,
+    price:{
+      parenting: 9.99,
+      publicFigure: 14.99
+    }
   },
 ];
 

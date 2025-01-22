@@ -45,15 +45,13 @@ const PaymentScreen = () => {
   const getProducts = async () => {
     const result = await send("get", "/bonded-user-service/products/list");
     setProducts(result);
+    console.log("===", result);
     setSelectedProduct(result[0]);
   };
-
-
 
   useEffect(() => {
     getProducts();
   }, []);
-
 
   const checkout = async () => {
     const result = await send(
@@ -61,7 +59,6 @@ const PaymentScreen = () => {
       "/bonded-user-service/payments/create-payment-intent",
       {
         productId: selectedProduct?.id,
-        quantity: selectedPlan?.months,
         description: selectedProduct?.description,
         metadata: {
           additionalProp1: selectedProduct?.currency,
@@ -93,7 +90,6 @@ const PaymentScreen = () => {
         btnText: "Try Again",
         onDismiss: () => {
           setPaymentResult(null);
-
         },
       });
     } else {
@@ -109,14 +105,26 @@ const PaymentScreen = () => {
           router.push({ pathname: "/(tabs)" });
         },
       });
-
     }
+  };
+
+  const formatProducts = (products: Product[]) => {
+    return products.map((p) => {
+      return {
+        id: p.id,
+        name: p.name,
+        description: p.description,
+        price: p.price,
+        currency: p.currency,
+        active: p.active,
+      };
+    });
   };
 
   const renderTabContent = () => {
     switch (selectedTab) {
       case 0:
-        return paymentPlans.map((p, key) => (
+        return products.map((p, key) => (
           <TouchableOpacity
             style={[
               styles.planContainer,
@@ -132,7 +140,7 @@ const PaymentScreen = () => {
             <Text style={styles.planTitle}>
               {p.duration}{" "}
               <Text style={[tw.textXs]}>
-                (${p.months * selectedProduct?.price} for {p.duration})
+                ${p.pricePep} / {p.description}
               </Text>
             </Text>
             <Text style={styles.planFeatures}>{p.description}</Text>
@@ -195,7 +203,7 @@ const PaymentScreen = () => {
       />
       <View style={[styles.container, tw.bgPink100]}>
         <Text style={[styles.header, tw.textCenter, tw.textWhite]}>
-          Daily limit exceeded, upgrade your account
+          To unlock more features, upgrade your account
         </Text>
         {!products?.length ? (
           <Spinner />
@@ -213,7 +221,7 @@ const PaymentScreen = () => {
                 tw.rounded,
               ]}
             >
-              {products.map((p: Product, index) => (
+              {[{ name: "Premium" }].map((p, index) => (
                 <TouchableOpacity
                   key={index}
                   onPress={() => {

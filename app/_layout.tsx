@@ -111,7 +111,7 @@ export default function RootLayout() {
               <Stack.Screen
                 name="payment/index"
                 options={{
-                  headerTitle: "Payment Required",
+                  headerTitle: "Upgrade Account",
                   headerTitleAlign: "center",
                   headerStyle: { backgroundColor: "#eca899" },
                 }}

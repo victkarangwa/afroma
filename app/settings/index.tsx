@@ -23,6 +23,12 @@ const SettingsScreen = () => {
         router.navigate("/faq");
       },
     },
+    {
+      title: "Payments",
+      onPress: () => {
+        router.navigate("/payment");
+      },
+    },
   ];
 
   return (

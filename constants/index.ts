@@ -198,35 +198,200 @@ export const profileRegistrationFields = [
 ];
 
 export const paymentPlans = [
-    {
-      id: 4,
-      duration: "12 Months",
-      months: 12,
-      description:
-        "Annual plan – the ultimate value! Commit for a year and save the most.",
-      recommended: true,
+  {
+    id: 4,
+    duration: "Yearly",
+    months: 12,
+    description:
+      "The ultimate value—12 months of uninterrupted access, saving you the most!",
+    recommended: true,
+    price: {
+      parenting: 239.99,
+      publicFigure: 359.99,
     },
-    {
-      id: 3,
-      duration: "6 Months",
-      months: 6,
-      description:
-        "Half-year commitment, great savings! Enjoy convenience and cost-effectiveness.",
-      recommended: false,
+  },
+  {
+    id: 3,
+    duration: "Quarterly",
+    months: 3,
+    description:
+      "Dive deeper with 3 months of premium benefits at a discounted rate",
+    recommended: false,
+    price: {
+      parenting: 89.99,
+      publicFigure: 149.99,
     },
-    {
-      id: 2,
-      duration: "3 Months",
-      months: 3,
-      description:
-        "Quarterly plan for consistent savings. Best value for trying us out!",
-      recommended: false,
+  },
+  {
+    id: 2,
+    duration: "Monthly",
+    months: 1,
+    description:
+      "Your go-to option for regular access—renewable every month with no long-term commitment.",
+    recommended: false,
+    price: {
+      parenting: 39.99,
+      publicFigure: 59.99,
     },
-    {
-      id: 1,
-      duration: "1 Month",
-      months: 1,
-      description: "Try it out for a month! Flexible and commitment-free.",
-      recommended: false,
-    },
-  ];
+  },
+  {
+    id: 1,
+    duration: "Weekly",
+    months: 1,
+    description:
+      "Perfect for trying us out or for short-term needs—flexible and hassle-free.",
+    recommended: false,
+    price:{
+      parenting: 9.99,
+      publicFigure: 14.99
+    }
+  },
+];
+
+export const faqData = [
+  {
+    section: "General Questions About Parenti",
+    items: [
+      {
+        question: "What is Parenti?",
+        answer:
+          "Parenti is a U.S.-based platform designed for individuals and couples who aspire to become parents outside the traditional expectations of marriage or romantic relationships. It provides a secure and supportive space for co-parenting partnerships, welcoming individuals, LGBTQ+ users, and couples facing fertility challenges. Parenti is committed to fostering family-building connections based on mutual values and shared goals.",
+      },
+      {
+        question: "Who can join Parenti?",
+        answer:
+          "Parenti is open to individuals aged 24 to 55 who are seeking a co-parenting partner. Public figures are also welcome, with options to match with regular users or other public figures.",
+      },
+      {
+        question: "Is Parenti available globally?",
+        answer:
+          "Currently, Parenti is available in the United States, but global expansion is in the works.",
+      },
+      {
+        question: "Do I need children to join Parenti?",
+        answer:
+          "No, Parenti is for those who are beginning their parenting journey, whether they already have children or are planning to have them in the future.",
+      },
+    ],
+  },
+  {
+    section: "Features and Functionality",
+    items: [
+      {
+        question: "How does Parenti work?",
+        answer:
+          "Users create detailed profiles outlining their parenting goals, values, and preferences. Free-tier users receive one swipe per day, while premium members enjoy unlimited swipes, advanced filters, and profile insights. Once matched, users can chat, verify their profiles, and discuss co-parenting goals.",
+      },
+      {
+        question: "Can couples join Parenti?",
+        answer:
+          "Yes, couples struggling to conceive can join Parenti to find a co-parent who aligns with their family-building goals.",
+      },
+      {
+        question: "Does Parenti welcome LGBTQ+ individuals?",
+        answer:
+          "Absolutely. Parenti is an inclusive platform for LGBTQ+ users seeking co-parenting partnerships.",
+      },
+      {
+        question: "Does Parenti offer premium memberships?",
+        answer:
+          "Yes, premium memberships provide benefits such as unlimited swipes, advanced filters, incognito mode, and access to exclusive events.",
+      },
+      {
+        question: "Can public figures join Parenti?",
+        answer:
+          "Yes, public figures can create private profiles and match with regular users or other public figures while maintaining their privacy.",
+      },
+      {
+        question: "Does Parenti offer medical or fertility support?",
+        answer:
+          "Yes, Parenti refers matched users to trusted clinics and fertility specialists for expert guidance and support.",
+      },
+    ],
+  },
+  {
+    section: "Privacy and Security",
+    items: [
+      {
+        question: "How does Parenti protect my privacy?",
+        answer:
+          "Parenti uses advanced privacy features like incognito mode, private profile images, and robust security measures to safeguard user data. Public figures can opt for enhanced privacy settings.",
+      },
+      {
+        question: "Can I verify my profile?",
+        answer:
+          "Yes, users can verify their identity, background, work, and health information. Verified profiles receive badges:\n\n• Star Check (Gold Badge): Full verification (identity, background, work, medical health, and personal references).\n• Blue Check: Basic verification (identity, personal references, and background).",
+      },
+      {
+        question: "Are background checks mandatory?",
+        answer:
+          "No, background checks are optional but strongly recommended to build trust and improve matching opportunities. Parenti collaborates with third-party providers to conduct legitimate background checks.",
+      },
+      {
+        question: "Does Parenti collect sensitive information?",
+        answer:
+          "Parenti collects sensitive information, such as health details and racial/ethnic origin, only with user consent. This data is used to enhance the matching process and overall user experience.",
+      },
+      {
+        question: "Can users provide personal references?",
+        answer:
+          "Yes, users can choose to provide personal references to validate their trustworthiness and readiness for co-parenting.",
+      },
+    ],
+  },
+  {
+    section: "Using the App",
+    items: [
+      {
+        question: "How do I sign up?",
+        answer:
+          "You can sign up using your email, phone number, or Instagram/Facebook account. Simply download the app and follow the registration process.",
+      },
+      {
+        question: "How does matching work?",
+        answer:
+          "Users swipe on profiles. Free-tier users get one swipe per day, while premium users enjoy unlimited swipes and advanced filters for better matches.",
+      },
+      {
+        question: "What happens after matching?",
+        answer:
+          "Matched users can chat, share hidden photos, and discuss co-parenting goals. Verification options are available to enhance trust.",
+      },
+      {
+        question: "Can I unmatch with someone?",
+        answer:
+          "Yes, you can unmatch at any time if the connection does not align with your goals.",
+      },
+      {
+        question: "Can I pause my account?",
+        answer:
+          "Yes, you can pause your account and return whenever you are ready.",
+      },
+    ],
+  },
+  {
+    section: "Payments and Memberships",
+    items: [
+      {
+        question: "Is Parenti free to use?",
+        answer:
+          "Parenti offers a free tier with one swipe per day. Premium memberships unlock additional features, including unlimited swipes, advanced filters, and more.",
+      },
+      {
+        question: "What are the premium membership plans?",
+        answer:
+          "• Weekly: $9.99 (Parenting Users) / $14.99 (Public Figures)\n• Monthly: $39.99 (Parenting Users) / $59.99 (Public Figures)\n• Quarterly: $89.99 (Parenting Users) / $149.99 (Public Figures)\n• Yearly: $239.99 (Parenting Users) / $359.99 (Public Figures)",
+      },
+      {
+        question: "Can I cancel my subscription?",
+        answer:
+          "Yes, you can cancel your subscription anytime through your app store or account settings. Premium features remain active until the end of the billing cycle.",
+      },
+      {
+        question: "Do you offer refunds?",
+        answer:
+          "Subscriptions are non-refundable. For billing concerns, please contact support@parenti.co.",
+      },
+    ],
+  },
+];

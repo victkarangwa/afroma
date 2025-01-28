@@ -158,6 +158,18 @@ const ProfileScreen: React.FC = () => {
               // source={require("../../assets/images/c_photo.jpeg")}
               style={[tw.wFull, tw.h48]}
             />
+            <View style={[tw.absolute, tw.mT8, tw.mX8, tw.top0, tw.left0]}>
+              <Image
+                source={require("../../assets/images/parenti_logo.png")}
+                style={[tw.absolute, tw.w12, tw.h12, tw._m6]}
+              />
+            </View>
+            <TouchableOpacity
+              style={[tw.absolute, tw.mT4, tw.mX4, tw.top0, tw.right0]}
+              onPress={() => router.push("/settings")}
+            >
+              <Ionicons name="settings" size={24} style={[tw.textWhite]} />
+            </TouchableOpacity>
           </View>
 
           <TouchableOpacity onPress={pickImage}>
@@ -183,22 +195,17 @@ const ProfileScreen: React.FC = () => {
           </TouchableOpacity>
           <View style={[tw.flex, tw.flexRow, tw.justifyCenter]}>
             <View style={[tw.bgPink700, tw.mT12, tw.w1_3, , tw.roundedFull]}>
-              {/* <Ionicons
-              name="pencil-outline"
-              size={30}
-              style={[tw.textWhite, tw.absolute, tw._mT20]}
-            /> */}
               <TextComponent style={[tw.textCenter, tw.pY1, tw.fontBold]}>
                 {getProfileCompletion(profileFields, profile)}% Complete
               </TextComponent>
             </View>
           </View>
-          <View style={[tw.m4, tw.absolute, tw.flex]}>
+          {/* <View style={[tw.m4, tw.absolute, tw.flex, tw.wFull]}>
             <Image
               source={require("../../assets/images/parenti_logo.png")}
               style={[tw.absolute, tw.w12, tw.h12, tw._m6]}
             />
-          </View>
+          </View> */}
           <View style={[tw.pT4]}>
             <View>
               <TextComponent style={[tw.textCenter, tw.text2xl, tw.fontBold]}>

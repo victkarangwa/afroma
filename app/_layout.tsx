@@ -111,7 +111,7 @@ export default function RootLayout() {
               <Stack.Screen
                 name="payment/index"
                 options={{
-                  headerTitle: "Payment Required",
+                  headerTitle: "Upgrade Account",
                   headerTitleAlign: "center",
                   headerStyle: { backgroundColor: "#eca899" },
                 }}
@@ -137,6 +137,34 @@ export default function RootLayout() {
               <Stack.Screen
                 name="getStarted/accountType"
                 options={{ headerShown: false }}
+              />
+              <Stack.Screen
+                name="webview/termsAndConditions"
+                options={{
+                  headerTitle: "Terms and Conditions",
+                  headerTitleAlign: "center",
+                }}
+              />
+              <Stack.Screen
+                name="webview/privacyPolicy"
+                options={{
+                  headerTitle: "Privacy Policy",
+                  headerTitleAlign: "center",
+                }}
+              />
+              <Stack.Screen
+                name="faq/index"
+                options={{
+                  headerTitle: "Parenti FAQs",
+                  headerTitleAlign: "center",
+                }}
+              />
+              <Stack.Screen
+                name="settings/index"
+                options={{
+                  headerTitle: "Settings",
+                  headerTitleAlign: "center",
+                }}
               />
               <Stack.Screen name="+not-found" />
             </Stack>

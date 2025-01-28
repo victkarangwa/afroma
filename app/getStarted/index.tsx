@@ -123,7 +123,7 @@ const SignupScreen: React.FC = () => {
       );
 
       if (result?.errors) {
-        console.log("000000>", result)
+        console.log("000000>", result);
         setModalInfo({
           title: "Error",
           description: result?.errors || "An error occurred. Please try again.",
@@ -293,12 +293,12 @@ const SignupScreen: React.FC = () => {
         </View>
       ) : (
         <View style={[tw.bgPink100, tw.hFull, tw.flex, tw.flexCol]}>
-          <View style={[tw.flex, tw.justifyCenter, tw.itemsCenter, tw.pX8]}>
-            <Image
-              source={require("../../assets/images/parenti_logo.png")}
-              style={[tw.w64, tw.h64]}
-            />
-          </View>
+        <View style={[tw.flex, tw.justifyCenter, tw.itemsCenter, tw.pX8]}>
+          <Image
+            source={require("../../assets/images/parenti_logo.png")}
+            style={[tw.w32, tw.h32, tw.mY12]}
+          />
+        </View>
 
           <View style={[tw.mX8, tw._m12]}>
             <Controller
@@ -508,14 +508,14 @@ const SignupScreen: React.FC = () => {
             >
               By signing up, you agree to our{" "}
               <Link
-                href="/getStarted"
+                href="/webview/termsAndConditions"
                 style={[tw.textBlue500, tw.underline, tw.textYellow400]}
               >
                 Terms of Service
-              </Link>{" "}
-              and{" "}
+              </Link>
+             {" "} and {" "}
               <Link
-                href="/getStarted"
+                href="/webview/privacyPolicy"
                 style={[tw.textBlue500, tw.underline, tw.textYellow400]}
               >
                 Privacy Policy

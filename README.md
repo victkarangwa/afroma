@@ -1,4 +1,4 @@
-# Welcome to bonded app 👋
+# Welcome to Parenti app 👋
 
 This is a dating mobile app for both IOS and Androif
 

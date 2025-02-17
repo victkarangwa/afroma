@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "bonded",
-    "slug": "bonded",
-    "version": "1.0.0",
+    "name": "Parenti",
+    "slug": "parenti",
+    "version": "1.0.1",
     "orientation": "portrait",
     "icon": "./assets/images/parenti_logo.png",
-    "scheme": "bonded",
+    "scheme": "parenti",
     "userInterfaceStyle": "automatic",
     "splash": {
       "image": "./assets/images/parenti_logo.png",
@@ -14,14 +14,14 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "io.bonded.app"
+      "bundleIdentifier": "io.parenti.app"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "io.bonded.app"
+      "package": "io.parenti.app"
     },
     "web": {
       "bundler": "metro",

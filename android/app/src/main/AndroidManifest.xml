@@ -27,8 +27,8 @@
         <action android:name="android.intent.action.VIEW"/>
         <category android:name="android.intent.category.DEFAULT"/>
         <category android:name="android.intent.category.BROWSABLE"/>
-        <data android:scheme="bonded"/>
-        <data android:scheme="io.bonded.app"/>
+        <data android:scheme="parenti"/>
+        <data android:scheme="io.parenti.app"/>
       </intent-filter>
     </activity>
     <activity android:name="com.facebook.react.devsupport.DevSettingsActivity" android:exported="false"/>

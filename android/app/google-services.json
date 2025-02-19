@@ -14,11 +14,11 @@
       },
       "oauth_client": [
         {
-          "client_id": "104521571553-4ncdd9hmpfhapjs1ob5q2avrc6o5763c.apps.googleusercontent.com",
+          "client_id": "104521571553-5vqf06t2bq6p27ba68ghms0tbk336foc.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
             "package_name": "io.parenti.app",
-            "certificate_hash": "cd7fe008c09290eee3e6b91163a6f918c6365575"
+            "certificate_hash": "5e8f16062ea3cd2c4a0d547876baa6f38cabf625"
           }
         },
         {

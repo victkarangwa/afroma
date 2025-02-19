@@ -6,7 +6,7 @@ import { AccessToken, LoginManager } from "react-native-fbsdk-next";
 // export default function App() {
   GoogleSignin.configure({
     webClientId:
-      "720223876750-o6g0kkpikqpdi6nglpg20nntop0f6uuk.apps.googleusercontent.com",
+      "104521571553-70cj474frto1ascll6mfukhilpveqdvp.apps.googleusercontent.com",
   });
  export async function onGoogleButtonPress() {
     try {

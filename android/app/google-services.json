@@ -1,49 +1,42 @@
 {
   "project_info": {
-    "project_number": "720223876750",
-    "project_id": "bonded-e856b",
-    "storage_bucket": "bonded-e856b.firebasestorage.app"
+    "project_number": "104521571553",
+    "project_id": "parenti-apps",
+    "storage_bucket": "parenti-apps.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:720223876750:android:0151394219344ae857bbdf",
+        "mobilesdk_app_id": "1:104521571553:android:bd29f80987d4fe188eaba0",
         "android_client_info": {
-          "package_name": "io.bonded.app"
+          "package_name": "io.parenti.app"
         }
       },
       "oauth_client": [
         {
-          "client_id": "720223876750-0deid2u97cuavtlssd1qr1a0bmskq9en.apps.googleusercontent.com",
+          "client_id": "104521571553-4ncdd9hmpfhapjs1ob5q2avrc6o5763c.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
-            "package_name": "io.bonded.app",
-            "certificate_hash": "5e8f16062ea3cd2c4a0d547876baa6f38cabf625"
+            "package_name": "io.parenti.app",
+            "certificate_hash": "cd7fe008c09290eee3e6b91163a6f918c6365575"
           }
         },
         {
-          "client_id": "720223876750-o6g0kkpikqpdi6nglpg20nntop0f6uuk.apps.googleusercontent.com",
+          "client_id": "104521571553-70cj474frto1ascll6mfukhilpveqdvp.apps.googleusercontent.com",
           "client_type": 3
         }
       ],
       "api_key": [
         {
-          "current_key": "AIzaSyAcLVV_atQ6544IBf2uXdGt_u2DpsmGvMQ"
+          "current_key": "AIzaSyA178OafcaCUJV1RNZxUolHD70tl0FTx8E"
         }
       ],
       "services": {
         "appinvite_service": {
           "other_platform_oauth_client": [
             {
-              "client_id": "720223876750-5o4o6hige9922pd439977kv7hcml609i.apps.googleusercontent.com",
+              "client_id": "104521571553-70cj474frto1ascll6mfukhilpveqdvp.apps.googleusercontent.com",
               "client_type": 3
-            },
-            {
-              "client_id": "720223876750-7hdiqf53312mcrmkuphmsp6ktv6usc3b.apps.googleusercontent.com",
-              "client_type": 2,
-              "ios_info": {
-                "bundle_id": "io.bonded.app"
-              }
             }
           ]
         }

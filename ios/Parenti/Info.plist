@@ -27,7 +27,7 @@
       <dict>
         <key>CFBundleURLSchemes</key>
         <array>
-          <string>parenti</string>
+          <string>arenti</string>
           <string>io.parenti.app</string>
         </array>
       </dict>

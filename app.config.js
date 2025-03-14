@@ -12,7 +12,7 @@ export default ({ config }) => ({
     stripePublishableKey: process.env.STRIPE_PUBLISHABLE_KEY,
     stripeSecretKey: process.env.STRIPE_SECRET_KEY,
     eas: {
-      projectId: '24a4f53e-d857-4bb4-9a6a-87e1fd9e6e2b',
+      projectId: '4de90cc8-846c-40ff-ba31-3210109983de',
     },
   },
 })

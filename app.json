@@ -15,6 +15,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "io.parenti.app",
+      "buildNumber": "0",
       "googleServicesFile": "./GoogleService-Info.plist"
     },
     "android": {
@@ -36,6 +37,6 @@
     "experiments": {
       "typedRoutes": true
     },
-    "owner": "bondedapp"
+    "owner": "victkarangwa"
   }
 }

@@ -1,7 +1,13 @@
 import { ThemedView } from "@/components/ThemedView";
 import { Ionicons } from "@expo/vector-icons";
 import React, { useState } from "react";
-import { View, StyleSheet, TouchableOpacity, Image } from "react-native";
+import {
+  View,
+  StyleSheet,
+  TouchableOpacity,
+  Image,
+  Platform,
+} from "react-native";
 import { tw } from "react-native-tailwindcss";
 import { heightPercentageToDP } from "react-native-responsive-screen";
 import ButtonComponent from "@/components/Button";
@@ -198,21 +204,23 @@ const LoginScreen: React.FC = () => {
           Login
         </Button>
         <Separator text="OR" />
-        <Button
-          onPress={() =>
-            onGoogleButtonPress().then((res) => {
-              if (res) continueWithSocial("google", res);
-            })
-          }
-          mode="outlined"
-          style={[tw.mX8, tw.mY2]}
-          icon={"google"}
-          labelStyle={[tw.mL8]}
-        >
-          <TextComponent style={[tw.pL12]}>
-            Login with Google{"    "}
-          </TextComponent>
-        </Button>
+        {Platform.OS === "android" && (
+          <Button
+            onPress={() =>
+              onGoogleButtonPress().then((res) => {
+                if (res) continueWithSocial("google", res);
+              })
+            }
+            mode="outlined"
+            style={[tw.mX8, tw.mY2]}
+            icon={"google"}
+            labelStyle={[tw.mL8]}
+          >
+            <TextComponent style={[tw.pL12]}>
+              Login with Google{"    "}
+            </TextComponent>
+          </Button>
+        )}
         <Button
           onPress={() =>
             onFacebookButtonPress().then((res) => {

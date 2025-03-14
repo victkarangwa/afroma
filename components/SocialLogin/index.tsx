@@ -1,13 +1,17 @@
 import {
     GoogleSignin,
 } from "@react-native-google-signin/google-signin";
+import { Platform } from "react-native";
 import { AccessToken, LoginManager } from "react-native-fbsdk-next";
 
 // export default function App() {
+
+if(Platform.OS === 'android'){
   GoogleSignin.configure({
     webClientId:
       "104521571553-70cj474frto1ascll6mfukhilpveqdvp.apps.googleusercontent.com",
   });
+}
  export async function onGoogleButtonPress() {
     try {
       // Check if your device supports Google Play

@@ -22,8 +22,7 @@
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "io.parenti.app",
-      "googleServicesFile": "./google-services.json"
+      "package": "io.parenti.app"
     },
     "web": {
       "bundler": "metro",
@@ -31,7 +30,8 @@
       "favicon": "./assets/images/favicon.png"
     },
     "plugins": [
-      "expo-router"
+      "expo-router",
+      "expo-secure-store"
     ],
     "experiments": {
       "typedRoutes": true

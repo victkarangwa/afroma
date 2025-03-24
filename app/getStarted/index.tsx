@@ -454,7 +454,7 @@ const SignupScreen: React.FC = () => {
               </TextComponent>
               <View style={[tw.flex1, tw.bgGray100, tw.hPx, tw.opacity25]} />
             </View>
-            <Button
+            {/* <Button
               onPress={() =>
                 onGoogleButtonPress().then((res) => {
                   if (res) continueWithSocial("google", res);
@@ -469,7 +469,7 @@ const SignupScreen: React.FC = () => {
               <TextComponent style={[tw.pL12]}>
                 Signup with Google{"    "}
               </TextComponent>
-            </Button>
+            </Button> */}
             <Button
               onPress={() =>
                 onFacebookButtonPress().then((res) => {

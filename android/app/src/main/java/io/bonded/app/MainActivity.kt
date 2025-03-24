@@ -1,4 +1,4 @@
-package io.bonded.app
+package io.parenti.app
 
 import android.os.Build
 import android.os.Bundle

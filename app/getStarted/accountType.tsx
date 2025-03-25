@@ -13,6 +13,7 @@ import DateTimePicker from "@react-native-community/datetimepicker";
 import moment from "moment";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { Ionicons } from "@expo/vector-icons";
+import CustomDatePicker from "@/components/input/date";
 
 type FormData = {
   code: string;
@@ -35,7 +36,7 @@ const AccountTypeScreen: React.FC = () => {
 
   const [visible, setVisible] = React.useState(false);
   const [publicFigure, setPublicFigure] = React.useState(false);
-  const [profileFields, setProfileFields] = React.useState<any[]>([]);
+  const [profileFields, setProfileFields] = React.useState<{ [key: string]: any }>({});
   const [showDatePicker, setShowDatePicker] = React.useState(false);
   const [currentStep, setCurrentStep] = React.useState(0);
   const [date, setDate] = React.useState(new Date());
@@ -65,13 +66,13 @@ const AccountTypeScreen: React.FC = () => {
     { id: 1, value: true, label: "Public Figure" },
   ];
 
-  const onDateChange = (event: any, selectedDate: any) => {
-    const currentDate = selectedDate || date;
-    setShowDatePicker(Platform.OS === "ios");
-    setDate(currentDate);
+  const onDateChange = (selectedDate: Date) => {
+    // const currentDate = selectedDate || date;
+    // setShowDatePicker(Platform.OS === "ios");
+    // setDate(currentDate);
     setProfileFields({
       ...profileFields,
-      dateOfBirth: currentDate,
+      dateOfBirth: selectedDate,
     });
   };
   return (
@@ -149,11 +150,12 @@ const AccountTypeScreen: React.FC = () => {
               )
             ) : (
               <View style={[tw.w3_4]}>
-                <Input
+                 <CustomDatePicker onDateChange={onDateChange} />
+                {/* <Input
                   label="Date of Birth"
                   value={moment(date).format("YYYY-MM-DD")}
                   onPress={() => setShowDatePicker(true)}
-                />
+                /> */}
               </View>
             )}
           </View>

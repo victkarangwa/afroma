@@ -258,7 +258,7 @@ const SignupScreen: React.FC = () => {
                     tw.rounded,
                     tw.wFull,
                   ]}
-                  textContainerStyle={[tw.bgTransparent, tw.pY3, tw.roundedR]}
+                  textContainerStyle={[tw.bgTransparent, tw.pY4, tw.roundedR]}
                   textInputStyle={[tw.textWhite]}
                   codeTextStyle={[tw.textWhite]}
                   textInputProps={{
@@ -350,7 +350,7 @@ const SignupScreen: React.FC = () => {
                     tw.rounded,
                     tw.wFull,
                   ]}
-                  textContainerStyle={[tw.bgTransparent, tw.pY3, tw.roundedR]}
+                  textContainerStyle={[tw.bgTransparent, tw.pY4, tw.roundedR]}
                   textInputStyle={[tw.textWhite]}
                   codeTextStyle={[tw.textWhite]}
                   textInputProps={{

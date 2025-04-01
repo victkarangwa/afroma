@@ -34,8 +34,8 @@ const ScreenContainer = ({
               tw.justifyBetween,
               tw.itemsCenter,
               tw.wFull,
-              tw.pX4,
-              tw.pY4,
+              tw.pX8,
+              tw.pY8,
             ]}
           >
             {/* <TextComponent style={[tw.textWhite, tw.textXl]}>
@@ -46,7 +46,7 @@ const ScreenContainer = ({
               style={[ tw.w12, tw.h12, tw._m6]}
             />
             <TouchableOpacity onPress={() => router.push("/settings")}>
-              <Ionicons name="notifications-outline" size={28} color="white" />
+              <Ionicons name="settings-outline" size={28} color="white" />
             </TouchableOpacity>
           </View>
         )}

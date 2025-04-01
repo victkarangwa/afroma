@@ -84,7 +84,6 @@ const SignupScreen: React.FC = () => {
     try {
       const { name, email, phone_number, password } = data;
 
-      console.log("----", 453);
 
       const otherFields = JSON.parse(profileFields);
 
@@ -258,7 +257,7 @@ const SignupScreen: React.FC = () => {
                     tw.rounded,
                     tw.wFull,
                   ]}
-                  textContainerStyle={[tw.bgTransparent, tw.pY3, tw.roundedR]}
+                  textContainerStyle={[tw.bgTransparent, tw.pY4, tw.roundedR]}
                   textInputStyle={[tw.textWhite]}
                   codeTextStyle={[tw.textWhite]}
                   textInputProps={{
@@ -350,7 +349,7 @@ const SignupScreen: React.FC = () => {
                     tw.rounded,
                     tw.wFull,
                   ]}
-                  textContainerStyle={[tw.bgTransparent, tw.pY3, tw.roundedR]}
+                  textContainerStyle={[tw.bgTransparent, tw.pY4, tw.roundedR]}
                   textInputStyle={[tw.textWhite]}
                   codeTextStyle={[tw.textWhite]}
                   textInputProps={{

@@ -37,9 +37,21 @@
           <string>exp+parenti</string>
         </array>
       </dict>
+      <dict>
+        <key>CFBundleURLSchemes</key>
+        <array>
+          <string>fb968976975145852</string>
+        </array>
+      </dict>
     </array>
     <key>CFBundleVersion</key>
     <string>1</string>
+    <key>FacebookAppID</key>
+    <string>968976975145852</string>
+    <key>FacebookClientToken</key>
+    <string>20f3c7dae4395f39ab03fdca418b6d93</string>
+    <key>FacebookDisplayName</key>
+    <string>Parenti</string>
     <key>LSRequiresIPhoneOS</key>
     <true/>
     <key>NSAppTransportSecurity</key>

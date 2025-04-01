@@ -6,7 +6,7 @@ import PhoneInput, { PhoneInputProps } from "react-native-phone-number-input";
 
 const PhoneNumberInput: React.FC<PhoneInputProps> = ({
   defaultValue,
-  defaultCode = "RW",
+  defaultCode = "US",
   onChangeText,
   ...rest
 }) => {

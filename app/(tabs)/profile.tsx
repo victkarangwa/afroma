@@ -290,7 +290,7 @@ const ProfileScreen: React.FC = () => {
           </View>
           <View style={[tw.mX4, tw.rounded, tw.pY4]}>
             {profileTabs[activeTab].content === "otherDetails"
-              ? profileFields.map((group: any, index: number) => {
+              ? profileFields.map((group: any, groupIndex: number) => {
                   return (
                     <View style={[tw.pY5, tw.pX2, tw.mY1, tw.bgWhite]}>
                       <Text style={[tw.fontBold, tw.textBase]}>
@@ -300,9 +300,12 @@ const ProfileScreen: React.FC = () => {
                       <View>
                         {group.questions.map((qn: any, index: number) => {
                           return (
-                            <View
+                            <TouchableOpacity
                               key={index}
                               style={[tw.mX4, tw.mY2, tw.flex, tw.flexRow]}
+                              onPress={() => {
+                                router.push(`/form/profile?tab=${activeTab}&step=${groupIndex}`);
+                              }}
                             >
                               <View style={[tw.mR4]}>
                                 <Ionicons
@@ -333,7 +336,7 @@ const ProfileScreen: React.FC = () => {
                                 </TextComponent>
                               </View>
                               <Divider style={[tw.bgGray500, tw.mY4]} />
-                            </View>
+                            </TouchableOpacity>
                           );
                         })}
                       </View>
@@ -390,7 +393,13 @@ const ProfileScreen: React.FC = () => {
                 //   })
                 profileTabs[activeTab].content.map(
                   (field: string, index: number) => (
-                    <View key={index} style={[tw.mX4]}>
+                    <TouchableOpacity
+                      key={index}
+                      style={[tw.mX4]}
+                      onPress={() => {
+                        router.push(`/form/profile?tab=${activeTab}`);
+                      }}
+                    >
                       <TextComponent
                         variant="labelLarge"
                         style={[tw.fontBlack, tw.capitalize]}
@@ -406,7 +415,7 @@ const ProfileScreen: React.FC = () => {
                           : profile[field] ?? "No data yet"}
                       </TextComponent>
                       <Divider style={[tw.bgGray500, tw.mY4]} />
-                    </View>
+                    </TouchableOpacity>
                   )
                 )}
           </View>

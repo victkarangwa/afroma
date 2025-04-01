@@ -84,7 +84,6 @@ const SignupScreen: React.FC = () => {
     try {
       const { name, email, phone_number, password } = data;
 
-      console.log("----", 453);
 
       const otherFields = JSON.parse(profileFields);
 

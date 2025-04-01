@@ -35,6 +35,7 @@ const ProfileScreen: React.FC = () => {
   const router = useRouter();
   const params = useLocalSearchParams();
 
+
   const { loading, send, error } = useApiRequest<ApiResponse>();
 
   const [profileFields, setProfileFields] = useState<any>([]);
@@ -49,7 +50,7 @@ const ProfileScreen: React.FC = () => {
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [loadingProfile, setLoadingProfile] = useState(false);
   const [openSlect, setOpenSect] = useState(false);
-  const [currentStep, setCurrentStep] = useState(0);
+  const [currentStep, setCurrentStep] = useState(Number(params.step) ?? 0);
 
   const geProfileFields = async () => {
     const result = await send(
@@ -290,56 +291,66 @@ const ProfileScreen: React.FC = () => {
         <TextComponent
           style={[tw.textXl, tw.fontBold, tw.textBlack, tw.p2, tw.textCenter]}
         >
-          {profileFields[currentStep]?.title}
+          {Number(params.tab) === 1
+            ? profileFields[currentStep]?.title
+            : "Personal Info"}
         </TextComponent>
-        <View style={[tw.flex, tw.flexRow, tw.justifyAround, tw.itemsCenter]}>
-          <TouchableOpacity
-            onPress={() => handleContinue("back")}
-            style={[
-              tw.mY4,
-              tw.p2,
-              { backgroundColor: "#38364a" },
-              tw.roundedFull,
-              tw.shadow2xl,
-            ]}
-          >
-            <Ionicons name="arrow-back" size={24} style={[tw.textPink700]} />
-          </TouchableOpacity>
-          <View style={[tw.relative, tw.w2_4]}>
-            <View
+        {Number(params.tab) === 1 && (
+          <View style={[tw.flex, tw.flexRow, tw.justifyAround, tw.itemsCenter]}>
+            <TouchableOpacity
+              onPress={() => handleContinue("back")}
               style={[
-                tw.absolute,
-                tw.h2,
-                tw.wFull,
+                tw.mY4,
+                tw.p2,
+                { backgroundColor: "#38364a" },
                 tw.roundedFull,
-                tw.bgBlack,
-                tw.opacity25,
+                tw.shadow2xl,
               ]}
-            ></View>
-            <View
+            >
+              <Ionicons name="arrow-back" size={24} style={[tw.textPink700]} />
+            </TouchableOpacity>
+            <View style={[tw.relative, tw.w2_4]}>
+              <View
+                style={[
+                  tw.absolute,
+                  tw.h2,
+                  tw.wFull,
+                  tw.roundedFull,
+                  tw.bgBlack,
+                  tw.opacity25,
+                ]}
+              ></View>
+              <View
+                style={[
+                  tw.h2,
+                  {
+                    width: `${
+                      ((currentStep + 1) / profileFields.length) * 100
+                    }%`,
+                  },
+                  tw.roundedFull,
+                  tw.bgPink100,
+                ]}
+              ></View>
+            </View>
+            <TouchableOpacity
+              onPress={() => handleContinue("next")}
               style={[
-                tw.h2,
-                {
-                  width: `${((currentStep + 1) / profileFields.length) * 100}%`,
-                },
+                tw.mY4,
+                tw.p2,
+                { backgroundColor: "#38364a" },
                 tw.roundedFull,
-                tw.bgPink100,
+                tw.shadow2xl,
               ]}
-            ></View>
+            >
+              <Ionicons
+                name="arrow-forward"
+                size={24}
+                style={[tw.textPink700]}
+              />
+            </TouchableOpacity>
           </View>
-          <TouchableOpacity
-            onPress={() => handleContinue("next")}
-            style={[
-              tw.mY4,
-              tw.p2,
-              { backgroundColor: "#38364a" },
-              tw.roundedFull,
-              tw.shadow2xl,
-            ]}
-          >
-            <Ionicons name="arrow-forward" size={24} style={[tw.textPink700]} />
-          </TouchableOpacity>
-        </View>
+        )}
         {loadingProfile ? (
           <Spinner />
         ) : (

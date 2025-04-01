@@ -59,7 +59,7 @@ const SwiperComponent = ({
         swipeType,
       });
 
-      console.log("====REQ====>", swipedId, swipeType);
+      // console.log("====REQ====>", swipedId, swipeType);
       if (result?.paymentRequired) {
         router.push({
           pathname: "/payment",
@@ -67,7 +67,7 @@ const SwiperComponent = ({
         });
       }
 
-      console.log("====RES====>", result);
+      // console.log("====RES====>", result);
       if (result?.matched) {
         router.push({
           pathname: "/match",
@@ -289,7 +289,7 @@ const styles = StyleSheet.create({
     ...tw.bgGray200,
     height: 500,
     width: 300,
-    marginTop: -200,
+    marginTop: -400,
   },
   text: {
     textAlign: "center",

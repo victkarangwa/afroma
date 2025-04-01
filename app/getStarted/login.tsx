@@ -118,7 +118,6 @@ const LoginScreen: React.FC = () => {
           setVisible(true);
           return;
         }
-        console.log("------", result);
         if (!result.newAccount) {
           LocalStorage.setItem(
             localStore.token,

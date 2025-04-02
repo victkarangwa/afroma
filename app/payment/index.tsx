@@ -45,7 +45,7 @@ const PaymentScreen = () => {
   const getProducts = async () => {
     const result = await send("get", "/bonded-user-service/products/list");
     setProducts(result);
-    console.log("===", result);
+    // console.log("===", result);
     setSelectedProduct(result[0]);
   };
 
@@ -67,11 +67,12 @@ const PaymentScreen = () => {
         },
       }
     );
-
+// console.log("-------", result, selectedProduct);
     // ++++++OPEN PAYMENT SHEET++++++
     const { error } = await initPaymentSheet({
       merchantDisplayName: "Parenti App",
       paymentIntentClientSecret: result?.clientSecret,
+      returnURL: 'parenti://payment-complete'
     });
     if (error) {
       // handle error

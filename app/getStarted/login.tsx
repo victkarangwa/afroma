@@ -195,14 +195,14 @@ const LoginScreen: React.FC = () => {
         <Button
           onPress={handleSubmit(handleLogin)}
           mode="contained"
-          style={[tw.mX8, tw.mY2]}
+          style={[tw.mX8, tw.mY6]}
           labelStyle={[tw.textBlack]}
           loading={loading}
           disabled={loading}
         >
           Login
         </Button>
-        <Separator text="OR" />
+        {/* <Separator text="OR" />
         {Platform.OS === "android" && (
           <Button
             onPress={() =>
@@ -232,7 +232,7 @@ const LoginScreen: React.FC = () => {
           icon={"facebook"}
         >
           <TextComponent> Login with Facebook</TextComponent>
-        </Button>
+        </Button> */}
         <TextComponent
           variant="labelSmall"
           style={[tw.textCenter, tw.textWhite, tw.opacity75]}

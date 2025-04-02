@@ -4,7 +4,13 @@ import { ApiResponse } from "@/types";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import React, { useRef, useState, useEffect } from "react";
-import { Image, StyleSheet, View, TouchableOpacity } from "react-native";
+import {
+  Image,
+  StyleSheet,
+  View,
+  TouchableOpacity,
+  Platform,
+} from "react-native";
 import Swiper from "react-native-deck-swiper";
 import { tw } from "react-native-tailwindcss";
 import Spinner from "../Spinner";
@@ -138,28 +144,32 @@ const SwiperComponent = ({
         return (
           <View style={styles.card}>
             <View style={[{ height: "65%" }, tw.relative]}>
-             {parameter !== "all" && <View
-                style={[
-                  tw.flex,
-                  tw.flexRow,
-                  tw.itemsCenter,
-                  tw.bgWhite,
-                  tw.roundedFull,
-                  tw.textPink700,
-                  tw.absolute,
-                  tw.left0,
-                  tw.top0,
-                  tw.m8,
-                  tw.pX2,
-                  tw.pY1,
-                  tw.z10,
-                ]}
-              >
-                <Ionicons name="location-outline" size={16} />
-                <TextComponent style={[tw.textPink100, tw.textXs, tw.fontBold]}>
-                  { `${card?.distance?.toFixed(0)} km`}
-                </TextComponent>
-              </View>}
+              {parameter !== "all" && (
+                <View
+                  style={[
+                    tw.flex,
+                    tw.flexRow,
+                    tw.itemsCenter,
+                    tw.bgWhite,
+                    tw.roundedFull,
+                    tw.textPink700,
+                    tw.absolute,
+                    tw.left0,
+                    tw.top0,
+                    tw.m8,
+                    tw.pX2,
+                    tw.pY1,
+                    tw.z10,
+                  ]}
+                >
+                  <Ionicons name="location-outline" size={16} />
+                  <TextComponent
+                    style={[tw.textPink100, tw.textXs, tw.fontBold]}
+                  >
+                    {`${card?.distance?.toFixed(0)} km`}
+                  </TextComponent>
+                </View>
+              )}
               <TouchableOpacity
                 style={[
                   tw.flex,
@@ -187,7 +197,7 @@ const SwiperComponent = ({
                   activeStrokeColor={"#eca899"}
                   titleStyle={{ fontSize: 12 }}
                   progressValueColor="#eca899"
-                  titleColor={'white'}
+                  titleColor={"white"}
                 />
               </TouchableOpacity>
               <Image
@@ -201,7 +211,7 @@ const SwiperComponent = ({
             </View>
             <View style={[tw.pX4, tw.mT8]}>
               <TextComponent style={[tw.textXl, tw.textPink100, tw.fontBold]}>
-                {card?.firstName} {card?.middleName}, {card?.age}
+                {card?.firstName} {card?.middleName?.[0]}., {card?.age}
               </TextComponent>
               {/* <View style={[tw.flex, tw.flexRow, tw.mY2]}>
                 {card?.relationshipStatus && (
@@ -289,7 +299,7 @@ const styles = StyleSheet.create({
     ...tw.bgGray200,
     height: 500,
     width: 300,
-    marginTop: -400,
+    marginTop: Platform.OS === "ios" ? -400 : -300,
   },
   text: {
     textAlign: "center",

@@ -444,7 +444,7 @@ const SignupScreen: React.FC = () => {
             >
               Get Started
             </Button>
-            <View style={[tw.flexRow, tw.itemsCenter, tw.mX8]}>
+            {/* <View style={[tw.flexRow, tw.itemsCenter, tw.mX8]}>
               <View style={[tw.flex1, tw.bgGray100, tw.hPx, tw.opacity25]} />
               <TextComponent
                 style={[tw.mX2, tw.mY2, tw.textCenter, tw.textWhite]}
@@ -452,7 +452,7 @@ const SignupScreen: React.FC = () => {
                 Or
               </TextComponent>
               <View style={[tw.flex1, tw.bgGray100, tw.hPx, tw.opacity25]} />
-            </View>
+            </View> */}
             {/* <Button
               onPress={() =>
                 onGoogleButtonPress().then((res) => {
@@ -469,7 +469,7 @@ const SignupScreen: React.FC = () => {
                 Signup with Google{"    "}
               </TextComponent>
             </Button> */}
-            <Button
+            {/* <Button
               onPress={() =>
                 onFacebookButtonPress().then((res) => {
                   if (res?.accessToken)
@@ -482,7 +482,7 @@ const SignupScreen: React.FC = () => {
               disabled={loading}
             >
               <TextComponent> Signup with Facebook</TextComponent>
-            </Button>
+            </Button> */}
           </View>
           <View style={[tw.mT4, tw.flex, tw.justifyCenter]}>
             <TextComponent

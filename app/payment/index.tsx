@@ -35,7 +35,7 @@ const PaymentScreen = () => {
   const [selectedTab, setSelectedTab] = useState(0);
   const [products, setProducts] = useState<[]>([]);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
-  const [selectedPlan, setSelectedPlan] = useState<null>(paymentPlans[0]);
+  const [selectedPlan, setSelectedPlan] = useState<Product | null>(null);
   const [paymentResult, setPaymentResult] = useState<paymentResult | null>(
     null
   );
@@ -58,12 +58,12 @@ const PaymentScreen = () => {
       "post",
       "/bonded-user-service/payments/create-payment-intent",
       {
-        productId: selectedProduct?.id,
-        description: selectedProduct?.description,
+        productId: selectedPlan?.id,
+        description: selectedPlan?.description,
         metadata: {
-          additionalProp1: selectedProduct?.currency,
-          additionalProp2: selectedProduct?.active,
-          additionalProp3: selectedProduct?.price,
+          additionalProp1: selectedPlan?.currency,
+          additionalProp2: selectedPlan?.active,
+          additionalProp3: selectedPlan?.pricePep,
         },
       }
     );
@@ -109,18 +109,18 @@ const PaymentScreen = () => {
     }
   };
 
-  const formatProducts = (products: Product[]) => {
-    return products.map((p) => {
-      return {
-        id: p.id,
-        name: p.name,
-        description: p.description,
-        price: p.price,
-        currency: p.currency,
-        active: p.active,
-      };
-    });
-  };
+  // const formatProducts = (products: Product[]) => {
+  //   return products.map((p) => {
+  //     return {
+  //       id: p.id,
+  //       name: p.name,
+  //       description: p.description,
+  //       price: p.price,
+  //       currency: p.currency,
+  //       active: p.active,
+  //     };
+  //   });
+  // };
 
   const renderTabContent = () => {
     switch (selectedTab) {

@@ -65,7 +65,7 @@ const ForumScreen: React.FC = () => {
           setThreads(enhancedPosts);
           setLoading(false);
 
-          console.log("-----", enhancedPosts);
+          // console.log("-----", enhancedPosts);
         });
 
         // Cleanup posts listener on unmount
@@ -157,7 +157,11 @@ const ForumScreen: React.FC = () => {
                       ]}
                     >
                       <Image
-                        src={thread?.created_by?.photo}
+                        src={thread?.created_by?.photo.replace(
+                          // Replace the URL with the correct one if needed !!this will be removed on production
+                          "http://203.161.50.115:5001",
+                          "https://uat-user-api.bondedapp.io"
+                        )}
                         source={require("../../assets/images/default_avatar.jpg")}
                         style={[
                           tw.w12,
@@ -210,9 +214,7 @@ const ForumScreen: React.FC = () => {
                         {thread.content?.substring(0, 200)}...
                       </TextComponent>
                     </View>
-                    <View
-                      style={[tw.flex, tw.flexRow, tw.mT2]}
-                    >
+                    <View style={[tw.flex, tw.flexRow, tw.mT2]}>
                       <TouchableOpacity
                         style={[
                           tw.textGray500,
@@ -267,7 +269,7 @@ const ForumScreen: React.FC = () => {
                           tw.flex,
                           tw.flexRow,
                           tw.itemsCenter,
-                          tw.mX4
+                          tw.mX4,
                         ]}
                       >
                         <Ionicons

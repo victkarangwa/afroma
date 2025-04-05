@@ -51,15 +51,15 @@ export async function onFacebookButtonPress() {
       "limited",
       nonce
     );
-
     if (result.isCancelled) {
       throw "User cancelled the login process";
     }
-
+    
     // Once signed in, get the users AccessToken
     let data;
     if (Platform.OS === "ios") {
       data = await AuthenticationToken.getAuthenticationTokenIOS();
+      console.log("----FB_LOGIN_RESULT---", data);
     } else {
       data = await AccessToken.getCurrentAccessToken();
     }

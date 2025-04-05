@@ -102,6 +102,7 @@ const LoginScreen: React.FC = () => {
           {
             headers: {
               accessToken: token,
+              platform: Platform.OS,
             },
           }
         );
@@ -202,7 +203,7 @@ const LoginScreen: React.FC = () => {
         >
           Login
         </Button>
-        {/* <Separator text="OR" />
+        <Separator text="OR" />
         {Platform.OS === "android" && (
           <Button
             onPress={() =>
@@ -223,8 +224,13 @@ const LoginScreen: React.FC = () => {
         <Button
           onPress={() =>
             onFacebookButtonPress().then((res) => {
-              if (res?.accessToken)
+              if (res?.accessToken) {
                 continueWithSocial("facebook", res?.accessToken);
+              }
+              // On ios, we need to get the authentication token since it uses limited login
+              if (res?.authenticationToken) {
+                continueWithSocial("facebook", res?.authenticationToken);
+              }
             })
           }
           mode="outlined"
@@ -232,7 +238,7 @@ const LoginScreen: React.FC = () => {
           icon={"facebook"}
         >
           <TextComponent> Login with Facebook</TextComponent>
-        </Button> */}
+        </Button>
         <TextComponent
           variant="labelSmall"
           style={[tw.textCenter, tw.textWhite, tw.opacity75]}

@@ -11,6 +11,7 @@ interface Props extends TextInputProps {
   icon?: string;
   containerStyles?: any;
   theme?: any;
+  autoFocus: boolean;
 }
 
 const Input = ({
@@ -21,6 +22,7 @@ const Input = ({
   onChangeText,
   containerStyles,
   theme,
+  autoFocus = true,
   ...rest
 }: Props) => {
   return (
@@ -51,6 +53,7 @@ const Input = ({
         onChangeText={onChangeText}
         value={value}
         placeholder={placeholder}
+        autoFocus={autoFocus}
         {...rest}
       />
     </View>

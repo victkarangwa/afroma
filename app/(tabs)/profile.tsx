@@ -230,7 +230,10 @@ const ProfileScreen: React.FC = () => {
               style={[tw.mX4, tw.textPink700]}
             />
           </TouchableOpacity>
-          <View
+          <TouchableOpacity
+                onPress={() => {
+                  router.push(`/form/profile?tab=${activeTab}&step=${0}&edit=bio`);
+                }}
             style={[
               tw.bgWhite,
               tw.mX4,
@@ -244,13 +247,14 @@ const ProfileScreen: React.FC = () => {
               About Me
             </TextComponent>
             <View style={[tw.flex, tw.flexRow, tw.justifyBetween]}>
-              <View style={[]}>
+              <View
+              >
                 <TextComponent variant="bodyMedium">
                   {profile?.bio ?? profileFillIntroText[0].description}
                 </TextComponent>
               </View>
             </View>
-          </View>
+          </TouchableOpacity>
 
           <View
             style={[
@@ -304,7 +308,9 @@ const ProfileScreen: React.FC = () => {
                               key={index}
                               style={[tw.mX4, tw.mY2, tw.flex, tw.flexRow]}
                               onPress={() => {
-                                router.push(`/form/profile?tab=${activeTab}&step=${groupIndex}`);
+                                router.push(
+                                  `/form/profile?tab=${activeTab}&step=${groupIndex}`
+                                );
                               }}
                             >
                               <View style={[tw.mR4]}>

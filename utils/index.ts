@@ -155,7 +155,7 @@ export const getCustomPlaceholder = (fieldName: string) => {
       return {
         placeholder: "Provide an answer",
         title: fieldName,
-        description: "Please provide details for: " + fieldName,
+        description: "Please provide details",
       };
   }
 };

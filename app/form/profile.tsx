@@ -30,16 +30,18 @@ import DateTimePicker from "@react-native-community/datetimepicker";
 import moment from "moment";
 import Spinner from "@/components/Spinner";
 import DropDownPicker from "react-native-dropdown-picker";
+import { debounce } from 'lodash';
 
 const ProfileScreen: React.FC = () => {
   const router = useRouter();
   const params = useLocalSearchParams();
 
-
   const { loading, send, error } = useApiRequest<ApiResponse>();
 
   const [profileFields, setProfileFields] = useState<any>([]);
-  const [openBottomSheet, setOpenBottomSheet] = useState(false);
+  const [openBottomSheet, setOpenBottomSheet] = useState(
+    false || params.edit === "bio"
+  );
   const [selectedField, setSelectedField] = useState<any>(null);
   const [userInput, setUserInput] = useState<any>({});
   const [visible, setVisible] = React.useState(false);
@@ -93,6 +95,40 @@ const ProfileScreen: React.FC = () => {
     getMyProfileAnswers();
   }, [updatedProfile]);
 
+  const debouncedUpdateProfile = debounce(async (newState) => {
+    const existingProfile = profileTabs[0].content.reduce(
+      (acc: any, field: string) => {
+        acc[field] = profile[field];
+        return acc;
+      },
+      {}
+    );
+
+    let data;
+    let result;
+    if (Number(params.tab) === 1) {
+      const profileAnswers = transformToProfileAnswer(newState);
+      data = profileAnswers;
+      result = await send(
+        "post",
+        "/bonded-user-service/user-profiling/save/answers",
+        data
+      );
+    } else {
+      data = {
+        ...existingProfile,
+        ...newState,
+      };
+      result = await send("put", "/bonded-user-service/users/profile", data);
+    }
+    if (result?.errors) {
+      return setVisible(true);
+    }
+    setUpdatedProfile(result);
+    setUserInput({});
+    setOpenBottomSheet(false);
+  }, 1000);
+
   const getFieldType = (field: any, type?: string, defaultValue?: string) => {
     const { id, fieldType, options } = field;
     switch (fieldType ?? type) {
@@ -105,10 +141,14 @@ const ProfileScreen: React.FC = () => {
               onPress={() => {
                 const currentValues = userInput[id] || [];
                 const updatedValues = currentValues.includes(opt.id)
-                  ? currentValues.filter((item: string) => item !== opt.id) // Remove if already selected
-                  : [...currentValues, opt.id]; // Add if not selected
+                  ? currentValues.filter((item: string) => item !== opt.id)
+                  : [...currentValues, opt.id];
 
-                setUserInput({ ...userInput, [id]: updatedValues });
+                setUserInput((prevState) => {
+                  const newState = { ...prevState, [id]: updatedValues };
+                  debouncedUpdateProfile(newState);
+                  return newState;
+                });
               }}
             />
           </View>
@@ -119,7 +159,11 @@ const ProfileScreen: React.FC = () => {
           <RadioButton.Group
             value={userInput[id]}
             onValueChange={(newValue) => {
-              setUserInput({ ...userInput, [id]: newValue });
+              setUserInput((prevState) => {
+                const newState = { ...prevState, [id]: newValue };
+                debouncedUpdateProfile(newState);
+                return newState;
+              });
             }}
           >
             {options.map((opt: any, index: number) => (
@@ -206,44 +250,6 @@ const ProfileScreen: React.FC = () => {
           />
         );
     }
-  };
-
-  const updateMyProfile = async () => {
-    const existingProfile = profileTabs[0].content.reduce(
-      (acc: any, field: string) => {
-        acc[field] = profile[field];
-        return acc;
-      },
-      {}
-    );
-
-    let data;
-    let result;
-    if (Number(params.tab) === 1) {
-      const profileAnswers = transformToProfileAnswer(userInput);
-
-      console.log("-----", profileAnswers[0].answerOptionIds, profileAnswers);
-      data = profileAnswers;
-      result = await send(
-        "post",
-        "/bonded-user-service/user-profiling/save/answers",
-        data
-      );
-    } else {
-      data = {
-        ...existingProfile,
-        ...userInput,
-        // otherDetails: [],
-      };
-      result = await send("put", "/bonded-user-service/users/profile", data);
-    }
-    if (result?.errors) {
-      return setVisible(true);
-    }
-    setUpdatedProfile(result);
-    setUserInput({});
-    setOpenBottomSheet(false);
-    router.push(`/profile?refresh=${new Date().getTime()}&tab=${params.tab}`);
   };
 
   const onDateChange = (event, selectedDate) => {
@@ -432,7 +438,7 @@ const ProfileScreen: React.FC = () => {
               // })
               <View style={[tw.flex]}>
                 <PictureForm profile={profile} />
-                {profileTabs[0].content.map((field: string, index: number) => {
+                {(profileTabs[0].content as string[]).map((field: string, index: number) => {
                   return (
                     <TouchableOpacity
                       key={index}
@@ -499,7 +505,16 @@ const ProfileScreen: React.FC = () => {
                 }}
                 children={undefined}
               />
+              <View style={[tw.mY4]}>
             </View>
+            </View>
+            <Button
+                onPress={() => debouncedUpdateProfile(userInput)}
+                loading={loading}
+                icon={() => <Ionicons name="save" style={[tw.textPink700]} size={16} />}
+              >
+                Save Changes
+              </Button>
             <View>
               <TextComponent style={[tw.textXl, tw.fontBold, tw.textCenter]}>
                 {
@@ -508,7 +523,7 @@ const ProfileScreen: React.FC = () => {
                   //     ? selectedField.fieldName
                   //     : selectedField
                   // ).title
-                  selectedField.question
+                  selectedField?.question
                 }
               </TextComponent>
               <TextComponent
@@ -517,7 +532,7 @@ const ProfileScreen: React.FC = () => {
                 {
                   getCustomPlaceholder(
                     Number(params.tab) === 1
-                      ? selectedField.question
+                      ? selectedField?.question
                       : selectedField
                   ).description
                 }
@@ -532,7 +547,10 @@ const ProfileScreen: React.FC = () => {
                   {getFieldType(selectedField)}
                 </ScrollView>
               ) : (
-                profileTabs[0].content.map((field: string, index: number) => (
+                (params.edit === "bio"
+                  ? profileTabs[0].content?.slice(4, 5) as string[] // bio 
+                  : profileTabs[0].content as string[]  
+                ).map((field: string, index: number) => (
                   <View key={index}>
                     {getFieldType(
                       field === "gender"
@@ -554,15 +572,15 @@ const ProfileScreen: React.FC = () => {
                 ))
               )}
             </KeyboardAwareScrollView>
-            <View style={[tw.mY4]}>
+            {/* <View style={[tw.mY4]}>
               <Button
                 mode="outlined"
-                onPress={updateMyProfile}
+                onPress={() => debouncedUpdateProfile(userInput)}
                 loading={loading}
               >
                 Apply Changes
               </Button>
-            </View>
+            </View> */}
           </BottomModal>
         )}
       </GestureHandlerRootView>

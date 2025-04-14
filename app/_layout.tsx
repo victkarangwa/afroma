@@ -91,6 +91,8 @@ export default function RootLayout() {
                 options={{
                   headerTitle: "Edit Profile",
                   headerTitleAlign: "center",
+                  headerBackTitle: "Back",
+                  headerTintColor: "#eca899",
                 }}
               />
               <Stack.Screen

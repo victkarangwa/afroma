@@ -166,6 +166,8 @@ export default function RootLayout() {
                 options={{
                   headerTitle: "Settings",
                   headerTitleAlign: "center",
+                  headerBackTitle: "Back",
+                  headerTintColor: "#eca899",
                 }}
               />
               <Stack.Screen name="+not-found" />

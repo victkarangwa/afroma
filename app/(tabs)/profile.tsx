@@ -15,7 +15,12 @@ import TextComponent from "@/components/Text";
 import { introText, profileFillIntroText } from "@/constants/text";
 import Input from "@/components/input";
 import { Button, Chip, Divider, TextInput } from "react-native-paper";
-import { Link, useLocalSearchParams, useRouter } from "expo-router";
+import {
+  Link,
+  useLocalSearchParams,
+  useRouter,
+  useFocusEffect,
+} from "expo-router";
 import Separator from "@/components/Separator";
 import OTPTextView from "react-native-otp-textinput";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -46,8 +51,14 @@ const ProfileScreen: React.FC = () => {
   const [profile, setProfile] = useState<any>({});
   const [profileFields, setProfileFields] = useState<any>([]);
   const [activeTab, setActiveTab] = useState(params?.tab ?? 0);
-  const [updatedProfile, setUpdatedProfile] = useState<any>({
+  const [updatedProfile, setUpdatedProfile] = useState<{
+    featuredPhoto: any | null;
+    tempImageUri: string | null;
+    isUploading: boolean;
+  }>({
     featuredPhoto: null,
+    tempImageUri: null,
+    isUploading: false,
   });
   const [profileAnswers, setProfileAnswers] = useState<any>({});
 
@@ -73,11 +84,26 @@ const ProfileScreen: React.FC = () => {
     setProfileAnswers(result);
   };
 
-  useEffect(() => {
-    getMyBasicProfile();
-    getProfileField();
-    getMyProfileAnswers();
-  }, [params.refresh, updatedProfile.featuredPhoto]);
+  const getProfileField = async () => {
+    const result = await send(
+      "get",
+      "/bonded-user-service/settings/profile-questions"
+    );
+
+    if (result?.errors) {
+      return;
+    }
+    setProfileFields(result);
+  };
+
+  // Fetch fresh data every time screen comes into focus
+  useFocusEffect(
+    React.useCallback(() => {
+      getMyBasicProfile();
+      getProfileField();
+      getMyProfileAnswers();
+    }, [])
+  );
 
   const handleLogout = async () => {
     const result = await send("post", "/bonded-user-service/auth/logout");
@@ -85,34 +111,54 @@ const ProfileScreen: React.FC = () => {
     router.push({ pathname: "/getStarted/login" });
   };
 
-  const getProfileField = async () => {
-    const result = await send(
-      "get",
-      "/bonded-user-service/settings/profile-questions"
-    );
-
-    // console.log("___PROFILE-FIELDS___", result);
-    if (result?.errors) {
-      return;
-    }
-    setProfileFields(result);
-  };
-
   const handleTabChange = (tab: number) => {
     setActiveTab(tab);
   };
 
   const updateProfilePicture = async (data: any) => {
-    const result = await send(
-      "post",
-      "/bonded-user-service/media/upload",
-      data
-    );
-
-    if (result?.errors) {
-      return;
+    try {
+      setUpdatedProfile(
+        (prev: {
+          featuredPhoto: any | null;
+          tempImageUri: string | null;
+          isUploading: boolean;
+        }) => ({ ...prev, isUploading: true })
+      );
+      const result = await send(
+        "post",
+        "/bonded-user-service/media/upload",
+        data
+      );
+      // console.log("result", result);
+      if (result?.errors) {
+        // If upload fails, clear the temporary image
+        setUpdatedProfile(
+          (prev: {
+            featuredPhoto: any | null;
+            tempImageUri: string | null;
+            isUploading: boolean;
+          }) => ({ ...prev, tempImageUri: null, isUploading: false })
+        );
+        return;
+      }
+      setUpdatedProfile({
+        ...updatedProfile,
+        featuredPhoto: result,
+        tempImageUri: null,
+        isUploading: false,
+      });
+      // Refresh profile data after successful upload
+      await getMyBasicProfile();
+    } catch (error) {
+      // If upload fails, clear the temporary image
+      setUpdatedProfile(
+        (prev: {
+          featuredPhoto: any | null;
+          tempImageUri: string | null;
+          isUploading: boolean;
+        }) => ({ ...prev, tempImageUri: null, isUploading: false })
+      );
     }
-    setUpdatedProfile({ ...updatedProfile, featuredPhoto: result });
   };
 
   const pickImage = async () => {
@@ -125,25 +171,31 @@ const ProfileScreen: React.FC = () => {
 
     // Launch the media library
     const result = (await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.All, // Options: Images, Videos, or All
-      allowsEditing: true, // Let the user edit the media
-      aspect: [4, 3], // Aspect ratio if editing
-      quality: 1, // Image quality (0 to 1)
+      mediaTypes: ImagePicker.MediaTypeOptions.All,
+      allowsEditing: true,
+      aspect: [4, 3],
+      quality: 1,
     })) as any;
 
-    const base64 = (await convertImgToBase64(result.assets[0].uri)) as string;
+    if (!result.canceled && result.assets[0]) {
+      // Immediately show the selected image
+      setUpdatedProfile(
+        (prev: { featuredPhoto: any | null; tempImageUri: string | null }) => ({
+          ...prev,
+          tempImageUri: result.assets[0].uri,
+        })
+      );
 
-    const data = prepareImgForUpload(base64, true);
-
-    updateProfilePicture(data);
-
-    // convert it to base64
+      // Convert and upload in the background
+      const base64 = (await convertImgToBase64(result.assets[0].uri)) as string;
+      const data = prepareImgForUpload(base64, true);
+      updateProfilePicture(data);
+    }
   };
 
   return (
     <SafeAreaView>
       <ScrollView>
-        {loading && <Spinner />}
         <View style={[tw.hFull, tw.mB8]}>
           <View
             style={[
@@ -176,8 +228,22 @@ const ProfileScreen: React.FC = () => {
             <View
               style={[tw.relative, tw.flex, tw.justifyCenter, tw.itemsCenter]}
             >
+              {updatedProfile.isUploading && (
+                <View
+                  style={[
+                    tw.absolute,
+                    tw.z10,
+                    tw.bgWhite,
+                    tw.roundedFull,
+                    tw.p4,
+                  ]}
+                >
+                  <Spinner />
+                </View>
+              )}
               <Image
                 src={
+                  updatedProfile.tempImageUri ||
                   profile?.gallery?.find((img: any) => img.featured)
                     ?.thumbnailUrl
                 }
@@ -189,6 +255,7 @@ const ProfileScreen: React.FC = () => {
                   tw.roundedFull,
                   tw.border4,
                   tw.borderPink700,
+                  updatedProfile.isUploading && tw.opacity50,
                 ]}
               />
             </View>
@@ -231,9 +298,9 @@ const ProfileScreen: React.FC = () => {
             />
           </TouchableOpacity>
           <TouchableOpacity
-                onPress={() => {
-                  router.push(`/form/profile?tab=${activeTab}&step=${0}&edit=bio`);
-                }}
+            onPress={() => {
+              router.push(`/form/profile?tab=${activeTab}&step=${0}&edit=bio`);
+            }}
             style={[
               tw.bgWhite,
               tw.mX4,
@@ -247,8 +314,7 @@ const ProfileScreen: React.FC = () => {
               About Me
             </TextComponent>
             <View style={[tw.flex, tw.flexRow, tw.justifyBetween]}>
-              <View
-              >
+              <View>
                 <TextComponent variant="bodyMedium">
                   {profile?.bio ?? profileFillIntroText[0].description}
                 </TextComponent>

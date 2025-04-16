@@ -52,7 +52,7 @@ const ProfileScreen: React.FC = () => {
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [loadingProfile, setLoadingProfile] = useState(false);
   const [openSlect, setOpenSect] = useState(false);
-  const [currentStep, setCurrentStep] = useState(Number(params.step) ?? 0);
+  const [currentStep, setCurrentStep] = useState(Number(params.step ?? 0));
 
   const geProfileFields = async () => {
     const result = await send(
@@ -146,7 +146,7 @@ const ProfileScreen: React.FC = () => {
 
                 setUserInput((prevState) => {
                   const newState = { ...prevState, [id]: updatedValues };
-                  debouncedUpdateProfile(newState);
+                  // debouncedUpdateProfile(newState);
                   return newState;
                 });
               }}

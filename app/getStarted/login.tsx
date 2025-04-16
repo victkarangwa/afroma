@@ -75,7 +75,7 @@ const LoginScreen: React.FC = () => {
         },
       }
     );
-    // console.log("___LOGIN___", result);
+    console.log("___LOGIN___", result);
     if (result?.errors) {
       return setVisible(true);
     }

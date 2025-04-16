@@ -112,7 +112,6 @@ const SignupScreen: React.FC = () => {
       );
 
       if (result?.errors) {
-        console.log("000000>", result);
         setModalInfo({
           title: "Error",
           description: result?.errors || "An error occurred. Please try again.",

@@ -1,36 +1,26 @@
-import { ThemedView } from "@/components/ThemedView";
-import { Ionicons } from "@expo/vector-icons";
-import React, { useState } from "react";
-import {
-  View,
-  StyleSheet,
-  TouchableOpacity,
-  Image,
-  Platform,
-} from "react-native";
-import { tw } from "react-native-tailwindcss";
-import { heightPercentageToDP } from "react-native-responsive-screen";
-import ButtonComponent from "@/components/Button";
-import TextComponent from "@/components/Text";
-import { introText } from "@/constants/text";
 import Input from "@/components/input";
-import { Button, Divider, Portal, TextInput } from "react-native-paper";
-import { Link, useRouter } from "expo-router";
-import Separator from "@/components/Separator";
-import showToast from "@/utils/toast";
-import Toast from "react-native-toast-message";
-import AuthScreenLayout from "@/components/AuthScreensLayout";
-import { useForm, Controller, SubmitHandler } from "react-hook-form";
-import useApiRequest from "@/hooks/useApiRequest";
-import { ApiResponse } from "@/types";
 import Modal from "@/components/Modal";
-import LocalStorage from "@/utils/storage";
-import localStore from "@/utils/localValues";
-import { removeUserData } from "@/utils";
+import Separator from "@/components/Separator";
 import {
   onFacebookButtonPress,
   onGoogleButtonPress,
 } from "@/components/SocialLogin";
+import TextComponent from "@/components/Text";
+import useApiRequest from "@/hooks/useApiRequest";
+import { ApiResponse } from "@/types";
+import { removeUserData } from "@/utils";
+import localStore from "@/utils/localValues";
+import LocalStorage from "@/utils/storage";
+import { Link, useRouter } from "expo-router";
+import React from "react";
+import { Controller, useForm } from "react-hook-form";
+import {
+  Image,
+  Platform,
+  View
+} from "react-native";
+import { Button, TextInput } from "react-native-paper";
+import { tw } from "react-native-tailwindcss";
 
 type FormData = {
   username: string;
@@ -136,7 +126,7 @@ const LoginScreen: React.FC = () => {
 
   const handleModal = () => setVisible(false);
   return (
-    <AuthScreenLayout>
+    <View>
       <Modal
         title="Error"
         description={error ?? "An error occurred. Please try again."}
@@ -241,16 +231,16 @@ const LoginScreen: React.FC = () => {
         </Button>
         <TextComponent
           variant="labelSmall"
-          style={[tw.textCenter, tw.textWhite, tw.opacity75]}
+          style={[tw.textCenter, tw.textWhite, tw.opacity75, tw.mT4]}
         >
           Don't have an account yet?
-          <Link href="/getStarted/accountType" style={[tw.textBlue500]}>
+          <Link href="/getStarted/accountType" style={[tw.textYellow400]}>
             {" "}
             Signup
           </Link>
         </TextComponent>
       </View>
-    </AuthScreenLayout>
+    </View>
   );
 };
 

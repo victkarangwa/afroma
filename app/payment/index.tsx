@@ -63,7 +63,7 @@ const PaymentScreen = () => {
         metadata: {
           additionalProp1: selectedPlan?.currency,
           additionalProp2: selectedPlan?.active,
-          additionalProp3: selectedPlan?.pricePep,
+          additionalProp3: selectedPlan?.price,
         },
       }
     );
@@ -141,7 +141,7 @@ const PaymentScreen = () => {
             <Text style={styles.planTitle}>
               {p.duration}{" "}
               <Text style={[tw.textXs]}>
-                ${p.pricePep} / {p.description}
+                ${p.price} / {p.description}
               </Text>
             </Text>
             <Text style={styles.planFeatures}>{p.description}</Text>

@@ -91,6 +91,8 @@ export default function RootLayout() {
                 options={{
                   headerTitle: "Edit Profile",
                   headerTitleAlign: "center",
+                  headerBackTitle: "Back",
+                  headerTintColor: "#eca899",
                 }}
               />
               <Stack.Screen
@@ -113,7 +115,9 @@ export default function RootLayout() {
                 options={{
                   headerTitle: "Upgrade Account",
                   headerTitleAlign: "center",
-                  headerStyle: { backgroundColor: "#eca899" },
+                  // headerStyle: { backgroundColor: "#eca899" },
+                  headerTintColor: "#eca899",
+                  headerBackTitle: "Back",
                 }}
               />
               <Stack.Screen
@@ -164,6 +168,8 @@ export default function RootLayout() {
                 options={{
                   headerTitle: "Settings",
                   headerTitleAlign: "center",
+                  headerBackTitle: "Back",
+                  headerTintColor: "#eca899",
                 }}
               />
               <Stack.Screen name="+not-found" />

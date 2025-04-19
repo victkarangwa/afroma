@@ -1,28 +1,18 @@
-import { ThemedView } from "@/components/ThemedView";
-import { Ionicons } from "@expo/vector-icons";
-import React, { useEffect } from "react";
-import { View, StyleSheet, TouchableOpacity, Image } from "react-native";
-import { tw } from "react-native-tailwindcss";
-import { heightPercentageToDP } from "react-native-responsive-screen";
-import ButtonComponent from "@/components/Button";
-import TextComponent from "@/components/Text";
-import { introText } from "@/constants/text";
 import Input from "@/components/input";
-import { Button, Divider, Text, TextInput } from "react-native-paper";
-import { Link, useLocalSearchParams, useRouter } from "expo-router";
-import AuthScreenLayout from "@/components/AuthScreensLayout";
-import { useForm, Controller, SubmitHandler } from "react-hook-form";
+import PhoneNumberInput from "@/components/input/phone";
+import Modal from "@/components/Modal";
+import TextComponent from "@/components/Text";
 import useApiRequest from "@/hooks/useApiRequest";
 import { ApiResponse } from "@/types";
-import Modal from "@/components/Modal";
-import PhoneNumberInput from "@/components/input/phone";
-import {
-  onFacebookButtonPress,
-  onGoogleButtonPress,
-} from "@/components/SocialLogin";
-import LocalStorage from "@/utils/storage";
 import localStore from "@/utils/localValues";
+import LocalStorage from "@/utils/storage";
 import * as Location from "expo-location";
+import { Link, useLocalSearchParams, useRouter } from "expo-router";
+import React, { useEffect } from "react";
+import { Controller, useForm } from "react-hook-form";
+import { Image, View } from "react-native";
+import { Button, Text, TextInput } from "react-native-paper";
+import { tw } from "react-native-tailwindcss";
 
 type FormData = {
   name: string;
@@ -122,7 +112,6 @@ const SignupScreen: React.FC = () => {
       );
 
       if (result?.errors) {
-        console.log("000000>", result);
         setModalInfo({
           title: "Error",
           description: result?.errors || "An error occurred. Please try again.",
@@ -212,7 +201,7 @@ const SignupScreen: React.FC = () => {
     getLocation();
   }, []);
   return (
-    <AuthScreenLayout>
+    <View>
       <Modal
         title={modalInfo.title}
         description={modalInfo.description}
@@ -523,7 +512,7 @@ const SignupScreen: React.FC = () => {
           </View>
         </View>
       )}
-    </AuthScreenLayout>
+    </View>
   );
 };
 

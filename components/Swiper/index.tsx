@@ -166,7 +166,7 @@ const SwiperComponent = ({
                   <TextComponent
                     style={[tw.textPink100, tw.textXs, tw.fontBold]}
                   >
-                    {`${card?.distance?.toFixed(0)} km`}
+                    {`${card?.distance ? (card.distance * 0.621371).toFixed(0) : '0'} mi`}
                   </TextComponent>
                 </View>
               )}
@@ -302,7 +302,7 @@ const styles = StyleSheet.create({
     ...tw.bgGray200,
     height: 500,
     width: 300,
-    marginTop: Platform.OS === "ios" ? -400 : -300,
+    marginTop: -300,
   },
   text: {
     textAlign: "center",

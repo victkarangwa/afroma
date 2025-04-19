@@ -115,7 +115,9 @@ export default function RootLayout() {
                 options={{
                   headerTitle: "Upgrade Account",
                   headerTitleAlign: "center",
-                  headerStyle: { backgroundColor: "#eca899" },
+                  // headerStyle: { backgroundColor: "#eca899" },
+                  headerTintColor: "#eca899",
+                  headerBackTitle: "Back",
                 }}
               />
               <Stack.Screen

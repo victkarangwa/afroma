@@ -263,7 +263,8 @@ const ProfileScreen: React.FC = () => {
           <View style={[tw.flex, tw.flexRow, tw.justifyCenter]}>
             <View style={[tw.bgPink700, tw.mT12, tw.w1_3, , tw.roundedFull]}>
               <TextComponent style={[tw.textCenter, tw.pY1, tw.fontBold]}>
-                {getProfileCompletion(profileFields, profile)}% Complete
+                {getProfileCompletion(profileFields, profile, profileAnswers)}%
+                Complete
               </TextComponent>
             </View>
           </View>
@@ -404,7 +405,11 @@ const ProfileScreen: React.FC = () => {
                                   {profileAnswers
                                     ?.find((answer: any) => answer.id === qn.id)
                                     ?.answers.map((answer: any) => answer.text)
-                                    .join(", ") ?? "No set yet"}
+                                    .join(", ") ?? (
+                                    <TextComponent style={[tw.textRed300]}>
+                                      Not set yet
+                                    </TextComponent>
+                                  )}
                                 </TextComponent>
                               </View>
                               <Divider style={[tw.bgGray500, tw.mY4]} />

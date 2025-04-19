@@ -87,7 +87,7 @@ export const getCustomPlaceholder = (fieldName: string) => {
         title:
           "Is your family supportive and will they be involved in the co-parenting journey?",
         description:
-          "Explain your family’s level of involvement in co-parenting.",
+          "Explain your family's level of involvement in co-parenting.",
       };
     case "What is your highest level of education?":
       return {
@@ -244,29 +244,60 @@ interface profileFields {
   selectedValues: string;
 }
 
+interface ProfileQuestion {
+  id: number;
+  question: string;
+  fieldType: string;
+}
+
+interface ProfileAnswer {
+  id: number;
+  question: string;
+  answers: Array<{
+    id: number;
+    text: string;
+  }>;
+}
+
+interface ProfileField {
+  id: number;
+  title: string;
+  questions: ProfileQuestion[];
+}
+
+// Get the profile completion percentage based on the profile fields and the other details
 export const getProfileCompletion = (
-  allFields: otherDetails[],
-  profile: profileFields[]
+  allFields: ProfileField[],
+  profile: profileFields[],
+  profileAnswers: ProfileAnswer[] | undefined
 ) => {
   const basicFields = profileTabs[0].content.length;
-  const totalFields = allFields.length + basicFields;
-  let completedFields = 0;
+  let totalQuestions = 0;
+  let completedQuestions = 0;
 
-  // check if the basic fields ["firstname", "lastname", "gender", "dateOfBirth", "bio"] are in the profile object
+  // Count total questions from all fields
+  allFields?.forEach(field => {
+    totalQuestions += field.questions.length;
+  });
+
+  // Check basic profile fields
   for (const field of profileTabs[0].content) {
-    if (field in profile) {
-      completedFields++;
+    if (profile && field in profile) {
+      completedQuestions++;
     }
   }
 
-  // check if the other details are in the profile object
-  for (const field of allFields) {
-    if (profile?.otherDetails?.some((p) => p.fieldName === field.fieldName)) {
-      completedFields++;
-    }
+  // Check answered questions
+  if (Array.isArray(profileAnswers)) {
+    profileAnswers.forEach(answer => {
+      if (answer?.answers && answer.answers.length > 0) {
+        completedQuestions++;
+      }
+    });
   }
 
-  const percentage = (completedFields / totalFields) * 100;
+  const totalFields = totalQuestions + basicFields;
+  const percentage = totalFields > 0 ? (completedQuestions / totalFields) * 100 : 0;
 
   // return rounded percentage
   return Math.round(percentage);

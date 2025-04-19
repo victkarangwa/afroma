@@ -30,7 +30,7 @@ import DateTimePicker from "@react-native-community/datetimepicker";
 import moment from "moment";
 import Spinner from "@/components/Spinner";
 import DropDownPicker from "react-native-dropdown-picker";
-import { debounce } from 'lodash';
+import { debounce } from "lodash";
 
 const ProfileScreen: React.FC = () => {
   const router = useRouter();
@@ -340,7 +340,11 @@ const ProfileScreen: React.FC = () => {
               ></View>
             </View>
             <TouchableOpacity
-              onPress={() => handleContinue("next")}
+              onPress={() =>
+                currentStep !== profileFields.length - 1
+                  ? handleContinue("next")
+                  : router.push("/profile")
+              }
               style={[
                 tw.mY4,
                 tw.p2,
@@ -349,11 +353,19 @@ const ProfileScreen: React.FC = () => {
                 tw.shadow2xl,
               ]}
             >
-              <Ionicons
-                name="arrow-forward"
-                size={24}
-                style={[tw.textPink700]}
-              />
+              {currentStep !== profileFields.length - 1 ? (
+                <Ionicons
+                  name="arrow-forward"
+                  size={24}
+                  style={[tw.textPink700]}
+                />
+              ) : (
+                <Ionicons
+                  name="person-circle-outline"
+                  size={24}
+                  style={[tw.textPink700]}
+                />
+              )}
             </TouchableOpacity>
           </View>
         )}
@@ -438,58 +450,60 @@ const ProfileScreen: React.FC = () => {
               // })
               <View style={[tw.flex]}>
                 <PictureForm profile={profile} />
-                {(profileTabs[0].content as string[]).map((field: string, index: number) => {
-                  return (
-                    <TouchableOpacity
-                      key={index}
-                      style={[tw.mY1]}
-                      onPress={() => {
-                        setSelectedField(field);
-                        setOpenBottomSheet(true);
-                      }}
-                    >
-                      <View
-                        style={[
-                          tw.bgWhite,
-                          tw.pX3,
-                          tw.pX2,
-                          tw.rounded,
-                          tw.flex,
-                          tw.flexRow,
-                          tw.justifyBetween,
-                        ]}
+                {(profileTabs[0].content as string[]).map(
+                  (field: string, index: number) => {
+                    return (
+                      <TouchableOpacity
+                        key={index}
+                        style={[tw.mY1]}
+                        onPress={() => {
+                          setSelectedField(field);
+                          setOpenBottomSheet(true);
+                        }}
                       >
-                        <View>
-                          <TextComponent
-                            style={[
-                              tw.textBase,
-                              tw.fontBold,
-                              tw.mY1,
-                              tw.capitalize,
-                            ]}
-                          >
-                            {separateTextWithSpace(field)}
-                          </TextComponent>
-                          <TextComponent style={[tw.mY2]}>
-                            {field === "dateOfBirth"
-                              ? profile[field]?.split("T")[0]
-                              : profile[field] ??
-                                getCustomPlaceholder(field).placeholder}
-                          </TextComponent>
-                        </View>
                         <View
-                          style={[tw.flex, tw.itemsCenter, tw.justifyCenter]}
+                          style={[
+                            tw.bgWhite,
+                            tw.pX3,
+                            tw.pX2,
+                            tw.rounded,
+                            tw.flex,
+                            tw.flexRow,
+                            tw.justifyBetween,
+                          ]}
                         >
-                          <Ionicons
-                            name="chevron-forward-outline"
-                            size={24}
-                            color="gray"
-                          />
+                          <View>
+                            <TextComponent
+                              style={[
+                                tw.textBase,
+                                tw.fontBold,
+                                tw.mY1,
+                                tw.capitalize,
+                              ]}
+                            >
+                              {separateTextWithSpace(field)}
+                            </TextComponent>
+                            <TextComponent style={[tw.mY2]}>
+                              {field === "dateOfBirth"
+                                ? profile[field]?.split("T")[0]
+                                : profile[field] ??
+                                  getCustomPlaceholder(field).placeholder}
+                            </TextComponent>
+                          </View>
+                          <View
+                            style={[tw.flex, tw.itemsCenter, tw.justifyCenter]}
+                          >
+                            <Ionicons
+                              name="chevron-forward-outline"
+                              size={24}
+                              color="gray"
+                            />
+                          </View>
                         </View>
-                      </View>
-                    </TouchableOpacity>
-                  );
-                })}
+                      </TouchableOpacity>
+                    );
+                  }
+                )}
               </View>
             )}
           </ScrollView>
@@ -505,16 +519,17 @@ const ProfileScreen: React.FC = () => {
                 }}
                 children={undefined}
               />
-              <View style={[tw.mY4]}>
-            </View>
+              <View style={[tw.mY4]}></View>
             </View>
             <Button
-                onPress={() => debouncedUpdateProfile(userInput)}
-                loading={loading}
-                icon={() => <Ionicons name="save" style={[tw.textPink700]} size={16} />}
-              >
-                Save Changes
-              </Button>
+              onPress={() => debouncedUpdateProfile(userInput)}
+              loading={loading}
+              icon={() => (
+                <Ionicons name="save" style={[tw.textPink700]} size={16} />
+              )}
+            >
+              Save Changes
+            </Button>
             <View>
               <TextComponent style={[tw.textXl, tw.fontBold, tw.textCenter]}>
                 {
@@ -548,8 +563,8 @@ const ProfileScreen: React.FC = () => {
                 </ScrollView>
               ) : (
                 (params.edit === "bio"
-                  ? profileTabs[0].content?.slice(4, 5) as string[] // bio 
-                  : profileTabs[0].content as string[]  
+                  ? (profileTabs[0].content?.slice(4, 5) as string[]) // bio
+                  : (profileTabs[0].content as string[])
                 ).map((field: string, index: number) => (
                   <View key={index}>
                     {getFieldType(

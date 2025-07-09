@@ -10,12 +10,16 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        pink100: "#1d1b2c",
+        pink100: "#FFFFFF", // background
         pink400: '#ffece8',
-        pink700: "#eca899",
+        pink700: "#fb6c31", // main/primary color (for backward compatibility)
+        primary: "#fb6c31", // new main/primary color
         blue100: "#7ea8d0",
         purple100: "#715056",
         purple500: "#757fb4",
+      },
+      boxShadow: {
+        primary: '0 2px 8px 0 #fb6c3155', // subtle shadow with primary color
       },
     },
   },

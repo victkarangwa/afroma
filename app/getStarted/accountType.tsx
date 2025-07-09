@@ -1,228 +1,176 @@
-import Input from "@/components/input";
-import TextComponent from "@/components/Text";
-import { profileRegistrationFields } from "@/constants";
-import useApiRequest from "@/hooks/useApiRequest";
-import { ApiResponse } from "@/types";
-import { useRouter } from "expo-router";
 import React from "react";
-import { useForm } from "react-hook-form";
-import { Image, Platform, TouchableOpacity, View } from "react-native";
+import { useForm, Controller } from "react-hook-form";
+import { useRouter } from "expo-router";
+import { View, Image, TouchableOpacity, TextInput, Text } from "react-native";
 import { Button } from "react-native-paper";
-import { tw } from "react-native-tailwindcss";
 import DateTimePicker from "@react-native-community/datetimepicker";
+import { tw } from "react-native-tailwindcss";
 import moment from "moment";
-import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
-import { Ionicons } from "@expo/vector-icons";
-import CustomDatePicker from "@/components/input/date";
+import { FontAwesome } from '@expo/vector-icons';
 
 type FormData = {
-  code: string;
+  fullName: string;
+  password: string;
+  dateOfBirth: Date;
 };
 
 const AccountTypeScreen: React.FC = () => {
   const router = useRouter();
-
   const {
     control,
-    formState: { errors },
     handleSubmit,
+    formState: { errors },
+    watch,
   } = useForm<FormData>({
     defaultValues: {
-      code: "",
+      fullName: "",
+      password: "",
+      dateOfBirth: new Date(),
     },
   });
 
-  const { loading, send, error } = useApiRequest<ApiResponse>();
-
-  const [visible, setVisible] = React.useState(false);
-  const [publicFigure, setPublicFigure] = React.useState(false);
-  const [profileFields, setProfileFields] = React.useState<{ [key: string]: any }>({});
   const [showDatePicker, setShowDatePicker] = React.useState(false);
-  const [currentStep, setCurrentStep] = React.useState(0);
-  const [date, setDate] = React.useState(new Date());
 
-  const handleContinue = async (action: string) => {
-    if (action === "next") {
-      if (currentStep === profileRegistrationFields.length - 1) {
-        router.push(
-          `/getStarted?profileFields=${JSON.stringify(profileFields)}`
-        );
-      } else {
-        setCurrentStep(currentStep + 1);
-      }
-    } else {
-      if (currentStep !== 0) setCurrentStep(currentStep - 1);
-    }
+  const dateOfBirth = watch("dateOfBirth");
+  const age = dateOfBirth
+    ? moment().diff(moment(dateOfBirth), "years")
+    : "-";
+
+  const onSubmit = (data: FormData) => {
+    // You can handle the data here (e.g., send to API or navigate)
+    router.push(`/getStarted?profileFields=${JSON.stringify(data)}`);
   };
 
-  const goToLogin = async () => {
-    router.push(`/getStarted/login`);
+  const primaryShadow = {
+    shadowColor: '#fb6c31',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.33,
+    shadowRadius: 8,
+    elevation: 4,
   };
 
-  const handleModal = () => setVisible(false);
-
-  const accountTypes = [
-    { id: 1, value: false, label: "Regular User" },
-    { id: 1, value: true, label: "Public Figure" },
-  ];
-
-  const onDateChange = (selectedDate: Date) => {
-    // const currentDate = selectedDate || date;
-    // setShowDatePicker(Platform.OS === "ios");
-    // setDate(currentDate);
-    setProfileFields({
-      ...profileFields,
-      dateOfBirth: selectedDate,
-    });
-  };
   return (
-    <View style={[tw.bgPink100, tw.hFull]}>
-      {showDatePicker && (
-        <DateTimePicker
-          value={date}
-          mode="date"
-          display="default"
-          onChange={onDateChange}
-          style={[tw.bgWhite]}
-        />
-      )}
-      <View style={[tw.flex, tw.itemsCenter, tw.pX8]}>
+    <View style={[{ backgroundColor: '#FFFFFF' }, tw.hFull, tw.pX8, tw.justifyCenter]}>
+      <View style={[tw.itemsCenter]}>
         <Image
           source={require("../../assets/images/afroma_logo.png")}
           style={[tw.w32, tw.h32, tw.mT24]}
         />
+        <Text style={[tw.textPink700, tw.text2xl, tw.fontBold, tw.mT4]}>Create Account</Text>
       </View>
-      {/* <KeyboardAwareScrollView> */}
-        <View style={[tw.mB8]} key={profileRegistrationFields[currentStep].id}>
-          <TextComponent
-            style={[
-              tw.textWhite,
-              tw.textLg,
-              tw.mX4,
-              tw.mY2,
-              tw.textCenter,
-              tw.fontBold,
-            ]}
-          >
-            {profileRegistrationFields[currentStep].label}
-          </TextComponent>
-          <View
-            style={[
-              tw.flex,
-              tw.flexRow,
-              tw.justifyCenter,
-              tw.itemsCenter,
-              tw.mY6,
-            ]}
-          >
-            {profileRegistrationFields[currentStep].fieldType ===
-            "singleSelect" ? (
-              profileRegistrationFields[currentStep]?.options?.map(
-                (opt, index) => (
-                  <TouchableOpacity
-                    key={index}
-                    style={[
-                      tw.border,
-                      tw.borderPink700,
-                      // tw.w1_12,
-                      tw.mX2,
-                      tw.rounded,
-                      tw.mPx,
-                      profileFields[
-                        profileRegistrationFields[currentStep].field as any
-                      ] === opt.value
-                        ? tw.bgPink700
-                        : tw.bgTransparent,
-                    ]}
-                    onPress={() => {
-                      setProfileFields({
-                        ...profileFields,
-                        [profileRegistrationFields[currentStep].field]:
-                          opt.value,
-                      });
-                    }}
-                  >
-                    <TextComponent style={[tw.p3, tw.textWhite, tw.textCenter]}>
-                      {opt.optionText}
-                    </TextComponent>
-                  </TouchableOpacity>
-                )
-              )
-            ) : (
-              <View style={[tw.w3_4]}>
-                 <CustomDatePicker onDateChange={onDateChange} />
-                {/* <Input
-                  label="Date of Birth"
-                  value={moment(date).format("YYYY-MM-DD")}
-                  onPress={() => setShowDatePicker(true)}
-                /> */}
-              </View>
-            )}
-          </View>
-        </View>
-      {/* </KeyboardAwareScrollView> */}
-      <View style={[tw.mY16]}>
-        <View style={[tw.flex, tw.flexRow, tw.justifyAround, tw.itemsCenter]}>
-          <TouchableOpacity
-            onPress={() => handleContinue("back")}
-            style={[
-              tw.mY4,
-              tw.p2,
-              { backgroundColor: "#38364a" },
-              tw.roundedFull,
-              tw.shadow2xl,
-            ]}
-          >
-            <Ionicons name="arrow-back" size={24} style={[tw.textPink700]} />
-          </TouchableOpacity>
-          <View style={[tw.relative, tw.w2_4]}>
-            <View
-              style={[
-                tw.absolute,
-                tw.h2,
-                tw.wFull,
-                tw.roundedFull,
-                tw.bgWhite,
-                tw.opacity25,
-              ]}
-            ></View>
-            <View
-              style={[
-                tw.h2,
-                {
-                  width: `${
-                    ((currentStep + 1) /
-                      (profileRegistrationFields.length + 1)) *
-                    100
-                  }%`,
-                },
-                tw.roundedFull,
-                tw.bgPink700,
-              ]}
-            ></View>
-          </View>
-          <TouchableOpacity
-            onPress={() => handleContinue("next")}
-            style={[
-              tw.mY4,
-              tw.p2,
-              { backgroundColor: "#38364a" },
-              tw.roundedFull,
-              tw.shadow2xl,
-            ]}
-          >
-            <Ionicons name="arrow-forward" size={24} style={[tw.textPink700]} />
-          </TouchableOpacity>
-        </View>
+      <View style={[tw.mT8]}>
+        {/* Full Name */}
+        <Text style={[tw.textPink700, tw.textLg, tw.fontBold, tw.mB2]}>Full Name</Text>
+        <Controller
+          control={control}
+          name="fullName"
+          rules={{ required: "Full name is required" }}
+          render={({ field: { onChange, onBlur, value } }) => (
+            <TextInput
+              style={[tw.bgWhite, tw.rounded, tw.p3, tw.mB2, primaryShadow]}
+              placeholder="Enter your full name"
+              onBlur={onBlur}
+              onChangeText={onChange}
+              value={value}
+            />
+          )}
+        />
+        {errors.fullName && (
+          <Text style={[tw.textRed500, tw.mB2]}>{errors.fullName.message}</Text>
+        )}
+        {/* Password */}
+        <Text style={[tw.textPink700, tw.textLg, tw.fontBold, tw.mB2]}>Password</Text>
+        <Controller
+          control={control}
+          name="password"
+          rules={{
+            required: "Password is required",
+            minLength: { value: 6, message: "Password must be at least 6 characters" },
+          }}
+          render={({ field: { onChange, onBlur, value } }) => (
+            <TextInput
+              style={[tw.bgWhite, tw.rounded, tw.p3, tw.mB2, primaryShadow]}
+              placeholder="Enter a secure password"
+              secureTextEntry
+              onBlur={onBlur}
+              onChangeText={onChange}
+              value={value}
+            />
+          )}
+        />
+        {errors.password && (
+          <Text style={[tw.textRed500, tw.mB2]}>{errors.password.message}</Text>
+        )}
+        {/* Date of Birth */}
+        <Text style={[tw.textPink700, tw.textLg, tw.fontBold, tw.mB2]}>Date of Birth</Text>
+        <Controller
+          control={control}
+          name="dateOfBirth"
+          rules={{
+            required: "Date of birth is required",
+            validate: (date) => {
+              if (!date) return "Date of birth is required";
+              if (moment(date).isAfter(moment())) return "Date cannot be in the future";
+              return true;
+            },
+          }}
+          render={({ field: { value, onChange } }) => (
+            <>
+              <TouchableOpacity
+                style={[tw.bgWhite, tw.rounded, tw.p3, tw.mB2, primaryShadow]}
+                onPress={() => setShowDatePicker(true)}
+              >
+                <Text>{moment(value).format("YYYY-MM-DD")}</Text>
+              </TouchableOpacity>
+              {showDatePicker && (
+                <DateTimePicker
+                  value={value || new Date()}
+                  mode="date"
+                  display="default"
+                  onChange={(event, selectedDate) => {
+                    setShowDatePicker(false);
+                    if (selectedDate) onChange(selectedDate);
+                  }}
+                  maximumDate={new Date()}
+                  style={[tw.bgWhite]}
+                />
+              )}
+            </>
+          )}
+        />
+        {errors.dateOfBirth && (
+          <Text style={[tw.textRed500, tw.mB2]}>{errors.dateOfBirth.message}</Text>
+        )}
+        {/* Submit Button */}
         <Button
-          onPress={goToLogin}
-          mode="text"
-          style={[tw.mX8, tw.mY2]}
-          labelStyle={[tw.textBlack, tw.textPink700]}
-          loading={loading}
+          mode="contained"
+          onPress={handleSubmit(onSubmit)}
+          style={[tw.bgPink700, tw.mT4]}
+          labelStyle={[tw.textWhite]}
         >
-          Continue to Login
+          Continue
         </Button>
+        {/* Social Login */}
+        <View style={[tw.flex, tw.flexRow, tw.justifyCenter, tw.itemsCenter, tw.mT8]}>
+          <View style={[tw.flex1, tw.hPx, tw.bgGray300, tw.mR2]} />
+          <Text style={[tw.textGray500, tw.textSm]}>or sign up with</Text>
+          <View style={[tw.flex1, tw.hPx, tw.bgGray300, tw.mL2]} />
+        </View>
+        <View style={[tw.flex, tw.flexRow, tw.justifyCenter, tw.itemsCenter, tw.mT4]}>
+          <TouchableOpacity style={[tw.bgWhite, tw.roundedFull, tw.p3, primaryShadow, tw.mX2]} onPress={() => {/* TODO: Add Facebook login */}}>
+            <FontAwesome name="facebook" size={24} color="#1877F3" />
+          </TouchableOpacity>
+          <TouchableOpacity style={[tw.bgWhite, tw.roundedFull, tw.p3, primaryShadow, tw.mX2]} onPress={() => {/* TODO: Add Google login */}}>
+            <FontAwesome name="google" size={24} color="#EA4335" />
+          </TouchableOpacity>
+        </View>
+        {/* Already have an account? */}
+        <View style={[tw.flex, tw.flexRow, tw.justifyCenter, tw.itemsCenter, tw.mT8]}>
+          <Text style={[tw.textGray700]}>Already have an account? </Text>
+          <TouchableOpacity onPress={() => router.push('/getStarted/login')}>
+            <Text style={[{ color: '#fb6c31' }, tw.fontBold]}>Log in</Text>
+          </TouchableOpacity>
+        </View>
       </View>
     </View>
   );

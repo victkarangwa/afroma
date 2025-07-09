@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "Parenti",
-    "slug": "parenti",
+    "name": "Afroma",
+    "slug": "afroma",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/parenti_logo.png",
-    "scheme": "parenti",
+    "scheme": "net.afroma.app",
     "userInterfaceStyle": "automatic",
     "splash": {
       "image": "./assets/images/parenti_logo.png",
@@ -14,7 +14,7 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "io.parenti.app",
+      "bundleIdentifier": "net.afroma.app",
       "buildNumber": "0",
       "googleServicesFile": "./GoogleService-Info.plist"
     },
@@ -23,7 +23,7 @@
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "io.parenti.app"
+      "package": "net.afroma.app"
     },
     "web": {
       "bundler": "metro",

@@ -9,7 +9,7 @@
       "client_info": {
         "mobilesdk_app_id": "1:104521571553:android:bd29f80987d4fe188eaba0",
         "android_client_info": {
-          "package_name": "io.parenti.app"
+          "package_name": "net.afroma.app"
         }
       },
       "oauth_client": [
@@ -17,7 +17,7 @@
           "client_id": "104521571553-40qu51iemkkqrnmtchkjrgae1t2tvvtl.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
-            "package_name": "io.parenti.app",
+            "package_name": "net.afroma.app",
             "certificate_hash": "7b453e090eab02c4d0c8d61897187cb2f333fd76"
           }
         },
@@ -25,7 +25,7 @@
           "client_id": "104521571553-5vqf06t2bq6p27ba68ghms0tbk336foc.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
-            "package_name": "io.parenti.app",
+            "package_name": "net.afroma.app",
             "certificate_hash": "5e8f16062ea3cd2c4a0d547876baa6f38cabf625"
           }
         },
@@ -33,7 +33,7 @@
           "client_id": "104521571553-fvseuujlk5jmk67h0hqdv864e5g0c3pn.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
-            "package_name": "io.parenti.app",
+            "package_name": "net.afroma.app",
             "certificate_hash": "a7832c663c0443e469d39c284fa929af0c64c9d6"
           }
         },

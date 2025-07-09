@@ -109,9 +109,9 @@ android {
     buildToolsVersion rootProject.ext.buildToolsVersion
     compileSdk rootProject.ext.compileSdkVersion
 
-    namespace 'io.parenti.app'
+    namespace 'net.afroma.app'
     defaultConfig {
-        applicationId 'io.parenti.app'
+        applicationId 'net.afroma.app'
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 3

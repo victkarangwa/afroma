@@ -20,7 +20,7 @@ LogBox.ignoreAllLogs();
 
 export const unstable_settings = {
   // Ensure any route can link back to `/`
-  initialRouteName: "starters/indexr",
+  initialRouteName: "starters/index",
 };
 
 export default function RootLayout() {

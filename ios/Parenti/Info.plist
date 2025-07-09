@@ -7,7 +7,7 @@
     <key>CFBundleDevelopmentRegion</key>
     <string>$(DEVELOPMENT_LANGUAGE)</string>
     <key>CFBundleDisplayName</key>
-    <string>Parenti</string>
+    <string>Afroma</string>
     <key>CFBundleExecutable</key>
     <string>$(EXECUTABLE_NAME)</string>
     <key>CFBundleIdentifier</key>
@@ -27,14 +27,14 @@
       <dict>
         <key>CFBundleURLSchemes</key>
         <array>
-          <string>parenti</string>
-          <string>io.parenti.app</string>
+          <string>afroma</string>
+          <string>net.afroma.app</string>
         </array>
       </dict>
       <dict>
         <key>CFBundleURLSchemes</key>
         <array>
-          <string>exp+parenti</string>
+          <string>exp+afroma</string>
         </array>
       </dict>
       <dict>
@@ -51,7 +51,7 @@
     <key>FacebookClientToken</key>
     <string>20f3c7dae4395f39ab03fdca418b6d93</string>
     <key>FacebookDisplayName</key>
-    <string>Parenti</string>
+    <string>Afroma</string>
     <key>LSRequiresIPhoneOS</key>
     <true/>
     <key>NSAppTransportSecurity</key>

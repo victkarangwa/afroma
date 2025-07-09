@@ -1,4 +1,4 @@
-package io.parenti.app
+package net.afroma.app
 
 import android.os.Build
 import android.os.Bundle

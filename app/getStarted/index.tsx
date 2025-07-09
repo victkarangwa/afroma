@@ -75,7 +75,7 @@ const SignupScreen: React.FC = () => {
       const { name, email, phone_number, password } = data;
 
 
-      const otherFields = JSON.parse(profileFields);
+      const otherFields = JSON.parse(profileFields as string);
 
       let req;
       if (isSocialNewAccount) {
@@ -96,8 +96,8 @@ const SignupScreen: React.FC = () => {
           email,
           phone_number: phone_number.slice(1),
           password,
-          latitude: location?.coords?.latitude,
-          longitude: location?.coords?.longitude,
+          latitude: location?.coords?.latitude as number,
+          longitude: location?.coords?.longitude as number,
           ...otherFields,
           dateOfBirth:
             otherFields.dateOfBirth.slice(0, 10) + "T18:18:37.124+00:00",
@@ -105,6 +105,7 @@ const SignupScreen: React.FC = () => {
       }
       console.log("-------", req);
       // return console.log("-------", req);
+      router.push({ pathname: "/getStarted/lookingFor" });
       const result = await send(
         "post",
         "/bonded-user-service/users/register",

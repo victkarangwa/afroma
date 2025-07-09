@@ -74,6 +74,10 @@ export default function RootLayout() {
                 options={{ headerShown: false }}
               />
               <Stack.Screen
+                name="getStarted/lookingFor"
+                options={{ headerShown: false }}
+              />
+              <Stack.Screen
                 name="getStarted/index"
                 options={{ headerShown: false }}
               />

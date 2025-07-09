@@ -38,7 +38,7 @@ const AccountTypeScreen: React.FC = () => {
 
   const onSubmit = (data: FormData) => {
     // You can handle the data here (e.g., send to API or navigate)
-    router.push(`/getStarted?profileFields=${JSON.stringify(data)}`);
+    router.push(`/getStarted/lookingFor`);
   };
 
   const primaryShadow = {

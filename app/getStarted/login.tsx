@@ -136,7 +136,7 @@ const LoginScreen: React.FC = () => {
       <View style={[tw.bgPink100, tw.hFull]}>
         <View style={[tw.flex, tw.justifyCenter, tw.itemsCenter, tw.pX8]}>
           <Image
-            source={require("../../assets/images/parenti_logo.png")}
+            source={require("../../assets/images/afroma_logo.png")}
             style={[tw.w32, tw.h32, tw.mT24]}
           />
         </View>

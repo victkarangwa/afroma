@@ -212,7 +212,7 @@ const ProfileScreen: React.FC = () => {
             />
             <View style={[tw.absolute, tw.mT8, tw.mX8, tw.top0, tw.left0]}>
               <Image
-                source={require("../../assets/images/parenti_logo.png")}
+                source={require("../../assets/images/afroma_logo.png")}
                 style={[tw.absolute, tw.w12, tw.h12, tw._m6]}
               />
             </View>
@@ -270,7 +270,7 @@ const ProfileScreen: React.FC = () => {
           </View>
           {/* <View style={[tw.m4, tw.absolute, tw.flex, tw.wFull]}>
             <Image
-              source={require("../../assets/images/parenti_logo.png")}
+              source={require("../../assets/images/afroma_logo.png")}
               style={[tw.absolute, tw.w12, tw.h12, tw._m6]}
             />
           </View> */}

@@ -72,7 +72,7 @@ const PaymentScreen = () => {
     const { error } = await initPaymentSheet({
       merchantDisplayName: "Parenti App",
       paymentIntentClientSecret: result?.clientSecret,
-      returnURL: 'parenti://payment-complete'
+      returnURL: 'afroma://payment-complete'
     });
     if (error) {
       // handle error

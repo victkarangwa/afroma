@@ -1,4 +1,4 @@
-# Welcome to Parenti app 👋
+# Welcome to Afroma app 👋
 
 This is a dating mobile app for both IOS and Androif
 

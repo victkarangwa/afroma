@@ -159,7 +159,7 @@ export default function RootLayout() {
               <Stack.Screen
                 name="faq/index"
                 options={{
-                  headerTitle: "Parenti FAQs",
+                  headerTitle: "Afroma FAQs",
                   headerTitleAlign: "center",
                 }}
               />

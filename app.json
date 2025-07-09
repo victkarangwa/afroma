@@ -4,11 +4,11 @@
     "slug": "afroma",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/parenti_logo.png",
+    "icon": "./assets/images/afroma_logo.png",
     "scheme": "net.afroma.app",
     "userInterfaceStyle": "automatic",
     "splash": {
-      "image": "./assets/images/parenti_logo.png",
+      "image": "./assets/images/afroma_logo.png",
       "resizeMode": "contain",
       "backgroundColor": "#1d1b2c"
     },

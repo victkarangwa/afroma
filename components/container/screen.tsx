@@ -42,7 +42,7 @@ const ScreenContainer = ({
               {title}
             </TextComponent> */}
             <Image
-              source={require("../../assets/images/parenti_logo.png")}
+              source={require("../../assets/images/afroma_logo.png")}
               style={[ tw.w12, tw.h12, tw._m6]}
             />
             <TouchableOpacity onPress={() => router.push("/settings")}>

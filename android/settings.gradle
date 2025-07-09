@@ -44,7 +44,7 @@ if (getRNMinorVersion() >= 75) {
   }
 }
 
-rootProject.name = 'Parenti'
+rootProject.name = 'Afroma'
 
 dependencyResolutionManagement {
   versionCatalogs {

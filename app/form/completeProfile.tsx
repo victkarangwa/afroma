@@ -102,7 +102,7 @@ const CompleteProfileScreen: React.FC = () => {
     if (step > 0) setStep(step - 1);
   };
   const handleFinish = () => {
-    router.push("/(tabs)");
+    router.push(`/form/categoryProfile?purpose=${purpose}`);
   };
 
   const handleInstitutionChange = (idx: number, value: string) => {
@@ -401,7 +401,9 @@ const CompleteProfileScreen: React.FC = () => {
                 <Ionicons name="chevron-forward-outline" size={28} color="#fff" />
               </TouchableOpacity>
             ) : (
-              <ButtonComponent onPress={handleFinish} disabled={!isStepValid()} style={[tw.roundedFull, tw.pX8, { minWidth: 100 }]}>Finish</ButtonComponent>
+              <ButtonComponent onPress={handleFinish}
+              //  disabled={!isStepValid()} 
+               style={[tw.roundedFull, tw.pX8, { minWidth: 100 }]}>Finish</ButtonComponent>
             )}
           </View>
         </View>

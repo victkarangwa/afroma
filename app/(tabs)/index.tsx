@@ -88,7 +88,7 @@ const HomeScreen: React.FC = () => {
             ]}
             mode="text"
           >
-            <TextComponent style={[activeTab !== index && tw.textWhite]}>
+            <TextComponent style={[activeTab !== index ? tw.textGray700 : tw.textPink700]}>
               {tab}
             </TextComponent>
           </Button>

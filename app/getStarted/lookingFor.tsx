@@ -36,7 +36,7 @@ const LookingForScreen: React.FC = () => {
 
   const handleContinue = () => {
     // For now, just mock next step
-    router.push("/getStarted");
+    router.push("/form/completeProfile");
   };
 
   return (

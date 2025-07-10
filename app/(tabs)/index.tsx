@@ -1,221 +1,493 @@
-import SwiperComponent from "@/components/Swiper";
-import TextComponent from "@/components/Text";
-import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
-import React, { useEffect, useState } from "react";
-import { Image, ScrollView, TouchableOpacity, View } from "react-native";
-import { Button } from "react-native-paper";
+import React, { useState } from "react";
+import { View, Text, TextInput, ScrollView, Image, TouchableOpacity, FlatList, Dimensions, PanResponder, Animated } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { Ionicons } from "@expo/vector-icons";
 import { tw } from "react-native-tailwindcss";
-import { Skeleton } from "@rneui/themed";
-import Placeholder from "@/components/Swiper/skeleton";
-import ScreenContainer from "@/components/container/screen";
-import useApiRequest from "@/hooks/useApiRequest";
-import { ApiResponse } from "@/types";
-import LocalStorage from "@/utils/storage";
-import localStore from "@/utils/localValues";
-import CircularProgress from "react-native-circular-progress-indicator";
-import PopupModal from "@/components/Modal/pop";
-import ButtonComponent from "@/components/Button";
+
+const { width: screenWidth, height: screenHeight } = Dimensions.get("window");
+
+// Mock data for dating profiles
+const MOCK_DATING_PROFILES = [
+  {
+    id: 1,
+    name: "Emma Wilson",
+    age: 28,
+    bio: "Adventure seeker, coffee lover, and travel enthusiast. Looking for someone to explore the world with!",
+    images: [
+      "https://randomuser.me/api/portraits/women/6.jpg",
+      "https://randomuser.me/api/portraits/women/7.jpg",
+      "https://randomuser.me/api/portraits/women/8.jpg"
+    ],
+    distance: "2 miles away",
+    interests: ["Travel", "Photography", "Hiking", "Coffee"],
+    verified: true,
+  },
+  {
+    id: 2,
+    name: "Marcus Thompson",
+    age: 32,
+    bio: "Fitness enthusiast and chef. Love cooking new recipes and staying active. Let's grab a healthy meal together!",
+    images: [
+      "https://randomuser.me/api/portraits/men/7.jpg",
+      "https://randomuser.me/api/portraits/men/8.jpg",
+      "https://randomuser.me/api/portraits/men/9.jpg"
+    ],
+    distance: "5 miles away",
+    interests: ["Fitness", "Cooking", "Music", "Reading"],
+    verified: false,
+  },
+  {
+    id: 3,
+    name: "Sofia Rodriguez",
+    age: 26,
+    bio: "Artist and yoga instructor. Finding beauty in everyday moments. Love deep conversations and weekend getaways.",
+    images: [
+      "https://randomuser.me/api/portraits/women/9.jpg",
+      "https://randomuser.me/api/portraits/women/10.jpg",
+      "https://randomuser.me/api/portraits/women/11.jpg"
+    ],
+    distance: "1 mile away",
+    interests: ["Art", "Yoga", "Meditation", "Nature"],
+    verified: true,
+  },
+  {
+    id: 4,
+    name: "James Park",
+    age: 30,
+    bio: "Tech entrepreneur with a passion for innovation. When I'm not coding, you'll find me rock climbing or playing guitar.",
+    images: [
+      "https://randomuser.me/api/portraits/men/10.jpg",
+      "https://randomuser.me/api/portraits/men/11.jpg",
+      "https://randomuser.me/api/portraits/men/12.jpg"
+    ],
+    distance: "3 miles away",
+    interests: ["Technology", "Rock Climbing", "Music", "Startups"],
+    verified: true,
+  },
+];
+
+// Mock data for posts
+const MOCK_POSTS = [
+  {
+    id: 1,
+    user: { name: "Michelle Ogilvy", avatar: "https://randomuser.me/api/portraits/women/1.jpg" },
+    timestamp: "1h ago",
+    image: "https://picsum.photos/400/300?random=1",
+    likes: 18600,
+    comments: 4700,
+    shares: 12400,
+    isBookmarked: false,
+  },
+  {
+    id: 2,
+    user: { name: "Brandon Loia", avatar: "https://randomuser.me/api/portraits/men/2.jpg" },
+    timestamp: "1h ago",
+    image: "https://picsum.photos/400/300?random=2",
+    likes: 15200,
+    comments: 3800,
+    shares: 9600,
+    isBookmarked: true,
+  },
+  {
+    id: 3,
+    user: { name: "Sarah Chen", avatar: "https://randomuser.me/api/portraits/women/3.jpg" },
+    timestamp: "2h ago",
+    image: "https://picsum.photos/400/300?random=3",
+    likes: 22100,
+    comments: 5200,
+    shares: 14800,
+    isBookmarked: false,
+  },
+  {
+    id: 4,
+    user: { name: "David Martinez", avatar: "https://randomuser.me/api/portraits/men/4.jpg" },
+    timestamp: "3h ago",
+    image: "https://picsum.photos/400/300?random=4",
+    likes: 8900,
+    comments: 1200,
+    shares: 3400,
+    isBookmarked: false,
+  },
+];
+
+const FILTER_TABS = ["All", "Dating", "Friends", "Business", "Travel"];
+
+// Dating Card Component
+const DatingCard = ({ profile, onSwipe, isTopCard }: { 
+  profile: typeof MOCK_DATING_PROFILES[0], 
+  onSwipe: (direction: 'left' | 'right' | 'up') => void,
+  isTopCard: boolean 
+}) => {
+  const pan = new Animated.ValueXY();
+  const scale = new Animated.Value(1);
+  const rotate = new Animated.Value(0);
+
+  const panResponder = PanResponder.create({
+    onMoveShouldSetPanResponder: () => true,
+    onPanResponderGrant: () => {
+      pan.setOffset({
+        x: (pan.x as any)._value,
+        y: (pan.y as any)._value,
+      });
+    },
+    onPanResponderMove: (_, gestureState) => {
+      const rotation = gestureState.dx / screenWidth * 30;
+      rotate.setValue(rotation);
+      Animated.event([null, { dx: pan.x, dy: pan.y }], {
+        useNativeDriver: false,
+      })(_, gestureState);
+    },
+    onPanResponderRelease: (_, gestureState) => {
+      pan.flattenOffset();
+      const { dx, dy } = gestureState;
+      const absDx = Math.abs(dx);
+      const absDy = Math.abs(dy);
+      if (absDy > 100 && dy < 0) {
+        onSwipe('up');
+        animateOffScreen(0, -screenHeight);
+      } else if (absDx > 120) {
+        if (dx > 0) {
+          onSwipe('right');
+          animateOffScreen(screenWidth, 0);
+        } else {
+          onSwipe('left');
+          animateOffScreen(-screenWidth, 0);
+        }
+      } else {
+        Animated.parallel([
+          Animated.spring(pan, {
+            toValue: { x: 0, y: 0 },
+            useNativeDriver: false,
+          }),
+          Animated.spring(rotate, {
+            toValue: 0,
+            useNativeDriver: false,
+          }),
+        ]).start();
+      }
+    },
+  });
+
+  const animateOffScreen = (x: number, y: number) => {
+    Animated.parallel([
+      Animated.timing(pan, {
+        toValue: { x, y },
+        duration: 300,
+        useNativeDriver: false,
+      }),
+      Animated.timing(scale, {
+        toValue: 0,
+        duration: 300,
+        useNativeDriver: false,
+      }),
+    ]).start();
+  };
+
+  // Use the first image only for consistency with post card
+  const mainImage = profile.images[0];
+
+  const rotateInterpolation = rotate.interpolate({
+    inputRange: [-30, 0, 30],
+    outputRange: ['-30deg', '0deg', '30deg'],
+  });
+
+  return (
+    <Animated.View
+      style={[
+        tw.bgWhite,
+        tw.roundedLg,
+        tw.mB4,
+        tw.shadow,
+        tw.mX4,
+        { position: 'absolute', width: screenWidth - 32, height: screenHeight * 0.48, zIndex: isTopCard ? 2 : 1,
+          transform: [
+            { translateX: pan.x },
+            { translateY: pan.y },
+            { rotate: rotateInterpolation },
+            { scale: scale },
+          ],
+          opacity: !isTopCard ? 0.8 : 1,
+        },
+      ]}
+      {...(isTopCard ? panResponder.panHandlers : {})}
+    >
+      {/* Header */}
+      <View style={[tw.flexRow, tw.itemsCenter, tw.justifyBetween, tw.p4, tw.pB2]}>
+        <View style={[tw.flexRow, tw.itemsCenter]}>
+          <Image
+            source={{ uri: mainImage }}
+            style={[tw.w10, tw.h10, tw.roundedFull, tw.mR3]}
+          />
+          <View>
+            <Text style={[tw.textGray900, tw.fontBold, tw.textBase]}>{profile.name}, {profile.age}</Text>
+            <Text style={[tw.textGray500, tw.textSm]}>{profile.distance}</Text>
+          </View>
+        </View>
+        {profile.verified && (
+          <View style={[tw.bgGray900, tw.roundedFull, tw.p1]}>
+            <Ionicons name="checkmark" size={12} color="white" />
+          </View>
+        )}
+      </View>
+
+      {/* Main Image */}
+      <View style={[tw.pX4, tw.pB2]}>
+        <Image
+          source={{ uri: mainImage }}
+          style={[tw.wFull, { height: 240 }, tw.roundedLg]}
+          resizeMode="cover"
+        />
+      </View>
+
+      {/* Profile Info */}
+      <View style={[tw.pX4, tw.pB4]}> 
+        <Text style={[tw.textGray800, tw.mB2]} numberOfLines={2}>{profile.bio}</Text>
+        <View style={[tw.flexRow, tw.flexWrap, tw.mB2]}>
+          {profile.interests.slice(0, 3).map((interest, index) => (
+            <View key={index} style={[tw.bgGray200, tw.roundedFull, tw.pX3, tw.pY1, tw.mR2, tw.mB1]}>
+              <Text style={[tw.textGray700, tw.textXs]}>{interest}</Text>
+            </View>
+          ))}
+        </View>
+      </View>
+    </Animated.View>
+  );
+};
 
 const HomeScreen: React.FC = () => {
-  const router = useRouter();
-  const { loading, send } = useApiRequest<ApiResponse>();
-
   const [activeTab, setActiveTab] = useState(0);
-  const [showPlaceholder, setShowPlaceholder] = useState(false);
-  const [matchSuggestions, setMatchSuggestions] = useState<ApiResponse | null>(
-    null
-  );
-  const [loadingData, setLoadingData] = useState(false);
-  const [userRate, setUserRate] = useState<number | null>(0);
-  const [selectecMatch, setSelectedMatch] = useState<ApiResponse | null>(null);
-  const [showModal, setShowModal] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [posts, setPosts] = useState(MOCK_POSTS);
+  const [datingProfiles, setDatingProfiles] = useState(MOCK_DATING_PROFILES);
+  const [currentProfileIndex, setCurrentProfileIndex] = useState(0);
 
-  const getMyProfile = async () => {
-    const result = await send("get", "/bonded-user-service/users/me");
-    LocalStorage.setItem(localStore.userId, result?.id);
-  };
-
-  const getMatchSuggestions = async () => {
-    try {
-      setLoadingData(true);
-      const response = await send(
-        "post",
-        "/bonded-user-service/matches/suggestions",
-        {
-          pageSize: 20,
-          swipeType: activeTab === 2 ? "bookmark" : undefined,
-        }
-      );
-      setLoadingData(false);
-      const data = response;
-      setMatchSuggestions(data);
-    } catch (error) {
-      console.error(error);
-      setLoadingData(false);
+  const formatNumber = (num: number) => {
+    if (num >= 1000) {
+      return (num / 1000).toFixed(1) + "k";
     }
+    return num.toString();
   };
 
-  useEffect(() => {
-    // Fetch user data
-    getMatchSuggestions();
-    getMyProfile();
-  }, [activeTab]);
+  const toggleBookmark = (postId: number) => {
+    setPosts(prevPosts =>
+      prevPosts.map(post =>
+        post.id === postId ? { ...post, isBookmarked: !post.isBookmarked } : post
+      )
+    );
+  };
 
-  const tabs = ["Matches", "Nearby", "Bookmarks"];
-
-  const onTabChange = (index: number) => {
-    setActiveTab(Number(index));
-    setShowPlaceholder(true);
+  const handleSwipe = (direction: 'left' | 'right' | 'up') => {
+    console.log(`Swiped ${direction} on ${datingProfiles[currentProfileIndex]?.name}`);
+    
+    // Move to next profile
     setTimeout(() => {
-      setShowPlaceholder(false);
-    }, 3000);
+      setCurrentProfileIndex(prev => prev + 1);
+    }, 300);
+  };
+
+  const handleActionButton = (action: 'dislike' | 'like' | 'bookmark') => {
+    const direction = action === 'dislike' ? 'left' : action === 'like' ? 'right' : 'up';
+    handleSwipe(direction);
+  };
+
+  const renderPostCard = ({ item }: { item: typeof MOCK_POSTS[0] }) => (
+    <View style={[tw.bgWhite, tw.roundedLg, tw.mB4, tw.shadow, tw.mX4]}>
+      {/* Header */}
+      <View style={[tw.flexRow, tw.itemsCenter, tw.justifyBetween, tw.p4, tw.pB2]}>
+        <View style={[tw.flexRow, tw.itemsCenter]}>
+          <Image
+            source={{ uri: item.user.avatar }}
+            style={[tw.w10, tw.h10, tw.roundedFull, tw.mR3]}
+          />
+          <View>
+            <Text style={[tw.textGray900, tw.fontBold, tw.textBase]}>{item.user.name}</Text>
+            <Text style={[tw.textGray500, tw.textSm]}>{item.timestamp}</Text>
+          </View>
+        </View>
+        <TouchableOpacity onPress={() => toggleBookmark(item.id)}>
+          <Ionicons
+            name={item.isBookmarked ? "bookmark" : "bookmark-outline"}
+            size={24}
+            color={item.isBookmarked ? "#fb6c31" : "#6b7280"}
+          />
+        </TouchableOpacity>
+      </View>
+
+      {/* Main Image */}
+      <View style={[tw.pX4, tw.pB2]}>
+        <Image
+          source={{ uri: item.image }}
+          style={[tw.wFull, { height: 240 }, tw.roundedLg]}
+          resizeMode="cover"
+        />
+      </View>
+
+      {/* Engagement Metrics */}
+      <View style={[tw.flexRow, tw.itemsCenter, tw.justifyBetween, tw.pX4, tw.pB4]}>
+        <View style={[tw.flexRow, tw.itemsCenter]}>
+          <TouchableOpacity style={[tw.flexRow, tw.itemsCenter, tw.mR6]}>
+            <Ionicons name="heart-outline" size={20} color="#6b7280" />
+            <Text style={[tw.textGray600, tw.textSm, tw.mL1]}>{formatNumber(item.likes)}</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity style={[tw.flexRow, tw.itemsCenter, tw.mR6]}>
+            <Ionicons name="chatbubble-outline" size={20} color="#6b7280" />
+            <Text style={[tw.textGray600, tw.textSm, tw.mL1]}>{formatNumber(item.comments)}</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity style={[tw.flexRow, tw.itemsCenter]}>
+            <Ionicons name="arrow-redo-outline" size={20} color="#6b7280" />
+            <Text style={[tw.textGray600, tw.textSm, tw.mL1]}>{formatNumber(item.shares)}</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </View>
+  );
+
+  const renderDatingInterface = () => {
+    const visibleProfiles = datingProfiles.slice(currentProfileIndex, currentProfileIndex + 2);
+    
+    if (currentProfileIndex >= datingProfiles.length) {
+      return (
+        <View style={[tw.flex1, tw.justifyCenter, tw.itemsCenter, tw.p8]}>
+          <Ionicons name="heart-outline" size={80} color="#fb6c31" />
+          <Text style={[tw.textGray900, tw.textXl, tw.fontBold, tw.mT4, tw.textCenter]}>
+            No more profiles
+          </Text>
+          <Text style={[tw.textGray600, tw.textBase, tw.mT2, tw.textCenter]}>
+            Check back later for new matches!
+          </Text>
+          <TouchableOpacity
+            style={[tw.bgPink700, tw.roundedFull, tw.pX6, tw.pY3, tw.mT6]}
+            onPress={() => {
+              setCurrentProfileIndex(0);
+              setDatingProfiles([...MOCK_DATING_PROFILES]);
+            }}
+          >
+            <Text style={[tw.textWhite, tw.fontBold]}>Reset Profiles</Text>
+          </TouchableOpacity>
+        </View>
+      );
+    }
+
+    return (
+      <View style={[tw.flex1, tw.relative, { paddingBottom: 120 }]}>
+        {/* Cards Stack */}
+        <View style={[tw.flex1, tw.justifyCenter, tw.pT4]}>
+          {visibleProfiles.reverse().map((profile, index) => (
+            <DatingCard
+              key={profile.id}
+              profile={profile}
+              onSwipe={handleSwipe}
+              isTopCard={index === visibleProfiles.length - 1}
+            />
+          ))}
+        </View>
+
+        {/* Action Buttons */}
+        <View style={[ tw.bottom0, tw.left0, tw.right0, tw.flexRow, tw.justifyCenter, tw.itemsCenter, tw.pB4, tw.pT4, tw.bgGray100]}>
+          <TouchableOpacity
+            style={[tw.bgRed500, tw.roundedFull, tw.w16, tw.h16, tw.justifyCenter, tw.itemsCenter, tw.mR4, tw.shadow]}
+            onPress={() => handleActionButton('dislike')}
+          >
+            <Ionicons name="close" size={28} color="white" />
+          </TouchableOpacity>
+          
+          <TouchableOpacity
+            style={[tw.bgGray900, tw.roundedFull, tw.w16, tw.h16, tw.justifyCenter, tw.itemsCenter, tw.mR4, tw.shadow]}
+            onPress={() => handleActionButton('bookmark')}
+          >
+            <Ionicons name="bookmark" size={24} color="white" />
+          </TouchableOpacity>
+          
+          <TouchableOpacity
+            style={[tw.bgGreen500, tw.roundedFull, tw.w16, tw.h16, tw.justifyCenter, tw.itemsCenter, tw.shadow]}
+            onPress={() => handleActionButton('like')}
+          >
+            <Ionicons name="heart" size={28} color="white" />
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
   };
 
   return (
-    <ScreenContainer showHeader={true} title="Home">
-      <View style={[tw.flex, tw.flexRow]}>
-        {tabs.map((tab, index) => (
-          <Button
-            key={index}
-            onPress={() => onTabChange(index)}
-            style={[
-              tw.mX4,
-              activeTab === index && tw.borderB2,
-              tw.borderPink700,
-              tw.roundedNone,
-            ]}
-            mode="text"
-          >
-            <TextComponent style={[activeTab !== index ? tw.textGray700 : tw.textPink700]}>
-              {tab}
-            </TextComponent>
-          </Button>
-        ))}
-      </View>
-      {loadingData ? (
-        <Placeholder />
-      ) : (
-        <View style={[tw.wFull]}>
-          {/* {userRate !== null ? (
-            <TouchableOpacity
-              style={[
-                tw.flex,
-                tw.flexRow,
-                tw.itemsCenter,
-                tw.bgPink700,
-                tw.roundedFull,
-                tw.textPink700,
-                tw.absolute,
-                tw.right0,
-                // tw.bottom0,
-                tw.m6,
-                tw.roundedFull,
-                tw.z10,
-                tw.mT120,
-                tw.p1,
-                tw.w19,
-                tw.h19,
-              ]}
-            >
-              <CircularProgress
-                value={userRate}
-                radius={20}
-                activeStrokeWidth={5}
-                inActiveStrokeWidth={5}
-                activeStrokeColor={"#1d1b2c"}
-                titleStyle={{ fontSize: 12 }}
-              />
-            </TouchableOpacity>
-          ): <></>} */}
-          {matchSuggestions?.list?.length ? (
-            <SwiperComponent
-              key={activeTab}
-              parameter={activeTab == 0 ? "all" : "distance"}
-              data={matchSuggestions?.list || []}
-              setUserRate={setUserRate}
-              userRate={userRate}
-              setSelectedMatch={setSelectedMatch}
-              setShowModal={setShowModal}
-            />
-          ) : (
-            <TextComponent style={[tw.textGray500, tw.textCenter, tw.p8]}>
-              No record found at the moment
-            </TextComponent>
-          )}
-        </View>
-      )}
-      <PopupModal visible={showModal} onDismiss={() => setShowModal(false)}>
-        <ScrollView>
-          <View style={[tw.flex, tw.justifyCenter, tw.itemsCenter]}>
+    <SafeAreaView style={[tw.flex1, tw.bgGray100]}>
+      {/* Top Navigation with Logo and Search */}
+      <View style={[tw.pX4, tw.pT2, tw.pB4]}>
+        <View style={[tw.flexRow, tw.itemsCenter, tw.justifyBetween]}>
+          {/* Logo */}
+          <View style={[tw.mR3]}>
             <Image
-              src={
-                selectecMatch?.mediaList.find((img: any) => img.featured)
-                  ?.thumbnailUrl
-              }
-              source={require("@/assets/images/logo.jpeg")}
-              style={[
-                tw.wAuto,
-                tw.roundedFull,
-                tw.m4,
-                { height: 100, width: 100 },
-              ]}
-              blurRadius={20}
+              source={require("../../assets/images/afroma_logo.png")}
+              style={[tw.w8, tw.h8]}
+              resizeMode="contain"
             />
-
-            <TextComponent style={[, tw.fontBold]}>
-              {selectecMatch?.firstName} {selectecMatch?.middleName},{" "}
-              {selectecMatch?.age}
-            </TextComponent>
-
-            {selectecMatch?.matchingResult?.matchedQuestions?.map(
-              (question, index) => (
-                <View style={[tw.wFull, tw.pT4]} key={index}>
-                  <TextComponent style={[tw.textSm, tw.textPink100]}>
-                    {question?.questionText}
-                  </TextComponent>
-                  <TextComponent
-                    style={[tw.textXs, tw.textPink100, tw.fontBold]}
-                  >
-                    {question?.answer?.join(", ")}
-                  </TextComponent>
-                </View>
-              )
-            )}
-
-            <View
-              style={[tw.flex, tw.flexRow, tw.justifyCenter, tw.itemsCenter]}
-            >
-              <View style={[tw.pT4]}>
-                <TextComponent style={[tw.textSm, tw.textPink100, tw.fontBold]}>
-                  Matching Rate
-                </TextComponent>
-                <View style={[tw.mY2]}>
-                  <CircularProgress
-                    value={selectecMatch?.matchingResult?.matchingRate}
-                    radius={50}
-                    activeStrokeWidth={10}
-                    inActiveStrokeWidth={10}
-                    duration={3000}
-                    activeStrokeColor={"#1d1b2c"}
-                    titleStyle={{ fontSize: 12 }}
-                    progressValueColor="#1d1b2c"
-                    titleColor={"#1d1b2c"}
-                    title="%"
-                  />
-                </View>
-              </View>
-            </View>
-            <View style={[tw.w3_4, tw.mT4]}>
-              <Button mode="outlined" onPress={() => setShowModal(false)}>
-                Dismiss
-              </Button>
-            </View>
           </View>
+          
+          {/* Search Bar */}
+          <View style={[tw.flex1, tw.flexRow, tw.itemsCenter, tw.bgWhite, tw.roundedFull, tw.pX4, tw.pY3, tw.shadow]}>
+            <TextInput
+              style={[tw.flex1, tw.textBase, tw.textGray700]}
+              placeholder="Search for person, places, posts..."
+              placeholderTextColor="#9ca3af"
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+            />
+            <TouchableOpacity>
+              <Ionicons name="search" size={20} color="#6b7280" />
+            </TouchableOpacity>
+          </View>
+        </View>
+      </View>
+
+      {/* Filter Tabs */}
+      <View style={[tw.pX4, tw.pB4]}>
+        <Text style={[tw.textGray900, tw.fontBold, tw.textLg, tw.mB3]}>Categories</Text>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+          {FILTER_TABS.map((tab, index) => (
+            <TouchableOpacity
+              key={tab}
+              onPress={() => setActiveTab(index)}
+              style={[
+                tw.pX4,
+                tw.pY2,
+                tw.roundedFull,
+                tw.mR3,
+                tw.border,
+                activeTab === index ? tw.bgGray900 : tw.bgWhite,
+                activeTab === index ? tw.borderGray900 : tw.borderGray300,
+              ]}
+            >
+              <Text
+                style={[
+                  tw.textSm,
+                  tw.fontMedium,
+                  activeTab === index ? tw.textWhite : tw.textGray700,
+                ]}
+              >
+                {tab}
+              </Text>
+            </TouchableOpacity>
+          ))}
         </ScrollView>
-      </PopupModal>
-    </ScreenContainer>
+      </View>
+
+      {/* Content */}
+      {activeTab === 1 ? (
+        // Dating Interface
+        renderDatingInterface()
+      ) : (
+        // Posts Feed
+        <FlatList
+          data={posts}
+          renderItem={renderPostCard}
+          keyExtractor={(item) => item.id.toString()}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={[{ paddingBottom: 80 }]}
+        />
+      )}
+    </SafeAreaView>
   );
 };
 

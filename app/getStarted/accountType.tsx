@@ -60,7 +60,7 @@ const AccountTypeScreen: React.FC = () => {
       </View>
       <View style={[tw.mT8]}>
         {/* Full Name */}
-        <Text style={[tw.textPink700, tw.textLg, tw.fontBold, tw.mB2]}>Full Name</Text>
+        <Text style={[tw.textPink700, tw.textBase, tw.fontBold, tw.mB2]}>Full Name</Text>
         <Controller
           control={control}
           name="fullName"
@@ -79,7 +79,7 @@ const AccountTypeScreen: React.FC = () => {
           <Text style={[tw.textRed500, tw.mB2]}>{errors.fullName.message}</Text>
         )}
         {/* Password */}
-        <Text style={[tw.textPink700, tw.textLg, tw.fontBold, tw.mB2]}>Password</Text>
+        <Text style={[tw.textPink700, tw.textBase, tw.fontBold, tw.mB2]}>Password</Text>
         <Controller
           control={control}
           name="password"
@@ -102,7 +102,7 @@ const AccountTypeScreen: React.FC = () => {
           <Text style={[tw.textRed500, tw.mB2]}>{errors.password.message}</Text>
         )}
         {/* Date of Birth */}
-        <Text style={[tw.textPink700, tw.textLg, tw.fontBold, tw.mB2]}>Date of Birth</Text>
+        <Text style={[tw.textPink700, tw.textBase, tw.fontBold, tw.mB2]}>Date of Birth</Text>
         <Controller
           control={control}
           name="dateOfBirth"

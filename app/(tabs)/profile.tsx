@@ -1,70 +1,55 @@
-import { ThemedView } from "@/components/ThemedView";
-import { Ionicons } from "@expo/vector-icons";
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   View,
-  StyleSheet,
+  Text,
   TouchableOpacity,
   Image,
   ScrollView,
+  FlatList,
 } from "react-native";
-import { tw } from "react-native-tailwindcss";
-import { heightPercentageToDP } from "react-native-responsive-screen";
-import ButtonComponent from "@/components/Button";
-import TextComponent from "@/components/Text";
-import { introText, profileFillIntroText } from "@/constants/text";
-import Input from "@/components/input";
-import { Button, Chip, Divider, TextInput } from "react-native-paper";
-import {
-  Link,
-  useLocalSearchParams,
-  useRouter,
-  useFocusEffect,
-} from "expo-router";
-import Separator from "@/components/Separator";
-import OTPTextView from "react-native-otp-textinput";
 import { SafeAreaView } from "react-native-safe-area-context";
-import CircularProgress from "react-native-circular-progress-indicator";
-import {
-  convertImgToBase64,
-  gateUserAge,
-  getProfileCompletion,
-  prepareImgForUpload,
-  removeUserData,
-  separateTextWithSpace,
-} from "@/utils";
+import { Ionicons } from "@expo/vector-icons";
+import { tw } from "react-native-tailwindcss";
+import { useRouter, useFocusEffect } from "expo-router";
 import useApiRequest from "@/hooks/useApiRequest";
 import { ApiResponse } from "@/types";
-import { constantUserData, profileTabs } from "@/constants";
-import moment from "moment";
+import { removeUserData } from "@/utils";
 import * as ImagePicker from "expo-image-picker";
-import Spinner from "@/components/Spinner";
-import { Text } from "react-native";
+
+// Mock data for posts
+const MOCK_USER_POSTS = [
+  {
+    id: 1,
+    user: { name: "Alex Tsimikas", avatar: "https://randomuser.me/api/portraits/women/5.jpg" },
+    timestamp: "3d ago",
+    content: "Going on vacation! Catch you all in 10 days. No call!!!!",
+    likes: 261,
+    comments: 12,
+    shares: 0,
+  },
+  {
+    id: 2,
+    user: { name: "Alex Tsimikas", avatar: "https://randomuser.me/api/portraits/women/5.jpg" },
+    timestamp: "4d ago", 
+    content: "1 day to go!",
+    likes: 189,
+    comments: 8,
+    shares: 2,
+  },
+];
+
+const PROFILE_TABS = ["Travel", "Networking", "Relationshions"];
 
 const ProfileScreen: React.FC = () => {
   const router = useRouter();
-
-  const params = useLocalSearchParams();
-
   const { loading, send } = useApiRequest<ApiResponse>();
-
+  
   const [profile, setProfile] = useState<any>({});
-  const [profileFields, setProfileFields] = useState<any>([]);
-  const [activeTab, setActiveTab] = useState(params?.tab ?? 0);
-  const [updatedProfile, setUpdatedProfile] = useState<{
-    featuredPhoto: any | null;
-    tempImageUri: string | null;
-    isUploading: boolean;
-  }>({
-    featuredPhoto: null,
-    tempImageUri: null,
-    isUploading: false,
-  });
-  const [profileAnswers, setProfileAnswers] = useState<any>({});
+  const [activeTab, setActiveTab] = useState(0);
+  const [isUploading, setIsUploading] = useState(false);
 
   const getMyBasicProfile = async () => {
     const result = await send("get", "/bonded-user-service/users/me");
-
     if (result?.errors) {
       handleLogout();
       return;
@@ -72,438 +57,204 @@ const ProfileScreen: React.FC = () => {
     setProfile(result);
   };
 
-  const getMyProfileAnswers = async () => {
-    const result = await send(
-      "get",
-      "/bonded-user-service/user-profiling/answers"
-    );
-
-    if (result?.errors) {
-      return;
-    }
-    setProfileAnswers(result);
-  };
-
-  const getProfileField = async () => {
-    const result = await send(
-      "get",
-      "/bonded-user-service/settings/profile-questions"
-    );
-
-    if (result?.errors) {
-      return;
-    }
-    setProfileFields(result);
-  };
-
-  // Fetch fresh data every time screen comes into focus
   useFocusEffect(
     React.useCallback(() => {
       getMyBasicProfile();
-      getProfileField();
-      getMyProfileAnswers();
     }, [])
   );
 
   const handleLogout = async () => {
-    const result = await send("post", "/bonded-user-service/auth/logout");
-    removeUserData();
-    router.push({ pathname: "/getStarted/login" });
-  };
-
-  const handleTabChange = (tab: number) => {
-    setActiveTab(tab);
-  };
-
-  const updateProfilePicture = async (data: any) => {
-    try {
-      setUpdatedProfile(
-        (prev: {
-          featuredPhoto: any | null;
-          tempImageUri: string | null;
-          isUploading: boolean;
-        }) => ({ ...prev, isUploading: true })
-      );
-      const result = await send(
-        "post",
-        "/bonded-user-service/media/upload",
-        data
-      );
-      // console.log("result", result);
-      if (result?.errors) {
-        // If upload fails, clear the temporary image
-        setUpdatedProfile(
-          (prev: {
-            featuredPhoto: any | null;
-            tempImageUri: string | null;
-            isUploading: boolean;
-          }) => ({ ...prev, tempImageUri: null, isUploading: false })
-        );
-        return;
-      }
-      setUpdatedProfile({
-        ...updatedProfile,
-        featuredPhoto: result,
-        tempImageUri: null,
-        isUploading: false,
-      });
-      // Refresh profile data after successful upload
-      await getMyBasicProfile();
-    } catch (error) {
-      // If upload fails, clear the temporary image
-      setUpdatedProfile(
-        (prev: {
-          featuredPhoto: any | null;
-          tempImageUri: string | null;
-          isUploading: boolean;
-        }) => ({ ...prev, tempImageUri: null, isUploading: false })
-      );
-    }
+    // const result = await send("post", "/bonded-user-service/auth/logout");
+    // removeUserData();
+    // router.push({ pathname: "/getStarted/login" });
   };
 
   const pickImage = async () => {
-    // Request permission to access the media library
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== "granted") {
       alert("Sorry, we need media library permissions to make this work!");
       return;
     }
 
-    // Launch the media library
-    const result = (await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.All,
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
-      aspect: [4, 3],
+      aspect: [1, 1],
       quality: 1,
-    })) as any;
+    });
 
     if (!result.canceled && result.assets[0]) {
-      // Immediately show the selected image
-      setUpdatedProfile(
-        (prev: { featuredPhoto: any | null; tempImageUri: string | null }) => ({
-          ...prev,
-          tempImageUri: result.assets[0].uri,
-        })
-      );
-
-      // Convert and upload in the background
-      const base64 = (await convertImgToBase64(result.assets[0].uri)) as string;
-      const data = prepareImgForUpload(base64, true);
-      updateProfilePicture(data);
+      // Handle image upload here
     }
   };
 
-  return (
-    <SafeAreaView>
-      <ScrollView>
-        <View style={[tw.hFull, tw.mB8]}>
-          <View
-            style={[
-              tw.flex,
-              tw.justifyCenter,
-              tw.itemsCenter,
-              tw.bgPink100,
-              tw.roundedB,
-            ]}
-          >
-            <Image
-              // source={require("../../assets/images/c_photo.jpeg")}
-              style={[tw.wFull, tw.h48]}
-            />
-            <View style={[tw.absolute, tw.mT8, tw.mX8, tw.top0, tw.left0]}>
-              <Image
-                source={require("../../assets/images/afroma_logo.png")}
-                style={[tw.absolute, tw.w12, tw.h12, tw._m6]}
-              />
-            </View>
-            <TouchableOpacity
-              style={[tw.absolute, tw.mT4, tw.mX4, tw.top0, tw.right0]}
-              onPress={() => router.push("/settings")}
-            >
-              <Ionicons name="settings" size={24} style={[tw.textWhite]} />
-            </TouchableOpacity>
+  const renderPost = ({ item }: { item: typeof MOCK_USER_POSTS[0] }) => (
+    <View style={[tw.bgWhite, tw.roundedLg, tw.mB4, tw.p4, tw.shadow]}>
+      <View style={[tw.flexRow, tw.itemsCenter, tw.justifyBetween, tw.mB3]}>
+        <View style={[tw.flexRow, tw.itemsCenter]}>
+          <Image
+            source={{ uri: item.user.avatar }}
+            style={[tw.w10, tw.h10, tw.roundedFull, tw.mR3]}
+          />
+          <View>
+            <Text style={[tw.textGray900, tw.fontBold]}>{item.user.name}</Text>
+            <Text style={[tw.textGray500, tw.textSm]}>{item.timestamp}</Text>
           </View>
+        </View>
+        <TouchableOpacity>
+          <Ionicons name="ellipsis-horizontal" size={20} color="#6b7280" />
+        </TouchableOpacity>
+      </View>
+      
+      <Text style={[tw.textGray800, tw.mB3]}>{item.content}</Text>
+      
+      <View style={[tw.flexRow, tw.itemsCenter]}>
+        <TouchableOpacity style={[tw.flexRow, tw.itemsCenter, tw.mR6]}>
+          <Ionicons name="heart-outline" size={18} color="#fb6c31" />
+          <Text style={[tw.textGray600, tw.textSm, tw.mL1]}>{item.likes}</Text>
+        </TouchableOpacity>
+        
+        <TouchableOpacity style={[tw.flexRow, tw.itemsCenter, tw.mR6]}>
+          <Ionicons name="chatbubble-outline" size={18} color="#6b7280" />
+          <Text style={[tw.textGray600, tw.textSm, tw.mL1]}>{item.comments}</Text>
+        </TouchableOpacity>
+        
+        <TouchableOpacity style={[tw.flexRow, tw.itemsCenter, tw.mR6]}>
+          <Ionicons name="arrow-redo-outline" size={18} color="#6b7280" />
+        </TouchableOpacity>
+        
+        <TouchableOpacity style={[tw.mL8]}>
+          <Ionicons name="bookmark-outline" size={18} color="#6b7280" />
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
 
-          <TouchableOpacity onPress={pickImage}>
-            <View
-              style={[tw.relative, tw.flex, tw.justifyCenter, tw.itemsCenter]}
-            >
-              {updatedProfile.isUploading && (
-                <View
-                  style={[
-                    tw.absolute,
-                    tw.z10,
-                    tw.bgWhite,
-                    tw.roundedFull,
-                    tw.p4,
-                  ]}
-                >
-                  <Spinner />
+  return (
+    <SafeAreaView style={[tw.flex1, tw.bgGray100]}>
+      <ScrollView showsVerticalScrollIndicator={false}>
+        {/* Header with Cover Photo */}
+        <View style={[tw.relative]}>
+          {/* Cover Photo */}
+          <TouchableOpacity>
+            <Image
+              source={{ uri: "https://picsum.photos/400/250?random=cover" }}
+              style={[tw.wFull, { height: 200 }]}
+              resizeMode="cover"
+            />
+          </TouchableOpacity>
+          
+          {/* Settings Icon */}
+          <TouchableOpacity
+            style={[tw.absolute, tw.top0, tw.right0, tw.m4, tw.bgBlack, tw.opacity50, tw.roundedFull, tw.p2]}
+            onPress={() => router.push("/settings")}
+          >
+            <Ionicons name="settings" size={20} color="white" />
+          </TouchableOpacity>
+
+          {/* Profile Picture positioned at bottom center of cover photo */}
+          <TouchableOpacity
+            onPress={pickImage}
+            style={[tw.absolute, { bottom: -50, left: '50%', marginLeft: -50 }]}
+          >
+            <View style={[tw.relative]}>
+              <Image
+                source={{
+                  uri: profile?.gallery?.find((img: any) => img.featured)?.thumbnailUrl || 
+                       "https://randomuser.me/api/portraits/women/5.jpg"
+                }}
+                style={[tw.w24, tw.h24, tw.roundedFull, tw.border4, tw.borderWhite]}
+              />
+              {isUploading && (
+                <View style={[tw.absolute, tw.inset0, tw.justifyCenter, tw.itemsCenter, tw.bgBlack, tw.opacity50, tw.roundedFull]}>
+                  <Ionicons name="camera" size={16} color="white" />
                 </View>
               )}
-              <Image
-                src={
-                  updatedProfile.tempImageUri ||
-                  profile?.gallery?.find((img: any) => img.featured)
-                    ?.thumbnailUrl
-                }
-                source={require("../../assets/images/default_avatar.jpg")}
-                style={[
-                  tw.absolute,
-                  tw.w32,
-                  tw.h32,
-                  tw.roundedFull,
-                  tw.border4,
-                  tw.borderPink700,
-                  updatedProfile.isUploading && tw.opacity50,
-                ]}
-              />
             </View>
           </TouchableOpacity>
-          <View style={[tw.flex, tw.flexRow, tw.justifyCenter]}>
-            <View style={[tw.bgPink700, tw.mT12, tw.w1_3, , tw.roundedFull]}>
-              <TextComponent style={[tw.textCenter, tw.pY1, tw.fontBold]}>
-                {getProfileCompletion(profileFields, profile, profileAnswers)}%
-                Complete
-              </TextComponent>
+        </View>
+
+        {/* Profile Section */}
+        <View style={[tw.pX6, tw.mT16]}>
+          {/* Profile Info */}
+          <View style={[tw.itemsCenter]}>
+            <Text style={[tw.textGray900, tw.text2xl, tw.fontBold]}>
+              {profile?.firstname || "Alex"} {profile?.lastname || "Tsimikas"}
+            </Text>
+            <Text style={[tw.textGray600, tw.textBase, tw.mT1]}>
+              Brooklyn, NY
+            </Text>
+            <Text style={[tw.textGray700, tw.textBase, tw.mT2, tw.textCenter]}>
+              Writer by Profession. Artist by Passion!
+            </Text>
+          </View>
+
+          {/* Stats */}
+          <View style={[tw.flexRow, tw.justifyCenter, tw.mT6, tw.mB6]}>
+            <View style={[tw.itemsCenter, tw.mR8]}>
+              <Text style={[tw.textGray900, tw.textLg, tw.fontBold]}>2,447</Text>
+              <Text style={[tw.textGray600, tw.textSm]}>Followers</Text>
+            </View>
+            <View style={[tw.itemsCenter, tw.mR8]}>
+              <Text style={[tw.textGray900, tw.textLg, tw.fontBold]}>1,589</Text>
+              <Text style={[tw.textGray600, tw.textSm]}>Following</Text>
             </View>
           </View>
-          {/* <View style={[tw.m4, tw.absolute, tw.flex, tw.wFull]}>
-            <Image
-              source={require("../../assets/images/afroma_logo.png")}
-              style={[tw.absolute, tw.w12, tw.h12, tw._m6]}
-            />
-          </View> */}
-          <View style={[tw.pT4]}>
-            <View>
-              <TextComponent style={[tw.textCenter, tw.text2xl, tw.fontBold]}>
-                {profile?.firstname} {profile?.lastname}
-              </TextComponent>
-              <TextComponent
-                style={[tw.textCenter, tw.textBase, tw.textGray600]}
-              >
-                {gateUserAge(profile.dateOfBirth)} Yo . {profile?.gender ?? "-"}
-              </TextComponent>
-            </View>
-          </View>
+
+          {/* Edit Profile Button */}
           <TouchableOpacity
-            style={[tw.flex, tw.flexRow, tw.justifyEnd]}
-            onPress={() => {
-              router.push(`/form/profile?tab=${activeTab}`);
-            }}
+            style={[tw.bgPink700, tw.roundedFull, tw.pY3, tw.pX8, tw.itemsCenter, tw.mB6]}
+            onPress={() => router.push("/form/profile")}
           >
-            <Ionicons
-              name="create-outline"
-              size={24}
-              style={[tw.mX4, tw.textPink700]}
-            />
-          </TouchableOpacity>
-          <TouchableOpacity
-            onPress={() => {
-              router.push(`/form/profile?tab=${activeTab}&step=${0}&edit=bio`);
-            }}
-            style={[
-              tw.bgWhite,
-              tw.mX4,
-              tw.rounded,
-              tw.p4,
-              tw.mY4,
-              tw.shadow2xl,
-            ]}
-          >
-            <TextComponent variant="labelLarge" style={[tw.fontBlack]}>
-              About Me
-            </TextComponent>
-            <View style={[tw.flex, tw.flexRow, tw.justifyBetween]}>
-              <View>
-                <TextComponent variant="bodyMedium">
-                  {profile?.bio ?? profileFillIntroText[0].description}
-                </TextComponent>
-              </View>
-            </View>
+            <Text style={[tw.textWhite, tw.fontBold]}>Edit Profile</Text>
           </TouchableOpacity>
 
-          <View
-            style={[
-              tw.flex,
-              tw.flexRow,
-              tw.justifyBetween,
-              tw.mX4,
-              tw.bgGray200,
-              tw.p2,
-              tw.rounded,
-            ]}
-          >
-            {profileTabs.map((tab, index) => (
+          {/* Tab Navigation */}
+          <View style={[tw.flexRow, tw.justifyBetween, tw.mB4]}>
+            {PROFILE_TABS.map((tab, index) => (
               <TouchableOpacity
-                key={index}
-                onPress={() => handleTabChange(index)}
+                key={tab}
+                onPress={() => setActiveTab(index)}
                 style={[
-                  activeTab == index && tw.bgWhite,
-                  tw.shadowLg,
-                  tw.rounded,
-                  tw.w1_2,
+                  tw.flex1,
+                  tw.pY2,
+                  tw.itemsCenter,
+                  index === activeTab && tw.bgGray900,
+                  index === activeTab && tw.roundedFull,
+                  index !== activeTab && tw.bgTransparent,
                 ]}
               >
-                <TextComponent
+                <Text
                   style={[
-                    tw.pY2,
-                    tw.pX4,
-                    activeTab === index && tw.fontBold,
-                    tw.textBlack,
-                    tw.textCenter,
+                    tw.fontBold,
+                    index === activeTab ? tw.textWhite : tw.textGray600,
                   ]}
                 >
-                  {tab.title}
-                </TextComponent>
+                  {tab}
+                </Text>
               </TouchableOpacity>
             ))}
           </View>
-          <View style={[tw.mX4, tw.rounded, tw.pY4]}>
-            {profileTabs[activeTab].content === "otherDetails"
-              ? profileFields.map((group: any, groupIndex: number) => {
-                  return (
-                    <View style={[tw.pY5, tw.pX2, tw.mY1, tw.bgWhite]}>
-                      <Text style={[tw.fontBold, tw.textBase]}>
-                        {group.title}
-                      </Text>
 
-                      <View>
-                        {group.questions.map((qn: any, index: number) => {
-                          return (
-                            <TouchableOpacity
-                              key={index}
-                              style={[tw.mX4, tw.mY2, tw.flex, tw.flexRow]}
-                              onPress={() => {
-                                router.push(
-                                  `/form/profile?tab=${activeTab}&step=${groupIndex}`
-                                );
-                              }}
-                            >
-                              <View style={[tw.mR4]}>
-                                <Ionicons
-                                  name={
-                                    profileTabs[activeTab]?.icons?.find(
-                                      (icon) => qn.question.includes(icon.field)
-                                    )?.icon
-                                  }
-                                  size={24}
-                                  style={[tw.textGray600, tw.mY2]}
-                                />
-                              </View>
-                              <View>
-                                <TextComponent
-                                  variant="labelLarge"
-                                  style={[tw.textXs, tw.capitalize]}
-                                >
-                                  {qn.question}
-                                </TextComponent>
-                                <TextComponent
-                                  variant="bodyMedium"
-                                  style={[tw.textGray600]}
-                                >
-                                  {profileAnswers
-                                    ?.find((answer: any) => answer.id === qn.id)
-                                    ?.answers.map((answer: any) => answer.text)
-                                    .join(", ") ?? (
-                                    <TextComponent style={[tw.textRed300]}>
-                                      Not set yet
-                                    </TextComponent>
-                                  )}
-                                </TextComponent>
-                              </View>
-                              <Divider style={[tw.bgGray500, tw.mY4]} />
-                            </TouchableOpacity>
-                          );
-                        })}
-                      </View>
-                    </View>
-                  );
-                })
-              : // profileFields?.map((field: any, index: number) => {
-                //     const label = field.fieldName.replace(/\_/g, " ");
-                //     const selectedVal = profile.otherDetails?.find(
-                //       (detail: any) => detail.fieldName === field.fieldName
-                //     )?.selectedValues;
-                //     let value;
-                //     try {
-                //       const parsedVal = JSON.parse(selectedVal);
-                //       value = Array.isArray(parsedVal)
-                //         ? parsedVal.join(", ")
-                //         : selectedVal;
-                //     } catch (error) {
-                //       // Assume it's not an array
-                //       value = selectedVal;
-                //     }
+          {/* Posts Content */}
+          {activeTab === 0 && (
+            <FlatList
+              data={MOCK_USER_POSTS}
+              renderItem={renderPost}
+              keyExtractor={(item) => item.id.toString()}
+              scrollEnabled={false}
+              contentContainerStyle={[{ paddingBottom: 100 }]}
+            />
+          )}
 
-                //     return (
-                //       <View key={index} style={[tw.mX4, tw.mY2, tw.flex, tw.flexRow]}>
-                //         <View style={[tw.mR4]}>
-                //           <Ionicons
-                //             name={
-                //               profileTabs[activeTab]?.icons?.find(
-                //                 (icon) => field.fieldName.includes(icon.field)
-                //               )?.icon
-                //             }
-                //             size={24}
-                //             style={[tw.textGray600, tw.mY2]}
-                //           />
-                //         </View>
-                //         <View>
-                //         <TextComponent
-                //           variant="labelLarge"
-                //           style={[tw.fontBlack, tw.capitalize]}
-                //         >
-                //           {label}
-                //         </TextComponent>
-                //         <TextComponent
-                //           variant="bodyMedium"
-                //           style={[tw.textGray600]}
-                //         >
-                //           {/* { profile[field.fieldName] ?? "No data yet"} */}
-                //           {value ?? "No set yet"}
-                //         </TextComponent>
-                //         </View>
-                //         <Divider style={[tw.bgGray500, tw.mY4]} />
-                //       </View>
-                //     );
-                //   })
-                profileTabs[activeTab].content.map(
-                  (field: string, index: number) => (
-                    <TouchableOpacity
-                      key={index}
-                      style={[tw.mX4]}
-                      onPress={() => {
-                        router.push(`/form/profile?tab=${activeTab}`);
-                      }}
-                    >
-                      <TextComponent
-                        variant="labelLarge"
-                        style={[tw.fontBlack, tw.capitalize]}
-                      >
-                        {separateTextWithSpace(field)}
-                      </TextComponent>
-                      <TextComponent
-                        variant="bodyMedium"
-                        style={[tw.textGray600]}
-                      >
-                        {field === "dateOfBirth"
-                          ? moment(profile[field]).format("MMM DD, YYYY")
-                          : profile[field] ?? "No data yet"}
-                      </TextComponent>
-                      <Divider style={[tw.bgGray500, tw.mY4]} />
-                    </TouchableOpacity>
-                  )
-                )}
-          </View>
-          <Button
-            onPress={handleLogout}
-            mode="contained"
-            style={[tw.mX4, tw.mT2, tw.mB12, tw.bgRed600, tw.textWhite]}
-            loading={loading}
-          >
-            Logout
-          </Button>
+          {/* Other tabs content */}
+          {activeTab !== 0 && (
+            <View style={[tw.itemsCenter, tw.pY16]}>
+              <Text style={[tw.textGray500, tw.textBase]}>
+                {PROFILE_TABS[activeTab]} content coming soon
+              </Text>
+            </View>
+          )}
         </View>
       </ScrollView>
     </SafeAreaView>

@@ -19,7 +19,7 @@ export default function TabLayout() {
         //   backgroundColor: "#1d1b2c",
         // },
         tabBarStyle: {
-          backgroundColor: '#2e2b42', // Set background color
+          backgroundColor: '#111827', // Set background color
           borderTopColor: 'transparent',
           position: 'absolute', // Ensures the bar is "detached"
           bottom: 10, // Position above the bottom of the screen

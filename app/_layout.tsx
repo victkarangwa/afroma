@@ -82,6 +82,10 @@ export default function RootLayout() {
                 options={{ headerShown: false }}
               />
               <Stack.Screen
+                name="form/categoryProfile"
+                options={{ headerShown: false }}
+              />
+              <Stack.Screen
                 name="getStarted/index"
                 options={{ headerShown: false }}
               />

@@ -1,9 +1,11 @@
 import React, { useState } from "react";
-import { View, Text, TextInput, ScrollView, Image, TouchableOpacity, FlatList, Dimensions, PanResponder, Animated } from "react-native";
+import { View, Text, TextInput, ScrollView, Image, TouchableOpacity, FlatList, Dimensions, PanResponder, Animated, Modal } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { tw } from "react-native-tailwindcss";
-import { useRouter, useLocalSearchParams } from "expo-router";
+import { useRouter, useFocusEffect } from "expo-router";
+import LocalStorage from "@/utils/storage";
+import localStore from "@/utils/localValues";
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get("window");
 
@@ -11,7 +13,7 @@ const { width: screenWidth, height: screenHeight } = Dimensions.get("window");
 const MOCK_DATING_PROFILES = [
   {
     id: 1,
-    name: "Emma Wilson",
+    name: "Emma Gasana",
     age: 28,
     bio: "Adventure seeker, coffee lover, and travel enthusiast. Looking for someone to explore the world with!",
     images: [
@@ -25,7 +27,7 @@ const MOCK_DATING_PROFILES = [
   },
   {
     id: 2,
-    name: "Marcus Thompson",
+    name: "Marcus Keshua",
     age: 32,
     bio: "Fitness enthusiast and chef. Love cooking new recipes and staying active. Let's grab a healthy meal together!",
     images: [
@@ -39,7 +41,7 @@ const MOCK_DATING_PROFILES = [
   },
   {
     id: 3,
-    name: "Sofia Rodriguez",
+    name: "Sofia Jayjay",
     age: 26,
     bio: "Artist and yoga instructor. Finding beauty in everyday moments. Love deep conversations and weekend getaways.",
     images: [
@@ -53,7 +55,7 @@ const MOCK_DATING_PROFILES = [
   },
   {
     id: 4,
-    name: "James Park",
+    name: "James Mthongozi",
     age: 30,
     bio: "Tech entrepreneur with a passion for innovation. When I'm not coding, you'll find me rock climbing or playing guitar.",
     images: [
@@ -78,6 +80,12 @@ const MOCK_POSTS = [
     comments: 4700,
     shares: 12400,
     isBookmarked: false,
+    location: "Kigali, Rwanda",
+    pictures: [
+      "https://picsum.photos/400/300?random=1",
+      "https://picsum.photos/400/300?random=11",
+      "https://picsum.photos/400/300?random=21"
+    ],
   },
   {
     id: 2,
@@ -88,6 +96,11 @@ const MOCK_POSTS = [
     comments: 3800,
     shares: 9600,
     isBookmarked: true,
+    location: "Nairobi, Kenya",
+    pictures: [
+      "https://picsum.photos/400/300?random=2",
+      "https://picsum.photos/400/300?random=12"
+    ],
   },
   {
     id: 3,
@@ -98,6 +111,10 @@ const MOCK_POSTS = [
     comments: 5200,
     shares: 14800,
     isBookmarked: false,
+    location: "Cape Town, South Africa",
+    pictures: [
+      "https://picsum.photos/400/300?random=3"
+    ],
   },
   {
     id: 4,
@@ -108,6 +125,13 @@ const MOCK_POSTS = [
     comments: 1200,
     shares: 3400,
     isBookmarked: false,
+    location: "Accra, Ghana",
+    pictures: [
+      "https://picsum.photos/400/300?random=4",
+      "https://picsum.photos/400/300?random=14",
+      "https://picsum.photos/400/300?random=24",
+      "https://picsum.photos/400/300?random=34"
+    ],
   },
 ];
 
@@ -327,7 +351,6 @@ const NetworkingCard = ({ profile }: { profile: typeof MOCK_NETWORKING_PROFILES[
 
 const HomeScreen: React.FC = () => {
   const router = useRouter();
-  const params = useLocalSearchParams();
   const [activeTab, setActiveTab] = useState(0);
   const [searchQuery, setSearchQuery] = useState("");
   const [posts, setPosts] = useState(MOCK_POSTS);
@@ -335,14 +358,20 @@ const HomeScreen: React.FC = () => {
   const [networkingProfiles] = useState(MOCK_NETWORKING_PROFILES);
   const [currentProfileIndex, setCurrentProfileIndex] = useState(0);
   const [showDating, setShowDating] = useState(false);
+  const [profileType, setProfileType] = useState<'travel' | 'networking' | 'dating' | null>(null);
+  const [imageModalVisible, setImageModalVisible] = useState(false);
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
-  React.useEffect(() => {
-    if (params.profileType === 'dating') {
-      setShowDating(true);
-    } else {
-      setShowDating(false);
-    }
-  }, [params.profileType]);
+  // On mount and on focus, read profileType from local storage
+  useFocusEffect(
+    React.useCallback(() => {
+      (async () => {
+        const storedType = await LocalStorage.getItem<'travel' | 'networking' | 'dating'>(localStore.profileType);
+        if (storedType) setProfileType(storedType);
+        setShowDating(storedType === 'dating');
+      })();
+    }, [])
+  );
 
   const formatNumber = (num: number) => {
     if (num >= 1000) {
@@ -384,6 +413,10 @@ const HomeScreen: React.FC = () => {
           />
           <View>
             <Text style={[tw.textGray900, tw.fontBold, tw.textBase]}>{item.user.name}</Text>
+            {/* Show location if profileType is travel */}
+            {profileType === 'travel' && item.location && (
+              <Text style={[tw.textGray500, tw.textXs]}>{item.location}</Text>
+            )}
             <Text style={[tw.textGray500, tw.textSm]}>{item.timestamp}</Text>
           </View>
         </View>
@@ -395,16 +428,88 @@ const HomeScreen: React.FC = () => {
           />
         </TouchableOpacity>
       </View>
-
-      {/* Main Image */}
-      <View style={[tw.pX4, tw.pB2]}>
-        <Image
-          source={{ uri: item.image }}
-          style={[tw.wFull, { height: 240 }, tw.roundedLg]}
-          resizeMode="cover"
-        />
-      </View>
-
+      {/* Main Image or Grid for Travel */}
+      {profileType === 'travel' ? (
+        <View style={[tw.pX4, tw.pB2]}> 
+          {item.pictures && item.pictures.length === 1 && (
+            <TouchableOpacity
+              onPress={() => {
+                setSelectedImage(item.pictures[0]);
+                setImageModalVisible(true);
+              }}
+            >
+              <Image
+                source={{ uri: item.pictures[0] }}
+                style={[tw.wFull, { height: 240 }, tw.roundedLg]}
+                resizeMode="cover"
+              />
+            </TouchableOpacity>
+          )}
+          {item.pictures && item.pictures.length === 2 && (
+            <View style={{ flexDirection: 'row', gap: 8 }}>
+              {item.pictures.map((img, idx) => (
+                <TouchableOpacity
+                  key={idx}
+                  style={{ flex: 1 }}
+                  onPress={() => {
+                    setSelectedImage(img);
+                    setImageModalVisible(true);
+                  }}
+                >
+                  <Image
+                    source={{ uri: img }}
+                    style={[{ width: '100%', height: 180, borderRadius: 12 }]}
+                    resizeMode="cover"
+                  />
+                </TouchableOpacity>
+              ))}
+            </View>
+          )}
+          {item.pictures && item.pictures.length >= 3 && (
+            <View style={{ flexDirection: 'row', gap: 8, height: 200 }}>
+              <TouchableOpacity
+                style={{ flex: 2, marginRight: 4 }}
+                onPress={() => {
+                  setSelectedImage(item.pictures[0]);
+                  setImageModalVisible(true);
+                }}
+              >
+                <Image
+                  source={{ uri: item.pictures[0] }}
+                  style={[{ width: '100%', height: '100%', borderRadius: 12, flex: 1 }]} 
+                  resizeMode="cover"
+                />
+              </TouchableOpacity>
+              <View style={{ flex: 1, justifyContent: 'space-between' }}>
+                {[item.pictures[1], item.pictures[2]].map((img, idx) => (
+                  <TouchableOpacity
+                    key={idx}
+                    style={{ flex: 1, marginBottom: idx === 0 ? 4 : 0 }}
+                    onPress={() => {
+                      setSelectedImage(img);
+                      setImageModalVisible(true);
+                    }}
+                  >
+                    <Image
+                      source={{ uri: img }}
+                      style={[{ width: '100%', height: '100%', borderRadius: 12, flex: 1 }]} 
+                      resizeMode="cover"
+                    />
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+          )}
+        </View>
+      ) : (
+        <View style={[tw.pX4, tw.pB2]}>
+          <Image
+            source={{ uri: item.image }}
+            style={[tw.wFull, { height: 240 }, tw.roundedLg]}
+            resizeMode="cover"
+          />
+        </View>
+      )}
       {/* Engagement Metrics */}
       <View style={[tw.flexRow, tw.itemsCenter, tw.justifyBetween, tw.pX4, tw.pB4]}>
         <View style={[tw.flexRow, tw.itemsCenter]}>
@@ -412,18 +517,37 @@ const HomeScreen: React.FC = () => {
             <Ionicons name="heart-outline" size={20} color="#6b7280" />
             <Text style={[tw.textGray600, tw.textSm, tw.mL1]}>{formatNumber(item.likes)}</Text>
           </TouchableOpacity>
-          
           <TouchableOpacity style={[tw.flexRow, tw.itemsCenter, tw.mR6]}>
             <Ionicons name="chatbubble-outline" size={20} color="#6b7280" />
             <Text style={[tw.textGray600, tw.textSm, tw.mL1]}>{formatNumber(item.comments)}</Text>
           </TouchableOpacity>
-          
           <TouchableOpacity style={[tw.flexRow, tw.itemsCenter]}>
             <Ionicons name="arrow-redo-outline" size={20} color="#6b7280" />
             <Text style={[tw.textGray600, tw.textSm, tw.mL1]}>{formatNumber(item.shares)}</Text>
           </TouchableOpacity>
         </View>
       </View>
+      {/* Image Modal */}
+      <Modal
+        visible={imageModalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setImageModalVisible(false)}
+      >
+        <TouchableOpacity
+          style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.9)', justifyContent: 'center', alignItems: 'center' }}
+          activeOpacity={1}
+          onPress={() => setImageModalVisible(false)}
+        >
+          {selectedImage && (
+            <Image
+              source={{ uri: selectedImage }}
+              style={{ width: '90%', height: '60%', borderRadius: 16 }}
+              resizeMode="contain"
+            />
+          )}
+        </TouchableOpacity>
+      </Modal>
     </View>
   );
 
@@ -556,7 +680,7 @@ const HomeScreen: React.FC = () => {
       {/* Content */}
       {showDating ? (
         renderDatingInterface()
-      ) : params.profileType === 'networking' ? (
+      ) : profileType === 'networking' ? (
         <FlatList
           data={networkingProfiles}
           renderItem={({ item }) => <NetworkingCard profile={item} />}

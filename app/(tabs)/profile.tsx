@@ -27,7 +27,7 @@ const localStoreTyped = localStore as LocalStoreType;
 const MOCK_USER_POSTS = [
   {
     id: 1,
-    user: { name: "Alex Tsimikas", avatar: "https://randomuser.me/api/portraits/women/5.jpg" },
+    user: { name: "Alex Tangishaka", avatar: "https://randomuser.me/api/portraits/women/5.jpg" },
     timestamp: "3d ago",
     content: "Going on vacation! Catch you all in 10 days. No call!!!!",
     likes: 261,
@@ -36,7 +36,7 @@ const MOCK_USER_POSTS = [
   },
   {
     id: 2,
-    user: { name: "Alex Tsimikas", avatar: "https://randomuser.me/api/portraits/women/5.jpg" },
+    user: { name: "Gedeon Izabayo", avatar: "https://randomuser.me/api/portraits/women/5.jpg" },
     timestamp: "4d ago", 
     content: "1 day to go!",
     likes: 189,

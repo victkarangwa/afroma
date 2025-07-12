@@ -5,7 +5,7 @@ import ButtonComponent from "@/components/Button";
 import { Chip, Divider, ProgressBar } from "react-native-paper";
 import { Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
-import { useRouter } from "expo-router";
+import { useRouter, useLocalSearchParams } from "expo-router";
 import NavBar from "@/components/navigation/NavBar";
 
 const HEIGHT_OPTIONS = [
@@ -54,13 +54,13 @@ const MAX_PHOTOS = 6;
 
 const CompleteProfileScreen: React.FC = () => {
   const router = useRouter();
+  const params = useLocalSearchParams();
   const [photos, setPhotos] = useState<string[]>([]);
   const [height, setHeight] = useState<string>("");
   const [customHeight, setCustomHeight] = useState<string>("");
   const [nationalities, setNationalities] = useState<string[]>([]);
   const [languages, setLanguages] = useState<string[]>([]);
   const [interests, setInterests] = useState<string[]>([]);
-  const [purpose, setPurpose] = useState<string>("");
   const [institutions, setInstitutions] = useState([
     { name: "" },
   ]);
@@ -86,7 +86,6 @@ const CompleteProfileScreen: React.FC = () => {
         return languages.length > 0 && interests.length > 0;
       case 3:
         return (
-          !!purpose &&
           institutions.every(inst => inst.name) &&
           employer && jobTitle
         );
@@ -102,6 +101,8 @@ const CompleteProfileScreen: React.FC = () => {
     if (step > 0) setStep(step - 1);
   };
   const handleFinish = () => {
+    // Get purpose from params (should be passed from lookingFor)
+    const purpose = params.purpose || '';
     router.push(`/form/categoryProfile?purpose=${purpose}`);
   };
 
@@ -299,34 +300,6 @@ const CompleteProfileScreen: React.FC = () => {
           )}
           {step === 3 && (
             <>
-              {/* Purpose */}
-              <View style={[tw.bgWhite, tw.roundedLg, tw.p4, tw.shadow, tw.mB6]}>
-                <Text style={[tw.textPink700, tw.textLg, tw.fontBold, tw.mB2]}>Purpose</Text>
-                <View style={[tw.flexRow, tw.flexWrap]}>
-                  {PURPOSES.map((p) => (
-                    <TouchableOpacity
-                      key={p.value}
-                      style={[
-                        tw.bgGray100,
-                        tw.pX4,
-                        tw.pY2,
-                        tw.roundedFull,
-                        tw.mR2,
-                        tw.mB2,
-                        tw.border2,
-                        purpose === p.value ? tw.borderPink700 : tw.borderGray300,
-                        purpose === p.value ? tw.bgPink700 : null,
-                      ]}
-                      onPress={() => setPurpose(p.value)}
-                    >
-                      <Text style={[
-                        purpose === p.value ? tw.textWhite : tw.textGray700,
-                        tw.fontBold,
-                      ]}>{p.label}</Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-              </View>
               {/* Institutions Attended */}
               <View style={[tw.bgWhite, tw.roundedLg, tw.p4, tw.shadow, tw.mB6]}>
                 <Text style={[tw.textPink700, tw.textLg, tw.fontBold, tw.mB2]}>Institutions Attended</Text>

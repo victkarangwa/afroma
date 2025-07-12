@@ -1,26 +1,17 @@
-import Input from "@/components/input";
+import React from "react";
+import { useForm, Controller } from "react-hook-form";
+import { useRouter } from "expo-router";
+import { View, Image, TouchableOpacity, TextInput, Text, Platform } from "react-native";
+import { Button } from "react-native-paper";
+import { tw } from "react-native-tailwindcss";
+import { FontAwesome } from '@expo/vector-icons';
 import Modal from "@/components/Modal";
-import Separator from "@/components/Separator";
-import {
-  onFacebookButtonPress,
-  onGoogleButtonPress,
-} from "@/components/SocialLogin";
-import TextComponent from "@/components/Text";
 import useApiRequest from "@/hooks/useApiRequest";
 import { ApiResponse } from "@/types";
 import { removeUserData } from "@/utils";
 import localStore from "@/utils/localValues";
 import LocalStorage from "@/utils/storage";
-import { Link, useRouter } from "expo-router";
-import React from "react";
-import { Controller, useForm } from "react-hook-form";
-import {
-  Image,
-  Platform,
-  View
-} from "react-native";
-import { Button, TextInput } from "react-native-paper";
-import { tw } from "react-native-tailwindcss";
+import moment from "moment";
 
 type FormData = {
   username: string;
@@ -29,11 +20,10 @@ type FormData = {
 
 const LoginScreen: React.FC = () => {
   const router = useRouter();
-
   const {
     control,
-    formState: { errors },
     handleSubmit,
+    formState: { errors },
   } = useForm<FormData>({
     defaultValues: {
       username: "",
@@ -42,13 +32,7 @@ const LoginScreen: React.FC = () => {
   });
 
   const [visible, setVisible] = React.useState(false);
-  const [modalInfo, setModalInfo] = React.useState<{
-    title: string;
-    description: string;
-    status: "error" | "success" | "warning" | "info";
-    btnText: string;
-    onDismiss?: () => void;
-  }>({
+  const [modalInfo, setModalInfo] = React.useState({
     title: "",
     description: "",
     status: "error",
@@ -59,186 +43,125 @@ const LoginScreen: React.FC = () => {
   const { loading, send, error } = useApiRequest<ApiResponse>();
 
   const handleLogin = async (credentials: FormData) => {
-    // remove user data -- to be revamped
-    removeUserData();
-
-    // convert username and password to basic auth
-    const basicAuth = btoa(`${credentials.username}:${credentials.password}`);
-    const result = await send(
-      "post",
-      "/bonded-user-service/auth/login",
-      {},
-      {
-        headers: {
-          Authorization: `Basic ${basicAuth}`,
-          "Content-Type": "application/json",
-        },
-      }
-    );
-    console.log("___LOGIN___", result);
-    if (result?.errors) {
-      return setVisible(true);
-    }
-    LocalStorage.setItem(localStore.token, result?.otpToken);
+    // removeUserData();
+    // const basicAuth = btoa(`${credentials.username}:${credentials.password}`);
+    // const result = await send(
+    //   "post",
+    //   "/bonded-user-service/auth/login",
+    //   {},
+    //   {
+    //     headers: {
+    //       Authorization: `Basic ${basicAuth}`,
+    //       "Content-Type": "application/json",
+    //     },
+    //   }
+    // );
+    // if (result?.errors) {
+    //   return setVisible(true);
+    // }
+    // LocalStorage.setItem(localStore.token, result?.otpToken);
     router.push({ pathname: "/getStarted/otp" });
   };
 
-  const continueWithSocial = async (type = "google", token: string) => {
-    try {
-      if (token) {
-        const result = await send(
-          "get",
-          `/bonded-user-service/socialmedia/auth/${type}`,
-          {
-            headers: {
-              accessToken: token,
-              platform: Platform.OS,
-            },
-          }
-        );
-
-        if (result?.errors) {
-          setModalInfo({
-            title: "Error",
-            description:
-              result?.errors || "An error occurred. Please try again.",
-            status: "error",
-            btnText: "Try Again",
-            onDismiss: () => setVisible(false),
-          });
-          setVisible(true);
-          return;
-        }
-        if (!result.newAccount) {
-          LocalStorage.setItem(
-            localStore.token,
-            result?.tokenResponse?.otpToken
-          );
-          router.push({ pathname: "/getStarted/otp" });
-        } else {
-          router.push({ pathname: "/getStarted/accountType" });
-        }
-      }
-    } catch (error) {
-      console.log("error", error, token);
-    }
+  const primaryShadow = {
+    shadowColor: '#fb6c31',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.33,
+    shadowRadius: 8,
+    elevation: 4,
   };
 
   const handleModal = () => setVisible(false);
+
   return (
-    <View>
+    <View style={[{ backgroundColor: '#FFFFFF' }, tw.hFull, tw.pX8, tw.justifyCenter]}>
       <Modal
         title="Error"
         description={error ?? "An error occurred. Please try again."}
         visible={visible}
         onDismiss={handleModal}
       />
-      <View style={[tw.bgPink100, tw.hFull]}>
-        <View style={[tw.flex, tw.justifyCenter, tw.itemsCenter, tw.pX8]}>
-          <Image
-            source={require("../../assets/images/afroma_logo.png")}
-            style={[tw.w32, tw.h32, tw.mT24]}
-          />
-        </View>
-        <View style={[tw.mX8]}>
-          <Controller
-            control={control}
-            rules={{
-              required: true,
-            }}
-            name="username"
-            render={({ field: { onChange, onBlur, value } }) => (
-              <Input
-                label="Email or Phone"
-                left={
-                  <TextInput.Icon icon="account-circle-outline" color="gray" />
-                }
-                onBlur={onBlur}
-                onChangeText={(value) => onChange(value)}
-              />
-            )}
-          />
-          {errors.username && (
-            <TextComponent style={[tw.textRed600]}>
-              Email or Phone is required
-            </TextComponent>
+      <View style={[tw.itemsCenter]}>
+        <Image
+          source={require("../../assets/images/afroma_logo.png")}
+          style={[tw.w32, tw.h32, tw.mT24]}
+        />
+        <Text style={[tw.textPink700, tw.text2xl, tw.fontBold, tw.mT4]}>Login</Text>
+      </View>
+      <View style={[tw.mT8]}>
+        {/* Username */}
+        <Text style={[tw.textPink700, tw.textBase, tw.fontBold, tw.mB2]}>Email or Phone</Text>
+        <Controller
+          control={control}
+          name="username"
+          rules={{ required: "Email or phone is required" }}
+          render={({ field: { onChange, onBlur, value } }) => (
+            <TextInput
+              style={[tw.bgWhite, tw.rounded, tw.p3, tw.mB2, primaryShadow]}
+              placeholder="Enter your email or phone"
+              onBlur={onBlur}
+              onChangeText={onChange}
+              value={value}
+              autoCapitalize="none"
+              keyboardType="email-address"
+            />
           )}
-          <Controller
-            control={control}
-            rules={{
-              required: true,
-            }}
-            name="password"
-            render={({ field: { onChange, onBlur, value } }) => (
-              <Input
-                label="Password"
-                left={<TextInput.Icon icon="lock-outline" color="gray" />}
-                onChangeText={(value) => onChange(value)}
-              />
-            )}
-          />
-          {errors.password && (
-            <TextComponent style={[tw.textRed600]}>
-              Password is required
-            </TextComponent>
+        />
+        {errors.username && (
+          <Text style={[tw.textRed500, tw.mB2]}>{errors.username.message}</Text>
+        )}
+        {/* Password */}
+        <Text style={[tw.textPink700, tw.textBase, tw.fontBold, tw.mB2]}>Password</Text>
+        <Controller
+          control={control}
+          name="password"
+          rules={{ required: "Password is required" }}
+          render={({ field: { onChange, onBlur, value } }) => (
+            <TextInput
+              style={[tw.bgWhite, tw.rounded, tw.p3, tw.mB2, primaryShadow]}
+              placeholder="Enter your password"
+              secureTextEntry
+              onBlur={onBlur}
+              onChangeText={onChange}
+              value={value}
+            />
           )}
-        </View>
+        />
+        {errors.password && (
+          <Text style={[tw.textRed500, tw.mB2]}>{errors.password.message}</Text>
+        )}
+        {/* Login Button */}
         <Button
-          onPress={handleSubmit(handleLogin)}
           mode="contained"
-          style={[tw.mX8, tw.mY6]}
-          labelStyle={[tw.textBlack]}
+          onPress={handleSubmit(handleLogin)}
+          style={[tw.bgPink700, tw.mT4]}
+          labelStyle={[tw.textWhite]}
           loading={loading}
           disabled={loading}
         >
           Login
         </Button>
-        <Separator text="OR" />
-        {Platform.OS === "android" && (
-          <Button
-            onPress={() =>
-              onGoogleButtonPress().then((res) => {
-                if (res) continueWithSocial("google", res);
-              })
-            }
-            mode="outlined"
-            style={[tw.mX8, tw.mY2]}
-            icon={"google"}
-            labelStyle={[tw.mL8]}
-          >
-            <TextComponent style={[tw.pL12]}>
-              Login with Google{"    "}
-            </TextComponent>
-          </Button>
-        )}
-        <Button
-          onPress={() =>
-            onFacebookButtonPress().then((res) => {
-              if (res?.accessToken) {
-                continueWithSocial("facebook", res?.accessToken);
-              }
-              // On ios, we need to get the authentication token since it uses limited login
-              if (res?.authenticationToken) {
-                continueWithSocial("facebook", res?.authenticationToken);
-              }
-            })
-          }
-          mode="outlined"
-          style={[tw.mX8, tw.mY2]}
-          icon={"facebook"}
-        >
-          <TextComponent> Login with Facebook</TextComponent>
-        </Button>
-        <TextComponent
-          variant="labelSmall"
-          style={[tw.textCenter, tw.textWhite, tw.opacity75, tw.mT4]}
-        >
-          Don't have an account yet?
-          <Link href="/getStarted/accountType" style={[tw.textYellow400]}>
-            {" "}
-            Signup
-          </Link>
-        </TextComponent>
+        {/* Social Login */}
+        <View style={[tw.flex, tw.flexRow, tw.justifyCenter, tw.itemsCenter, tw.mT8]}>
+          <View style={[tw.flex1, tw.hPx, tw.bgGray300, tw.mR2]} />
+          <Text style={[tw.textGray500, tw.textSm]}>or login with</Text>
+          <View style={[tw.flex1, tw.hPx, tw.bgGray300, tw.mL2]} />
+        </View>
+        <View style={[tw.flex, tw.flexRow, tw.justifyCenter, tw.itemsCenter, tw.mT4]}>
+          <TouchableOpacity style={[tw.bgWhite, tw.roundedFull, tw.p3, primaryShadow, tw.mX2]} onPress={() => {/* TODO: Add Facebook login */}}>
+            <FontAwesome name="facebook" size={24} color="#1877F3" />
+          </TouchableOpacity>
+          <TouchableOpacity style={[tw.bgWhite, tw.roundedFull, tw.p3, primaryShadow, tw.mX2]} onPress={() => {/* TODO: Add Google login */}}>
+            <FontAwesome name="google" size={24} color="#EA4335" />
+          </TouchableOpacity>
+        </View>
+        {/* Don't have an account? */}
+        <View style={[tw.flex, tw.flexRow, tw.justifyCenter, tw.itemsCenter, tw.mT8]}>
+          <Text style={[tw.textGray700]}>Don't have an account? </Text>
+          <TouchableOpacity onPress={() => router.push('/getStarted/accountType')}>
+            <Text style={[{ color: '#fb6c31' }, tw.fontBold]}>Sign up</Text>
+          </TouchableOpacity>
+        </View>
       </View>
     </View>
   );

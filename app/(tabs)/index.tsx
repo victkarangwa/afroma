@@ -3,6 +3,7 @@ import { View, Text, TextInput, ScrollView, Image, TouchableOpacity, FlatList, D
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { tw } from "react-native-tailwindcss";
+import { useRouter, useLocalSearchParams } from "expo-router";
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get("window");
 
@@ -110,7 +111,47 @@ const MOCK_POSTS = [
   },
 ];
 
-const FILTER_TABS = ["All", "Dating", "Friends", "Business", "Travel"];
+// Mock data for networking profiles
+const MOCK_NETWORKING_PROFILES = [
+  {
+    id: 1,
+    name: "Linda Mensah",
+    headline: "Product Manager at FinTech Africa",
+    summary: "Building digital products for financial inclusion. Passionate about mentoring women in tech.",
+    photo: "https://randomuser.me/api/portraits/women/12.jpg",
+    industries: ["Technology", "Finance"],
+    collaboration: ["Mentoring", "Partnerships"],
+  },
+  {
+    id: 2,
+    name: "Kwame Boateng",
+    headline: "Founder, EduConnect",
+    summary: "Connecting students with global learning opportunities. Always open to new partnerships.",
+    photo: "https://randomuser.me/api/portraits/men/13.jpg",
+    industries: ["Education", "Technology"],
+    collaboration: ["Partnerships", "Job Opportunities"],
+  },
+  {
+    id: 3,
+    name: "Fatima Diallo",
+    headline: "Marketing Strategist",
+    summary: "Helping brands grow in Africa. Let’s collaborate on creative campaigns!",
+    photo: "https://randomuser.me/api/portraits/women/14.jpg",
+    industries: ["Marketing", "Design"],
+    collaboration: ["Partnerships", "Mentoring"],
+  },
+  {
+    id: 4,
+    name: "Samuel Okoro",
+    headline: "Healthcare Consultant",
+    summary: "Improving healthcare systems across West Africa. Interested in health tech partnerships.",
+    photo: "https://randomuser.me/api/portraits/men/14.jpg",
+    industries: ["Healthcare", "Consulting"],
+    collaboration: ["Job Opportunities", "Partnerships"],
+  },
+];
+
+const FILTER_TABS = ["All", "People", "Posts", "Events", "Groups"];
 
 // Dating Card Component
 const DatingCard = ({ profile, onSwipe, isTopCard }: { 
@@ -254,12 +295,54 @@ const DatingCard = ({ profile, onSwipe, isTopCard }: {
   );
 };
 
+// Networking Card Component
+const NetworkingCard = ({ profile }: { profile: typeof MOCK_NETWORKING_PROFILES[0] }) => (
+  <View style={[tw.bgWhite, tw.roundedLg, tw.mB4, tw.shadow, tw.mX4, tw.p4, tw.flexRow]}> 
+    <Image
+      source={{ uri: profile.photo }}
+      style={[tw.w20, tw.h20, tw.rounded]}
+      resizeMode="cover"
+    />
+    <View style={[tw.flex1, tw.mL4, tw.justifyCenter]}> 
+      <Text style={[tw.textGray900, tw.fontBold, tw.textLg]}>{profile.name}</Text>
+      <Text style={[tw.textGray700, tw.textBase, tw.mT1]}>{profile.headline}</Text>
+      <Text style={[tw.textGray600, tw.textSm, tw.mT2]} numberOfLines={3}>{profile.summary}</Text>
+      <View style={[tw.flexRow, tw.flexWrap, tw.mT2]}> 
+        {profile.industries.map((industry, idx) => (
+          <View key={idx} style={[tw.bgGray200, tw.roundedFull, tw.pX3, tw.pY1, tw.mR2, tw.mB1]}>
+            <Text style={[tw.textGray700, tw.textXs]}>{industry}</Text>
+          </View>
+        ))}
+      </View>
+      <View style={[tw.flexRow, tw.flexWrap, tw.mT1]}> 
+        {profile.collaboration.map((item, idx) => (
+          <View key={idx} style={[tw.bgPink100, tw.roundedFull, tw.pX3, tw.pY1, tw.mR2, tw.mB1]}>
+            <Text style={[tw.textPink700, tw.textXs, tw.fontBold]}>{item}</Text>
+          </View>
+        ))}
+      </View>
+    </View>
+  </View>
+);
+
 const HomeScreen: React.FC = () => {
+  const router = useRouter();
+  const params = useLocalSearchParams();
   const [activeTab, setActiveTab] = useState(0);
   const [searchQuery, setSearchQuery] = useState("");
   const [posts, setPosts] = useState(MOCK_POSTS);
   const [datingProfiles, setDatingProfiles] = useState(MOCK_DATING_PROFILES);
+  const [networkingProfiles] = useState(MOCK_NETWORKING_PROFILES);
   const [currentProfileIndex, setCurrentProfileIndex] = useState(0);
+  const [showDating, setShowDating] = useState(false);
+
+  React.useEffect(() => {
+    if (params.profileType === 'dating') {
+      setShowDating(true);
+    } else {
+      setShowDating(false);
+    }
+  }, [params.profileType]);
 
   const formatNumber = (num: number) => {
     if (num >= 1000) {
@@ -424,7 +507,6 @@ const HomeScreen: React.FC = () => {
               resizeMode="contain"
             />
           </View>
-          
           {/* Search Bar */}
           <View style={[tw.flex1, tw.flexRow, tw.itemsCenter, tw.bgWhite, tw.roundedFull, tw.pX4, tw.pY3, tw.shadow]}>
             <TextInput
@@ -440,7 +522,6 @@ const HomeScreen: React.FC = () => {
           </View>
         </View>
       </View>
-
       {/* Filter Tabs */}
       <View style={[tw.pX4, tw.pB4]}>
         <Text style={[tw.textGray900, tw.fontBold, tw.textLg, tw.mB3]}>Categories</Text>
@@ -472,13 +553,18 @@ const HomeScreen: React.FC = () => {
           ))}
         </ScrollView>
       </View>
-
       {/* Content */}
-      {activeTab === 1 ? (
-        // Dating Interface
+      {showDating ? (
         renderDatingInterface()
-      ) : (
-        // Posts Feed
+      ) : params.profileType === 'networking' ? (
+        <FlatList
+          data={networkingProfiles}
+          renderItem={({ item }) => <NetworkingCard profile={item} />}
+          keyExtractor={(item) => item.id.toString()}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={[{ paddingBottom: 80 }]}
+            />
+          ) : (
         <FlatList
           data={posts}
           renderItem={renderPostCard}

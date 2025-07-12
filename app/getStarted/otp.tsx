@@ -1,23 +1,24 @@
-import { ThemedView } from "@/components/ThemedView";
-import { Ionicons } from "@expo/vector-icons";
-import React, { useEffect, useState } from "react";
-import { View, StyleSheet, TouchableOpacity, Image } from "react-native";
+import React from "react";
+import { useForm, Controller } from "react-hook-form";
+import { useRouter } from "expo-router";
+import { View, Image, TextInput, Text, TouchableOpacity } from "react-native";
+import { Button } from "react-native-paper";
 import { tw } from "react-native-tailwindcss";
-import { heightPercentageToDP } from "react-native-responsive-screen";
-import ButtonComponent from "@/components/Button";
-import TextComponent from "@/components/Text";
-import { introText } from "@/constants/text";
-import Input from "@/components/input";
-import { Button, Divider, TextInput } from "react-native-paper";
-import { Link, useRouter } from "expo-router";
-import Separator from "@/components/Separator";
+import { FontAwesome } from '@expo/vector-icons';
 import OTPTextView from "react-native-otp-textinput";
-import useApiRequest from "@/hooks/useApiRequest";
-import { ApiResponse } from "@/types";
-import Modal from "@/components/Modal";
-import localStore from "@/utils/localValues";
-import LocalStorage from "@/utils/storage";
-import { useForm } from "react-hook-form";
+// import useApiRequest from "@/hooks/useApiRequest";
+// import { ApiResponse } from "@/types";
+// import Modal from "@/components/Modal";
+// import localStore from "@/utils/localValues";
+// import LocalStorage from "@/utils/storage";
+
+const primaryShadow = {
+  shadowColor: '#fb6c31',
+  shadowOffset: { width: 0, height: 2 },
+  shadowOpacity: 0.33,
+  shadowRadius: 8,
+  elevation: 4,
+};
 
 type FormData = {
   code: string;
@@ -25,98 +26,74 @@ type FormData = {
 
 const OtpScreen: React.FC = () => {
   const router = useRouter();
-
-  const {
-    control,
-    formState: { errors },
-    handleSubmit,
-  } = useForm<FormData>({
-    defaultValues: {
-      code: "",
-    },
+  const { control, handleSubmit, formState: { errors } } = useForm<FormData>({
+    defaultValues: { code: "" },
   });
+  // const { loading, send, error } = useApiRequest<ApiResponse>();
+  // const [visible, setVisible] = React.useState(false);
 
-  const { loading, send, error } = useApiRequest<ApiResponse>();
-
-  const [visible, setVisible] = React.useState(false);
-  const [code, setCode] = React.useState("");
-
-  const handleOtp = async () => {
-    const result = await send("post", "/bonded-user-service/auth/login-auth2", {
-      code,
-    });
-    console.log("___OTP_[]__", result, errors);
-    if (result?.errors) {
-      return setVisible(true);
-    }
-    LocalStorage.setItem(localStore.token, result?.token);
+  const onSubmit = (data: FormData) => {
+    // Temporarily skip API call and go to main screen
+    // const result = await send("post", "/bonded-user-service/auth/login-auth2", { code: data.code });
+    // if (result?.errors) { setVisible(true); return; }
+    // LocalStorage.setItem(localStore.token, result?.token);
     router.push({ pathname: "/(tabs)" });
   };
 
-  const handleModal = () => setVisible(false);
   return (
-    <View style={[tw.bgPink100, tw.hFull]}>
-      <Modal
-        title="OTP Error"
-        description={error ?? "An error occured while verifying your OTP"}
-        visible={visible}
-        onDismiss={handleModal}
-      />
-      <View style={[tw.flex, tw.justifyCenter, tw.itemsCenter, tw.pX8]}>
+    <View style={[{ backgroundColor: '#FFFFFF' }, tw.hFull, tw.pX8, tw.justifyCenter]}>
+      <View style={[tw.itemsCenter]}>
         <Image
           source={require("../../assets/images/afroma_logo.png")}
           style={[tw.w32, tw.h32, tw.mT24]}
         />
+        <Text style={[tw.textPink700, tw.text2xl, tw.fontBold, tw.mT4]}>Code Verification</Text>
+        <Text style={[tw.textGray500, tw.textBase, tw.mT2, tw.textCenter]}>Enter the OTP sent to your Email/phone number</Text>
       </View>
-      <View style={[tw.m8]}>
-        <View style={[tw.mB8]}>
-          <TextComponent
-            variant="headlineMedium"
-            style={[tw.textWhite, tw.mX8, tw.textCenter, tw.fontBold]}
-          >
-            Code Verification
-          </TextComponent>
-          <TextComponent
-            variant="labelSmall"
-            style={[tw.textWhite, tw.mX8, tw.textCenter, tw.pT2]}
-          >
-            Enter the OTP sent to your Email/phone number
-          </TextComponent>
-        </View>
-        <OTPTextView
-          handleTextChange={setCode}
-          textInputStyle={StyleSheet.flatten([
-            tw.bgGray100,
-            tw.h10,
-            tw.w10,
-            // tw.mX2,
-            tw.rounded,
-          ])}
-          inputCount={6}
-          tintColor={"#757fb4"}
+      <View style={[tw.mT8, tw.itemsCenter]}>
+        <Controller
+          control={control}
+          name="code"
+          rules={{ required: "OTP code is required", minLength: { value: 6, message: "OTP must be 6 digits" } }}
+          render={({ field: { onChange, value } }) => (
+            <OTPTextView
+              handleTextChange={onChange}
+              inputCount={6}
+              keyboardType="numeric"
+              textInputStyle={{
+                backgroundColor: '#f3f4f6',
+                height: 48,
+                width: 48,
+                borderRadius: 8,
+                marginHorizontal: 6,
+                fontSize: 20,
+                color: '#111827',
+                ...primaryShadow,
+              }}
+              tintColor={"#fb6c31"}
+              offTintColor={"#e5e7eb"}
+              defaultValue={value}
+            />
+          )}
         />
+        {errors.code && (
+          <Text style={[tw.textRed500, tw.mT2]}>{errors.code.message}</Text>
+        )}
       </View>
       <Button
-        onPress={handleSubmit(handleOtp)}
         mode="contained"
-        style={[tw.mX8, tw.mY2]}
-        labelStyle={[tw.textBlack]}
-        loading={loading}
-        disabled={loading}
+        onPress={handleSubmit(onSubmit)}
+        style={[tw.bgPink700, tw.mT8]}
+        labelStyle={[tw.textWhite]}
       >
         Verify
       </Button>
-
-      <TextComponent
-        variant="labelSmall"
-        style={[tw.textCenter, tw.textWhite, tw.opacity75, tw.pT6]}
-      >
-        Didn't receive the code?
-        <Link href="/getStarted" style={[tw.textBlue500]}>
-          {" "}
-          Resend Now
-        </Link>
-      </TextComponent>
+      <View style={[tw.flex, tw.flexRow, tw.justifyCenter, tw.itemsCenter, tw.mT8]}>
+        <Text style={[tw.textGray700]}>Didn't receive the code? </Text>
+        <TouchableOpacity onPress={() => {}}>
+          <Text style={[{ color: '#fb6c31' }, tw.fontBold]}>Resend Now</Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 };

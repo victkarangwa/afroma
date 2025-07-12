@@ -6,6 +6,7 @@ import {
   Image,
   ScrollView,
   FlatList,
+  Modal,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
@@ -15,6 +16,12 @@ import useApiRequest from "@/hooks/useApiRequest";
 import { ApiResponse } from "@/types";
 import { removeUserData } from "@/utils";
 import * as ImagePicker from "expo-image-picker";
+import LocalStorage from "@/utils/storage";
+import localStore from "@/utils/localValues";
+
+// Patch type for localStore to include profileType
+type LocalStoreType = typeof localStore & { profileType: string };
+const localStoreTyped = localStore as LocalStoreType;
 
 // Mock data for posts
 const MOCK_USER_POSTS = [
@@ -47,6 +54,16 @@ const ProfileScreen: React.FC = () => {
   const [profile, setProfile] = useState<any>({});
   const [activeTab, setActiveTab] = useState(0);
   const [isUploading, setIsUploading] = useState(false);
+  const [profileType, setProfileType] = useState<'travel' | 'networking' | 'dating'>('travel');
+  const [modalVisible, setModalVisible] = useState(false);
+
+  // On mount, read profileType from local storage
+  useEffect(() => {
+    (async () => {
+      const storedType = await LocalStorage.getItem<'travel' | 'networking' | 'dating'>(localStoreTyped.profileType);
+      if (storedType) setProfileType(storedType);
+    })();
+  }, []);
 
   const getMyBasicProfile = async () => {
     const result = await send("get", "/bonded-user-service/users/me");
@@ -130,6 +147,36 @@ const ProfileScreen: React.FC = () => {
     </View>
   );
 
+  // Handle profile switch and navigate to Home
+  const handleProfileSwitch = async (type: 'travel' | 'networking' | 'dating') => {
+    setProfileType(type);
+    setModalVisible(false);
+    await LocalStorage.setItem(localStoreTyped.profileType, type);
+    let profileTypeParam = 'main';
+    if (type === 'dating') profileTypeParam = 'dating';
+    else if (type === 'networking') profileTypeParam = 'networking';
+    router.replace({ pathname: '/(tabs)', params: { profileType: profileTypeParam } });
+  };
+
+  // Profile type descriptions
+  const profileOptions = [
+    {
+      key: 'travel',
+      label: 'Travel',
+      description: 'Connect with fellow travelers, share experiences, and find travel buddies.'
+    },
+    {
+      key: 'networking',
+      label: 'Networking',
+      description: 'Expand your professional network, collaborate, and discover new opportunities.'
+    },
+    {
+      key: 'dating',
+      label: 'Dating & Relationship',
+      description: 'Meet new people, find matches, and build meaningful relationships.'
+    },
+  ];
+
   return (
     <SafeAreaView style={[tw.flex1, tw.bgGray100]}>
       <ScrollView showsVerticalScrollIndicator={false}>
@@ -170,12 +217,67 @@ const ProfileScreen: React.FC = () => {
                   <Ionicons name="camera" size={16} color="white" />
                 </View>
               )}
+              {/* Profile Type Tag */}
+              <View style={[tw.absolute, { bottom: -12, left: '50%', transform: [{ translateX: -30 }] }, tw.bgGray900, tw.pX3, tw.pY1, tw.roundedFull, tw.itemsCenter, tw.justifyCenter, { minWidth: 60, zIndex: 2 }]}> 
+                <Text style={[tw.textWhite, tw.textXs, tw.fontBold, { textAlign: 'center' }]}> 
+                  {profileType === 'travel' && 'Travel'}
+                  {profileType === 'networking' && 'Networking'}
+                  {profileType === 'dating' && 'Dating'}
+                </Text>
+              </View>
             </View>
           </TouchableOpacity>
         </View>
 
         {/* Profile Section */}
-        <View style={[tw.pX6, tw.mT16]}>
+        <View style={[tw.pX6, tw.mT24]}>
+          {/* Profile Actions Row */}
+          <View style={[tw.flexRow, tw.justifyCenter, tw.itemsCenter, tw.mB6]}> 
+            {/* Switch Profile Icon */}
+            <TouchableOpacity
+              style={[tw.bgGray900, tw.roundedFull, tw.p3, tw.mR4, { shadowColor: '#fb6c31', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.18, shadowRadius: 6, elevation: 3 }]}
+              onPress={() => setModalVisible(true)}
+              accessibilityLabel="Switch Profile"
+            >
+              <Ionicons name="swap-horizontal" size={24} color="#fff" />
+            </TouchableOpacity>
+            {/* Edit Profile Icon */}
+            <TouchableOpacity
+              style={[tw.bgPink700, tw.roundedFull, tw.p3, tw.mR4, { shadowColor: '#fb6c31', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.18, shadowRadius: 6, elevation: 3 }]}
+              onPress={() => router.push("/form/profile")}
+              accessibilityLabel="Edit Profile"
+            >
+              <Ionicons name="create-outline" size={24} color="#fff" />
+            </TouchableOpacity>
+          </View>
+
+          {/* Modal for Profile Options */}
+          <Modal
+            visible={modalVisible}
+            transparent
+            animationType="slide"
+            onRequestClose={() => setModalVisible(false)}
+          >
+            <View style={[tw.flex1, tw.justifyCenter, tw.itemsCenter, { backgroundColor: 'rgba(0,0,0,0.4)' }]}> 
+              <View style={[tw.bgWhite, tw.roundedLg, tw.p8, tw.wFull, tw.mX8]}> 
+                <Text style={[tw.textGray900, tw.textLg, tw.fontBold, tw.mB4, tw.textCenter]}>Select Profile Type</Text>
+                {profileOptions.map(option => (
+                  <TouchableOpacity
+                    key={option.key}
+                    style={[tw.pY4, tw.pX4, tw.rounded, tw.mB3, option.key === profileType ? tw.bgGray200 : tw.bgGray100]}
+                    onPress={() => handleProfileSwitch(option.key as any)}
+                  >
+                    <Text style={[tw.textGray900, tw.fontBold, tw.textBase]}>{option.label}</Text>
+                    <Text style={[tw.textGray600, tw.textSm, tw.mT1]}>{option.description}</Text>
+                  </TouchableOpacity>
+                ))}
+                <TouchableOpacity style={[tw.itemsCenter, tw.mT2]} onPress={() => setModalVisible(false)}>
+                  <Text style={[tw.textPink700, tw.fontBold]}>Cancel</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </Modal>
+
           {/* Profile Info */}
           <View style={[tw.itemsCenter]}>
             <Text style={[tw.textGray900, tw.text2xl, tw.fontBold]}>
@@ -201,16 +303,8 @@ const ProfileScreen: React.FC = () => {
             </View>
           </View>
 
-          {/* Edit Profile Button */}
-          <TouchableOpacity
-            style={[tw.bgPink700, tw.roundedFull, tw.pY3, tw.pX8, tw.itemsCenter, tw.mB6]}
-            onPress={() => router.push("/form/profile")}
-          >
-            <Text style={[tw.textWhite, tw.fontBold]}>Edit Profile</Text>
-          </TouchableOpacity>
-
           {/* Tab Navigation */}
-          <View style={[tw.flexRow, tw.justifyBetween, tw.mB4]}>
+          {/* <View style={[tw.flexRow, tw.justifyBetween, tw.mB4]}>
             {PROFILE_TABS.map((tab, index) => (
               <TouchableOpacity
                 key={tab}
@@ -234,7 +328,7 @@ const ProfileScreen: React.FC = () => {
                 </Text>
               </TouchableOpacity>
             ))}
-          </View>
+          </View> */}
 
           {/* Posts Content */}
           {activeTab === 0 && (

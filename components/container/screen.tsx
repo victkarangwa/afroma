@@ -45,9 +45,12 @@ const ScreenContainer = ({
               source={require("../../assets/images/afroma_logo.png")}
               style={[ tw.w12, tw.h12, tw._m6]}
             />
-            <TouchableOpacity onPress={() => router.push("/settings")}>
+            <TextComponent style={[tw.textGray900, tw.textXl]}>
+              {title}
+            </TextComponent> 
+            {/* <TouchableOpacity onPress={() => router.push("/settings")}>
               <Ionicons name="settings-outline" size={28} color="white" />
-            </TouchableOpacity>
+            </TouchableOpacity> */}
           </View>
         )}
         {children}

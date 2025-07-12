@@ -31,12 +31,31 @@ import LocalStorage from "@/utils/storage";
 import config from "@/utils/localValues";
 import moment from "moment";
 import { convertSecondsToTime } from "@/utils";
+import { useState as useReactState } from "react";
 
 const ChatScreen = () => {
   const router = useRouter();
   const { user, currentUserId } = useLocalSearchParams();
 
-  const userData = Array.isArray(user) ? JSON.parse(user[0]) : JSON.parse(user);
+  // Support both dating and networking/travel: if user is a stringified object, parse it; else, use dummy data
+  let userData: any = { firstName: '', avatar: '', online: false };
+  try {
+    userData = Array.isArray(user) ? JSON.parse(user[0]) : JSON.parse(user);
+  } catch {
+    // fallback for dummy data
+    userData = user || { firstName: '', avatar: '', online: false };
+  }
+
+  // Networking/travel dummy messages if not using Firebase
+  const [dummyMessages, setDummyMessages] = useReactState([
+    { id: '1', text: 'Hey there! 👋', createdAt: new Date(), senderId: 'them' },
+    { id: '2', text: 'Hello! How are you?', createdAt: new Date(), senderId: 'me' },
+    { id: '3', text: 'I wanted to discuss the project update.', createdAt: new Date(), senderId: 'them' },
+  ]);
+  const [dummyInput, setDummyInput] = useReactState('');
+
+  // Detect if this is a networking/travel chat (by presence of avatar and name)
+  const isNetworkingOrTravel = !!userData.avatar;
 
   const [chatId, setChatId] = useState<string | null>(null);
   const [message, setMessage] = useState("");
@@ -148,6 +167,62 @@ const ChatScreen = () => {
   const onGoBack = () => {
     router.push("/chats");
   };
+
+  if (isNetworkingOrTravel) {
+    // Modern chat room for networking/travel
+    return (
+      <SafeAreaView style={[tw.bgGray100, tw.hFull]}>
+        {/* Header */}
+        <View style={[tw.flexRow, tw.itemsCenter, tw.bgWhite, tw.p4, tw.shadow, { borderBottomLeftRadius: 20, borderBottomRightRadius: 20 }]}> 
+          <TouchableOpacity onPress={onGoBack} style={[tw.mR4]}>
+            <Ionicons name="chevron-back-outline" size={28} color="#fb6c31" />
+          </TouchableOpacity>
+          <Image
+            source={{ uri: userData.avatar }}
+            style={[tw.w14, tw.h14, tw.roundedFull, { borderWidth: 3, borderColor: userData.online ? '#4ade80' : '#e5e7eb' }]}
+          />
+          <View style={[tw.mL4]}> 
+            <Text style={[tw.textGray900, tw.textLg, tw.fontBold]}>{userData.name || userData.firstName}</Text>
+            {userData.online && <Text style={[tw.textGreen500, tw.textXs]}>Online</Text>}
+          </View>
+        </View>
+        {/* Messages */}
+        <FlatList
+          data={dummyMessages}
+          keyExtractor={(item) => item.id}
+          style={[tw.flex1, tw.p4]}
+          renderItem={({ item }) => (
+            <View style={item.senderId === 'me'
+              ? [tw.bgPink700, tw.pX4, tw.pY2, tw.roundedLg, tw.selfEnd, tw.mB2]
+              : [tw.bgGray200, tw.pX4, tw.pY2, tw.roundedLg, tw.selfStart, tw.mB2]}
+            >
+              <Text style={[item.senderId === 'me' ? tw.textWhite : tw.textGray900, tw.textBase]}>{item.text}</Text>
+            </View>
+          )}
+        />
+        {/* Input */}
+        <View style={[tw.flexRow, tw.itemsCenter, tw.bgWhite, tw.p4, { borderTopLeftRadius: 20, borderTopRightRadius: 20 }]}> 
+          <TextInput
+            style={[tw.flex1, tw.bgGray100, tw.roundedFull, tw.pX4, tw.pY2, tw.textBase, tw.border, tw.borderGray200]}
+            placeholder="Type a message..."
+            value={dummyInput}
+            onChangeText={setDummyInput}
+          />
+          <TouchableOpacity
+            style={[tw.bgPink700, tw.roundedFull, tw.p3, tw.mL2]}
+            onPress={() => {
+              if (dummyInput.trim()) {
+                setDummyMessages([...dummyMessages, { id: Date.now().toString(), text: dummyInput, createdAt: new Date(), senderId: 'me' }]);
+                setDummyInput('');
+              }
+            }}
+          >
+            <Ionicons name="send" size={22} color="#fff" />
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={[tw.bgGray100, tw.hFull]}>

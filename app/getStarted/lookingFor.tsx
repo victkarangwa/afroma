@@ -17,7 +17,7 @@ const OPTIONS = [
     icon: require("../../assets/images/afroma_logo.png"), // Replace with networking icon if available
   },
   {
-    key: "dating",
+    key: "relationship",
     title: "Dating",
     description: "Find meaningful relationships, friendships, and romantic connections",
     icon: require("../../assets/images/afroma_logo.png"), // Replace with dating icon if available
@@ -35,8 +35,10 @@ const LookingForScreen: React.FC = () => {
   };
 
   const handleContinue = () => {
-    // For now, just mock next step
-    router.push("/form/completeProfile");
+    // Pass the selected purpose(s) as a param (use the first selected for now)
+    if (selected.length > 0) {
+      router.push({ pathname: "/form/completeProfile", params: { purpose: selected[0] } });
+    }
   };
 
   return (

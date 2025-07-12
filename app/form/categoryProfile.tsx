@@ -15,10 +15,14 @@ const FAMILY_GOALS = ["Want children", "Don't want children", "Have children", "
 const GENDER_PREFERENCES = ["Men", "Women", "Non-binary", "Everyone"];
 
 const INDUSTRIES = ["Technology", "Finance", "Healthcare", "Education", "Marketing", "Design", "Consulting", "Other"];
-const COLLABORATION_INTERESTS = ["Mentorship", "Job opportunities", "Business partnerships", "Skill sharing", "Networking events"];
+const COLLABORATION_INTERESTS = ["Mentoring", "Partnerships", "Job Opportunities"];
 
 const TRAVEL_INTERESTS = ["Adventure", "Cultural", "Luxury", "Budget", "Solo", "Group", "Food & Wine", "Nature"];
 const DESTINATIONS = ["Europe", "Asia", "Africa", "Americas", "Oceania", "Middle East"];
+
+const COUNTRY_LIST = [
+  "Europe", "Asia", "Africa", "Americas", "Oceania", "Middle East"
+];
 
 const CategoryProfileScreen: React.FC = () => {
   const router = useRouter();
@@ -59,9 +63,14 @@ const CategoryProfileScreen: React.FC = () => {
   const [collaborationInterests, setCollaborationInterests] = useState<string[]>([]);
   const [professionalPhotos, setProfessionalPhotos] = useState<string[]>([]);
 
+  // Optionally, get existing photos from params (if passed from previous step)
+  // const params = useLocalSearchParams();
+  // const existingPhotos = params.photos ? JSON.parse(params.photos) : [];
+
   // State for travel fields
   const [travelInterests, setTravelInterests] = useState<string[]>([]);
   const [visitedDestinations, setVisitedDestinations] = useState<string[]>([]);
+  const [visitedPhotos, setVisitedPhotos] = useState<{ uri: string, country: string }[]>([]); // NEW
   const [bucketList, setBucketList] = useState<string[]>([]);
   const [travelBio, setTravelBio] = useState("");
   const [mediaLinks, setMediaLinks] = useState({ youtube: "", instagram: "", other: "" });
@@ -113,8 +122,8 @@ const CategoryProfileScreen: React.FC = () => {
       case "travel":
         switch (step) {
           case 0: return travelInterests.length > 0;
-          case 1: return visitedDestinations.length > 0 && bucketList.length > 0;
-          case 2: return travelBio;
+          case 1: return visitedPhotos.length > 0 && bucketList.length > 0;
+          case 2: return travelBio.length <= 800;
           default: return false;
         }
       default:
@@ -267,25 +276,69 @@ const CategoryProfileScreen: React.FC = () => {
       case 0:
         return (
           <>
+            {/* Profile Visuals: Reuse or upload professional headshots */}
+            <View style={[tw.bgWhite, tw.roundedLg, tw.p4, tw.shadow, tw.mB6]}> 
+              <Text style={[tw.textPink700, tw.textLg, tw.fontBold, tw.mB2]}>Profile Visuals</Text>
+              <Text style={[tw.textGray700, tw.textSm, tw.mB2]}>Upload professional headshots or reuse existing photos.</Text>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={[tw.mB2]}> 
+                {professionalPhotos.map((uri, idx) => (
+                  <View key={idx} style={[tw.relative, tw.mR2]}> 
+                    <Image source={{ uri }} style={[tw.w20, tw.h20, tw.rounded]} />
+                    <TouchableOpacity
+                      style={[tw.absolute, tw.top0, tw.right0, tw.bgWhite, tw.roundedFull, tw.p1]}
+                      onPress={() => setProfessionalPhotos(professionalPhotos.filter((_, i) => i !== idx))}
+                    >
+                      <Ionicons name="close" size={16} color="#fb6c31" />
+                    </TouchableOpacity>
+                  </View>
+                ))}
+                {professionalPhotos.length < 6 && (
+                  <TouchableOpacity
+                    style={[tw.bgGray200, tw.w20, tw.h20, tw.rounded, tw.justifyCenter, tw.itemsCenter]}
+                    onPress={async () => {
+                      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+                      if (status !== "granted") {
+                        alert("Sorry, we need media library permissions to make this work!");
+                        return;
+                      }
+                      const result = await ImagePicker.launchImageLibraryAsync({
+                        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+                        allowsEditing: true,
+                        aspect: [4, 3],
+                        quality: 1,
+                      });
+                      if (!result.canceled && result.assets && result.assets[0].uri) {
+                        setProfessionalPhotos([...professionalPhotos, result.assets[0].uri]);
+                      }
+                    }}
+                  >
+                    <Ionicons name="add" size={32} color="#fb6c31" />
+                  </TouchableOpacity>
+                )}
+              </ScrollView>
+            </View>
+            {/* Professional Headline */}
             <View style={[tw.bgWhite, tw.roundedLg, tw.p4, tw.shadow, tw.mB6]}>
               <Text style={[tw.textPink700, tw.textLg, tw.fontBold, tw.mB2]}>Professional Headline</Text>
               <TextInput
                 style={[tw.bgGray100, tw.rounded, tw.pX3, tw.pY2, tw.border, tw.borderGray300]}
-                placeholder="e.g., Senior Software Engineer at Tech Corp"
+                placeholder="e.g., Senior Analyst at XYZ"
                 value={professionalHeadline}
                 onChangeText={setProfessionalHeadline}
               />
             </View>
+            {/* Summary Bio */}
             <View style={[tw.bgWhite, tw.roundedLg, tw.p4, tw.shadow]}>
               <Text style={[tw.textPink700, tw.textLg, tw.fontBold, tw.mB2]}>Summary Bio</Text>
               <TextInput
                 style={[tw.bgGray100, tw.rounded, tw.pX3, tw.pY2, tw.border, tw.borderGray300, { height: 120 }]}
                 placeholder="Brief professional summary..."
                 value={summaryBio}
-                onChangeText={setSummaryBio}
+                onChangeText={text => text.length <= 800 && setSummaryBio(text)}
                 multiline
                 textAlignVertical="top"
               />
+              <Text style={[tw.textGray500, tw.textXs, tw.mT1, { textAlign: 'right' }]}>{summaryBio.length}/800</Text>
             </View>
           </>
         );
@@ -377,29 +430,67 @@ const CategoryProfileScreen: React.FC = () => {
       case 1:
         return (
           <>
+            {/* Visited Destinations: Photo upload with country tag */}
             <View style={[tw.bgWhite, tw.roundedLg, tw.p4, tw.shadow, tw.mB6]}>
               <Text style={[tw.textPink700, tw.textLg, tw.fontBold, tw.mB2]}>Visited Destinations</Text>
-              <View style={[tw.flexRow, tw.flexWrap]}>
-                {DESTINATIONS.map((dest) => (
-                  <Chip
-                    key={dest}
-                    selected={visitedDestinations.includes(dest)}
-                    onPress={() => toggleMulti(visitedDestinations, dest, setVisitedDestinations)}
-                    style={[
-                      tw.mR2, tw.mB2, tw.bgGray100, tw.border2,
-                      visitedDestinations.includes(dest) ? tw.borderPink700 : tw.borderGray300,
-                      visitedDestinations.includes(dest) ? tw.bgPink700 : null,
-                    ]}
-                    textStyle={[
-                      visitedDestinations.includes(dest) ? tw.textWhite : tw.textGray700,
-                      tw.fontBold,
-                    ]}
-                  >
-                    {dest}
-                  </Chip>
+              <View style={[tw.flexRow, tw.flexWrap, tw.mB2]}>
+                {visitedPhotos.map((photo, idx) => (
+                  <View key={idx} style={[tw.mR2, tw.mB2, { alignItems: 'center' }]}> 
+                    <Image source={{ uri: photo.uri }} style={[tw.w16, tw.h16, tw.rounded]} />
+                    <View style={[tw.mT1, tw.bgGray200, tw.roundedFull, tw.pX2, tw.pY1]}>
+                      <Text style={[tw.textGray700, tw.textXs]}>{photo.country}</Text>
+                    </View>
+                    <TouchableOpacity onPress={() => setVisitedPhotos(visitedPhotos.filter((_, i) => i !== idx))} style={[tw.mT1]}>
+                      <Ionicons name="close-circle" size={18} color="#fb6c31" />
+                    </TouchableOpacity>
+                  </View>
                 ))}
+                {visitedPhotos.length < 6 && (
+                  <TouchableOpacity onPress={async () => {
+                    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+                    if (status !== "granted") {
+                      alert("Sorry, we need media library permissions to make this work!");
+                      return;
+                    }
+                    const result = await ImagePicker.launchImageLibraryAsync({
+                      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+                      allowsEditing: true,
+                      aspect: [4, 3],
+                      quality: 1,
+                    });
+                    if (!result.canceled && result.assets && result.assets[0].uri) {
+                      // Ask user to tag country
+                      // For simplicity, just pick the first country for now (replace with a picker for production)
+                      setVisitedPhotos([...visitedPhotos, { uri: result.assets[0].uri, country: COUNTRY_LIST[0] }]);
+                    }
+                  }} style={[tw.bgGray200, tw.rounded, tw.p4, tw.justifyCenter, tw.itemsCenter]}> 
+                    <Ionicons name="add" size={28} color="#fb6c31" />
+                  </TouchableOpacity>
+                )}
               </View>
+              {/* Tag country for each photo (simple dropdown for now) */}
+              {visitedPhotos.map((photo, idx) => (
+                <View key={idx + '-tag'} style={[tw.flexRow, tw.itemsCenter, tw.mB2]}> 
+                  <Text style={[tw.textGray700, tw.textSm, tw.mR2]}>Tag country:</Text>
+                  <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                    {COUNTRY_LIST.map((country) => (
+                      <TouchableOpacity
+                        key={country}
+                        style={[tw.pX3, tw.pY1, tw.roundedFull, tw.mR2, tw.bgGray100, tw.border2, photo.country === country ? tw.borderPink700 : tw.borderGray300, photo.country === country ? tw.bgPink700 : null]}
+                        onPress={() => {
+                          const updated = [...visitedPhotos];
+                          updated[idx].country = country;
+                          setVisitedPhotos(updated);
+                        }}
+                      >
+                        <Text style={[photo.country === country ? tw.textWhite : tw.textGray700, tw.fontBold]}>{country}</Text>
+                      </TouchableOpacity>
+                    ))}
+                  </ScrollView>
+                </View>
+              ))}
             </View>
+            {/* Bucket List */}
             <View style={[tw.bgWhite, tw.roundedLg, tw.p4, tw.shadow]}>
               <Text style={[tw.textPink700, tw.textLg, tw.fontBold, tw.mB2]}>Bucket List</Text>
               <View style={[tw.flexRow, tw.flexWrap]}>
@@ -434,10 +525,11 @@ const CategoryProfileScreen: React.FC = () => {
                 style={[tw.bgGray100, tw.rounded, tw.pX3, tw.pY2, tw.border, tw.borderGray300, { height: 120 }]}
                 placeholder="Share your travel story..."
                 value={travelBio}
-                onChangeText={setTravelBio}
+                onChangeText={text => text.length <= 800 && setTravelBio(text)}
                 multiline
                 textAlignVertical="top"
               />
+              <Text style={[tw.textGray500, tw.textXs, tw.mT1, { textAlign: 'right' }]}>{travelBio.length}/800</Text>
             </View>
             <View style={[tw.bgWhite, tw.roundedLg, tw.p4, tw.shadow]}>
               <Text style={[tw.textPink700, tw.textLg, tw.fontBold, tw.mB2]}>Media Links (Optional)</Text>

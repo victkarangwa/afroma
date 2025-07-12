@@ -111,10 +111,10 @@ const ForumScreen: React.FC = () => {
           ]}
         >
           <View>
-            <TextComponent style={[tw.text4xl, tw.textWhite]}>
+            <TextComponent style={[tw.text4xl, tw.textGray900]}>
               Forums
             </TextComponent>
-            <TextComponent style={[tw.textGray100, tw.opacity50]}>
+            <TextComponent style={[tw.textGray900, tw.opacity50]}>
               Find topics that you like to read
             </TextComponent>
           </View>

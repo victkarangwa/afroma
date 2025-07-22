@@ -28,6 +28,8 @@ import useApiRequest from "@/hooks/useApiRequest";
 import LocalStorage from "@/utils/storage";
 import localStore from "@/utils/localValues";
 import { useFocusEffect } from "expo-router";
+import NotificationBadge from "@/components/NotificationBadge";
+import { MOCK_NOTIFICATIONS } from "@/components/NotificationCenter";
 
 const ChatsScreen: React.FC = () => {
   const router = useRouter();
@@ -186,10 +188,26 @@ const ChatsScreen: React.FC = () => {
     },
   ];
 
+  const unreadNotificationsCount = MOCK_NOTIFICATIONS.filter(n => !n.isRead).length;
+
   // Redesigned chat screen for networking/travel
   if (profileType === 'networking' || profileType === 'travel') {
     return (
       <ScreenContainer showHeader={true} title="Chats">
+        {/* Header */}
+        <View style={[tw.bgWhite, tw.pX4, tw.pT4, tw.pB4, tw.shadow]}>
+          <View style={[tw.flexRow, tw.itemsCenter, tw.justifyBetween]}>
+            <Text style={[tw.textGray900, tw.fontBold, tw.textXl]}>Chats</Text>
+            <View style={[tw.flexRow, tw.itemsCenter]}>
+              <NotificationBadge
+                count={unreadNotificationsCount}
+                onPress={() => router.push('/notifications')}
+                size="medium"
+              />
+            </View>
+          </View>
+        </View>
+
         <View style={[tw.bgGray100, tw.hFull, tw.wFull]}>
           {/* Activities */}
           <View style={[tw.mT4, tw.mB2, tw.pX4]}>
@@ -253,6 +271,20 @@ const ChatsScreen: React.FC = () => {
 
   return (
     <ScreenContainer showHeader={true} title="Messages">
+      {/* Header */}
+      <View style={[tw.bgWhite, tw.pX4, tw.pT4, tw.pB4, tw.shadow]}>
+        <View style={[tw.flexRow, tw.itemsCenter, tw.justifyBetween]}>
+          <Text style={[tw.textGray900, tw.fontBold, tw.textXl]}>Chats</Text>
+          <View style={[tw.flexRow, tw.itemsCenter]}>
+            <NotificationBadge
+              count={unreadNotificationsCount}
+              onPress={() => router.push('/notifications')}
+              size="medium"
+            />
+          </View>
+        </View>
+      </View>
+
       <View style={[tw.bgGray100, tw.hFull, tw.wFull, tw.flex, tw.itemsCenter]}>
         <ScrollView style={[tw.wFull]} contentContainerStyle={{ paddingBottom: 120 }}>
           <TextComponent style={[tw.textGray600, tw.m2, tw.fontBold]}>

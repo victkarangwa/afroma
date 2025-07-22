@@ -9,6 +9,8 @@ import localStore from "@/utils/localValues";
 import Networking from "@/components/Networking";
 import SinglePostView, { GenericPost } from "@/components/SinglePostView";
 import { MOCK_NETWORKING_PROFILES, MOCK_NETWORKING_POSTS } from "@/components/NetworkingCard";
+import NotificationBadge from "@/components/NotificationBadge";
+import { MOCK_NOTIFICATIONS } from "@/components/NotificationCenter";
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get("window");
 
@@ -886,6 +888,8 @@ const HomeScreen: React.FC = () => {
     );
   };
 
+  const unreadNotificationsCount = MOCK_NOTIFICATIONS.filter(n => !n.isRead).length;
+
   return (
     <SafeAreaView style={[tw.flex1, tw.bgGray100]}>
       {/* Top Navigation with Logo and Search */}
@@ -928,6 +932,14 @@ const HomeScreen: React.FC = () => {
                 color={searchQuery.trim() ? "#fb6c31" : "#6b7280"} 
               />
             </TouchableOpacity>
+          </View>
+          {/* Notification Button */}
+          <View style={[tw.mL3]}>
+            <NotificationBadge
+              count={unreadNotificationsCount}
+              onPress={() => router.push('/notifications')}
+              size="medium"
+            />
           </View>
         </View>
         

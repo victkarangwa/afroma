@@ -57,20 +57,6 @@ export default function TabLayout() {
           ),
         }}
       />
-      {/* <Tabs.Screen
-        name="search"
-        options={{
-          tabBarLabel: () => {
-            return null;
-          },
-          tabBarIcon: ({ color, focused }) => (
-            <TabBarIcon
-              name={focused ? "search" : "search-outline"}
-              color={color}
-            />
-          ),
-        }}
-      /> */}
       <Tabs.Screen
         name="chats"
         options={{
@@ -86,20 +72,6 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="profile"
-        options={{
-          tabBarLabel: () => {
-            return null;
-          },
-          tabBarIcon: ({ color, focused }) => (
-            <TabBarIcon
-              name={focused ? "person" : "person-outline"}
-              color={color}
-            />
-          ),
-        }}
-      />
-      <Tabs.Screen
         name="forums"
         options={{
           tabBarLabel: () => {
@@ -108,6 +80,20 @@ export default function TabLayout() {
           tabBarIcon: ({ color, focused }) => (
             <TabBarIcon
               name={focused ? "chatbubbles" : "chatbubbles-outline"}
+              color={color}
+            />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="profile"
+        options={{
+          tabBarLabel: () => {
+            return null;
+          },
+          tabBarIcon: ({ color, focused }) => (
+            <TabBarIcon
+              name={focused ? "person" : "person-outline"}
               color={color}
             />
           ),

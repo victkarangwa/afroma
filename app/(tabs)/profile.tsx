@@ -18,6 +18,8 @@ import { removeUserData } from "@/utils";
 import * as ImagePicker from "expo-image-picker";
 import LocalStorage from "@/utils/storage";
 import localStore from "@/utils/localValues";
+import NotificationBadge from "@/components/NotificationBadge";
+import { MOCK_NOTIFICATIONS } from "@/components/NotificationCenter";
 
 // Patch type for localStore to include profileType
 type LocalStoreType = typeof localStore & { profileType: string };
@@ -177,8 +179,27 @@ const ProfileScreen: React.FC = () => {
     },
   ];
 
+  const unreadNotificationsCount = MOCK_NOTIFICATIONS.filter(n => !n.isRead).length;
+
   return (
     <SafeAreaView style={[tw.flex1, tw.bgGray100]}>
+      {/* Header */}
+      <View style={[tw.bgWhite, tw.pX4, tw.pT4, tw.pB4, tw.shadow]}>
+        <View style={[tw.flexRow, tw.itemsCenter, tw.justifyBetween]}>
+          <Text style={[tw.textGray900, tw.fontBold, tw.textXl]}>Profile</Text>
+          <View style={[tw.flexRow, tw.itemsCenter]}>
+            <NotificationBadge
+              count={unreadNotificationsCount}
+              onPress={() => router.push('/notifications')}
+              size="medium"
+            />
+            <TouchableOpacity style={[tw.mL4]} onPress={() => router.push('/settings')}>
+              <Ionicons name="settings-outline" size={24} color="#6b7280" />
+            </TouchableOpacity>
+          </View>
+        </View>
+      </View>
+
       <ScrollView showsVerticalScrollIndicator={false}>
         {/* Header with Cover Photo */}
         <View style={[tw.relative]}>

@@ -159,6 +159,10 @@ export default function RootLayout() {
                 options={{ headerShown: false }}
               />
               <Stack.Screen
+                name="notifications/index"
+                options={{ headerShown: false }}
+              />
+              <Stack.Screen
                 name="webview/termsAndConditions"
                 options={{
                   headerTitle: "Terms and Conditions",

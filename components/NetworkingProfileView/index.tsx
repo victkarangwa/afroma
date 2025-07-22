@@ -46,18 +46,18 @@ const NetworkingProfileView: React.FC<NetworkingProfileViewProps> = ({
         return (
           <View style={[tw.flexRow, tw.spaceX3]}>
             <TouchableOpacity
-              style={[tw.flex1, tw.bgPink700, tw.roundedLg, tw.pX6, tw.pY3, tw.flexRow, tw.itemsCenter, tw.justifyCenter]}
+              style={[tw.flex1, tw.bgPink700, tw.roundedLg, tw.pX6, tw.pY3, tw.flexRow, tw.itemsCenter, tw.justifyCenter, tw.mX2]}
               onPress={() => onConnect?.(profile.id)}
             >
               <Ionicons name="person-add-outline" size={20} color="white" />
-              <Text style={[tw.textWhite, tw.fontBold, tw.mL2]}>Connect</Text>
+              <Text style={[tw.textWhite, tw.fontBold]}>Connect</Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={[tw.flex1, tw.bgGray500, tw.roundedLg, tw.pX6, tw.pY3, tw.flexRow, tw.itemsCenter, tw.justifyCenter]}
+              style={[tw.flex1, tw.bgGray500, tw.roundedLg, tw.pX6, tw.pY3, tw.flexRow, tw.itemsCenter, tw.justifyCenter, tw.mX2]}
               onPress={() => onMessage?.(profile.id)}
             >
               <Ionicons name="chatbubble-outline" size={20} color="white" />
-              <Text style={[tw.textWhite, tw.fontBold, tw.mL2]}>Message</Text>
+              <Text style={[tw.textWhite, tw.fontBold]}>Message</Text>
             </TouchableOpacity>
           </View>
         );

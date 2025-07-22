@@ -8,6 +8,7 @@ import {
   Dimensions,
   Modal,
   SafeAreaView,
+  StatusBar,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { tw } from "react-native-tailwindcss";
@@ -56,7 +57,17 @@ const SinglePostView: React.FC<SinglePostViewProps> = ({
 }) => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
-  if (!post) return null;
+  console.log('SinglePostView props:', { visible, post: post?.id, profileType });
+
+  if (!post) {
+    console.log('No post provided to SinglePostView');
+    return null;
+  }
+
+  if (!visible) {
+    console.log('SinglePostView not visible');
+    return null;
+  }
 
   const formatNumber = (num: number) => {
     if (num >= 1000) {
@@ -98,7 +109,11 @@ const SinglePostView: React.FC<SinglePostViewProps> = ({
       animationType="slide"
       presentationStyle="fullScreen"
       onRequestClose={onClose}
+      transparent={false}
+      statusBarTranslucent={false}
+      hardwareAccelerated={true}
     >
+      <StatusBar barStyle="light-content" backgroundColor="#000000" />
       <SafeAreaView style={[tw.flex1, tw.bgBlack]}>
         {/* Header */}
         <View style={[tw.flexRow, tw.itemsCenter, tw.justifyBetween, tw.p4, tw.bgBlack]}>

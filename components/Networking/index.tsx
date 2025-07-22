@@ -101,12 +101,17 @@ const Networking: React.FC = () => {
     };
 
     return (
-      <TouchableOpacity onPress={() => {
-        setSelectedPost(genericPost);
-        setSinglePostVisible(true);
-      }}>
-        <NetworkingPostCard post={item} onToggleBookmark={toggleBookmark} />
-      </TouchableOpacity>
+      <NetworkingPostCard 
+        post={item} 
+        onToggleBookmark={toggleBookmark}
+        onPress={() => {
+          console.log('Networking post tapped:', item.id);
+          console.log('Setting networking selected post:', genericPost);
+          setSelectedPost(genericPost);
+          setSinglePostVisible(true);
+          console.log('Networking single post visible set to true');
+        }}
+      />
     );
   };
 
@@ -121,7 +126,7 @@ const Networking: React.FC = () => {
             tw.pY3,
             tw.roundedLg,
             tw.itemsCenter,
-            activeTab === 'posts' ? tw.bgPink700 : tw.bgTransparent
+            activeTab === 'posts' ? tw.bgGray900 : tw.bgTransparent
           ]}
           onPress={() => setActiveTab('posts')}
         >
@@ -158,7 +163,7 @@ const Networking: React.FC = () => {
           renderItem={({ item }) => renderPostCard(item)}
           keyExtractor={(item) => item.id.toString()}
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={[tw.pB4]}
+          contentContainerStyle={[{ paddingBottom: 120 }]}
         />
       ) : (
         <FlatList
@@ -173,7 +178,7 @@ const Networking: React.FC = () => {
           )}
           keyExtractor={(item) => item.id.toString()}
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={[tw.pB4]}
+          contentContainerStyle={[{ paddingBottom: 120 }]}
         />
       )}
 
@@ -183,6 +188,7 @@ const Networking: React.FC = () => {
           visible={singlePostVisible}
           post={selectedPost}
           onClose={() => {
+            console.log('Closing networking single post view');
             setSinglePostVisible(false);
             setSelectedPost(null);
           }}

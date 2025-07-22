@@ -337,7 +337,7 @@ const ProfileScreen: React.FC = () => {
               renderItem={renderPost}
               keyExtractor={(item) => item.id.toString()}
               scrollEnabled={false}
-              contentContainerStyle={[{ paddingBottom: 100 }]}
+              contentContainerStyle={[{ paddingBottom: 120 }]}
             />
           )}
 

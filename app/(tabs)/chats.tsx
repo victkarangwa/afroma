@@ -254,7 +254,7 @@ const ChatsScreen: React.FC = () => {
   return (
     <ScreenContainer showHeader={true} title="Messages">
       <View style={[tw.bgGray100, tw.hFull, tw.wFull, tw.flex, tw.itemsCenter]}>
-        <ScrollView style={[tw.wFull]}>
+        <ScrollView style={[tw.wFull]} contentContainerStyle={{ paddingBottom: 120 }}>
           <TextComponent style={[tw.textGray600, tw.m2, tw.fontBold]}>
             New Matches
           </TextComponent>

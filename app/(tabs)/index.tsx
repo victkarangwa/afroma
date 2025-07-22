@@ -400,6 +400,7 @@ const HomeScreen: React.FC = () => {
     <TouchableOpacity 
       style={[tw.bgWhite, tw.roundedLg, tw.mB4, tw.shadow, tw.mX4]}
       onPress={() => {
+        console.log('Post tapped:', item.id);
         // Convert MOCK_POSTS item to GenericPost format
         const genericPost: GenericPost = {
           id: item.id,
@@ -413,8 +414,13 @@ const HomeScreen: React.FC = () => {
           shares: item.shares,
           isBookmarked: item.isBookmarked,
         };
+        console.log('Setting selected post:', genericPost);
+        console.log('Post images:', genericPost.images);
+        console.log('Post user:', genericPost.user);
         setSelectedPost(genericPost);
         setSinglePostVisible(true);
+        console.log('Single post visible set to true');
+        console.log('State after setting:', { selectedPost: genericPost, singlePostVisible: true });
       }}
     >
       {/* Header */}
@@ -669,7 +675,7 @@ const HomeScreen: React.FC = () => {
         </View>
       </View>
       {/* Filter Tabs */}
-      <View style={[tw.pX4, tw.pB4]}>
+      {/* <View style={[tw.pX4, tw.pB4]}>
         <Text style={[tw.textGray900, tw.fontBold, tw.textLg, tw.mB3]}>Categories</Text>
         <ScrollView horizontal showsHorizontalScrollIndicator={false}>
           {FILTER_TABS.map((tab, index) => (
@@ -698,7 +704,7 @@ const HomeScreen: React.FC = () => {
             </TouchableOpacity>
           ))}
         </ScrollView>
-      </View>
+      </View> */}
       {/* Content */}
       {showDating ? (
         renderDatingInterface()
@@ -710,7 +716,7 @@ const HomeScreen: React.FC = () => {
           renderItem={renderPostCard}
           keyExtractor={(item) => item.id.toString()}
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={[{ paddingBottom: 80 }]}
+          contentContainerStyle={[{ paddingBottom: 120 }]}
         />
       )}
       
@@ -736,7 +742,7 @@ const HomeScreen: React.FC = () => {
         onShare={(postId) => {
           console.log('Share post:', postId);
         }}
-        profileType={profileType}
+        profileType={profileType || 'travel'}
       />
 
       {/* Floating Action Button */}

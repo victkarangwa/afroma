@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { View, Text, TextInput, ScrollView, Image, TouchableOpacity, FlatList, Dimensions, PanResponder, Animated, Modal } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
@@ -8,6 +8,7 @@ import LocalStorage from "@/utils/storage";
 import localStore from "@/utils/localValues";
 import Networking from "@/components/Networking";
 import SinglePostView, { GenericPost } from "@/components/SinglePostView";
+import { MOCK_NETWORKING_PROFILES, MOCK_NETWORKING_POSTS } from "@/components/NetworkingCard";
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get("window");
 
@@ -305,6 +306,7 @@ const HomeScreen: React.FC = () => {
     caption: string;
     location: string;
   } | null>(null);
+  const [showSearchResults, setShowSearchResults] = useState(false);
 
   // On mount and on focus, read profileType from local storage
   useFocusEffect(
@@ -646,6 +648,244 @@ const HomeScreen: React.FC = () => {
     );
   };
 
+  // Search functionality based on profile type
+  const filteredContent = useMemo(() => {
+    if (!searchQuery.trim()) {
+      return {
+        posts: posts,
+        datingProfiles: datingProfiles,
+        networkingProfiles: MOCK_NETWORKING_PROFILES,
+        networkingPosts: MOCK_NETWORKING_POSTS
+      };
+    }
+
+    const query = searchQuery.toLowerCase();
+
+    if (profileType === 'travel') {
+      const filteredPosts = posts.filter(post =>
+        post.user.name.toLowerCase().includes(query) ||
+        post.caption.toLowerCase().includes(query) ||
+        post.location.toLowerCase().includes(query) ||
+        post.caption.split(' ').some(word => word.startsWith('#') && word.toLowerCase().includes(query))
+      );
+      return { posts: filteredPosts, datingProfiles: [], networkingProfiles: [], networkingPosts: [] };
+    }
+
+    if (profileType === 'networking') {
+      const filteredNetworkingProfiles = MOCK_NETWORKING_PROFILES.filter(profile =>
+        profile.name.toLowerCase().includes(query) ||
+        profile.headline.toLowerCase().includes(query) ||
+        profile.summary.toLowerCase().includes(query) ||
+        profile.industries.some(industry => industry.toLowerCase().includes(query)) ||
+        profile.collaboration.some(collab => collab.toLowerCase().includes(query))
+      );
+
+      const filteredNetworkingPosts = MOCK_NETWORKING_POSTS.filter(post =>
+        post.user.name.toLowerCase().includes(query) ||
+        post.caption.toLowerCase().includes(query) ||
+        post.location.toLowerCase().includes(query) ||
+        post.tags?.some(tag => tag.toLowerCase().includes(query)) ||
+        post.caption.split(' ').some(word => word.startsWith('#') && word.toLowerCase().includes(query))
+      );
+
+      return { 
+        posts: [], 
+        datingProfiles: [], 
+        networkingProfiles: filteredNetworkingProfiles, 
+        networkingPosts: filteredNetworkingPosts 
+      };
+    }
+
+    if (profileType === 'dating') {
+      const filteredDatingProfiles = datingProfiles.filter(profile =>
+        profile.name.toLowerCase().includes(query) ||
+        profile.bio.toLowerCase().includes(query) ||
+        profile.interests.some(interest => interest.toLowerCase().includes(query))
+      );
+      return { posts: [], datingProfiles: filteredDatingProfiles, networkingProfiles: [], networkingPosts: [] };
+    }
+
+    // Default: search across all content
+    const filteredPosts = posts.filter(post =>
+      post.user.name.toLowerCase().includes(query) ||
+      post.caption.toLowerCase().includes(query) ||
+      post.location.toLowerCase().includes(query)
+    );
+
+    const filteredDatingProfiles = datingProfiles.filter(profile =>
+      profile.name.toLowerCase().includes(query) ||
+      profile.bio.toLowerCase().includes(query) ||
+      profile.interests.some(interest => interest.toLowerCase().includes(query))
+    );
+
+    return { 
+      posts: filteredPosts, 
+      datingProfiles: filteredDatingProfiles, 
+      networkingProfiles: [], 
+      networkingPosts: [] 
+    };
+  }, [searchQuery, profileType, posts, datingProfiles]);
+
+  const getSearchPlaceholder = () => {
+    switch (profileType) {
+      case 'travel':
+        return "Search posts, places, hashtags...";
+      case 'networking':
+        return "Search people, companies, skills...";
+      case 'dating':
+        return "Search profiles, interests...";
+      default:
+        return "Search for people, places, posts...";
+    }
+  };
+
+  const getSearchIcon = () => {
+    if (searchQuery.trim()) {
+      return "close-circle";
+    }
+    return "search";
+  };
+
+  const handleSearchIconPress = () => {
+    if (searchQuery.trim()) {
+      setSearchQuery("");
+      setShowSearchResults(false);
+    }
+  };
+
+  const handleSearchFocus = () => {
+    if (searchQuery.trim()) {
+      setShowSearchResults(true);
+    }
+  };
+
+  const handleSearchChange = (text: string) => {
+    setSearchQuery(text);
+    if (text.trim()) {
+      setShowSearchResults(true);
+    } else {
+      setShowSearchResults(false);
+    }
+  };
+
+  const handleTouchOutside = () => {
+    if (showSearchResults) {
+      setShowSearchResults(false);
+    }
+  };
+
+  const renderSearchResults = () => {
+    if (!showSearchResults || !searchQuery.trim()) return null;
+
+    const { posts, datingProfiles, networkingProfiles, networkingPosts } = filteredContent;
+    const totalResults = posts.length + datingProfiles.length + networkingProfiles.length + networkingPosts.length;
+
+    if (totalResults === 0) {
+      return (
+        <View style={[tw.bgWhite, tw.roundedLg, tw.mX4, tw.p6, tw.shadow, { zIndex: 10, position: 'relative' }]}>
+          <View style={[tw.itemsCenter, tw.pY4]}>
+            <Ionicons name="search-outline" size={48} color="#9ca3af" />
+            <Text style={[tw.textGray500, tw.textLg, tw.fontMedium, tw.mT2]}>No results found</Text>
+            <Text style={[tw.textGray400, tw.textSm, tw.mT1, tw.textCenter]}>
+              Try adjusting your search terms
+            </Text>
+          </View>
+        </View>
+      );
+    }
+
+    return (
+      <View style={[tw.bgWhite, tw.roundedLg, tw.mX4, tw.shadow, { maxHeight: 400, zIndex: 10, position: 'relative' }]}>
+        <View style={[tw.p4, tw.borderB, tw.borderGray200]}>
+          <Text style={[tw.textGray600, tw.fontMedium]}>
+            {totalResults} result{totalResults !== 1 ? 's' : ''} for "{searchQuery}"
+          </Text>
+        </View>
+        
+        <ScrollView style={{ maxHeight: 350 }}>
+          {/* Travel Posts */}
+          {profileType === 'travel' && posts.map(post => (
+            <TouchableOpacity
+              key={`post-${post.id}`}
+              style={[tw.p4, tw.borderB, tw.borderGray100]}
+              onPress={() => {
+                setSelectedPost({
+                  id: post.id,
+                  user: post.user,
+                  timestamp: post.timestamp,
+                  location: post.location,
+                  caption: post.caption,
+                  images: post.pictures || [post.image],
+                  likes: post.likes,
+                  comments: post.comments,
+                  shares: post.shares,
+                  isBookmarked: post.isBookmarked,
+                });
+                setSinglePostVisible(true);
+                setShowSearchResults(false);
+              }}
+            >
+              <View style={[tw.flexRow, tw.itemsCenter]}>
+                <Image source={{ uri: post.user.avatar }} style={[tw.w10, tw.h10, tw.roundedFull, tw.mR3]} />
+                <View style={[tw.flex1]}>
+                  <Text style={[tw.textGray900, tw.fontMedium]}>{post.user.name}</Text>
+                  <Text style={[tw.textGray500, tw.textSm]} numberOfLines={2}>{post.caption}</Text>
+                  <Text style={[tw.textGray400, tw.textXs]}>{post.timestamp}</Text>
+                </View>
+                <Ionicons name="chevron-forward" size={20} color="#9ca3af" />
+              </View>
+            </TouchableOpacity>
+          ))}
+
+          {/* Networking Profiles */}
+          {profileType === 'networking' && networkingProfiles.map(profile => (
+            <TouchableOpacity
+              key={`networking-${profile.id}`}
+              style={[tw.p4, tw.borderB, tw.borderGray100]}
+              onPress={() => {
+                setShowSearchResults(false);
+                // Navigate to networking search or profile view
+                router.push('/networking/search');
+              }}
+            >
+              <View style={[tw.flexRow, tw.itemsCenter]}>
+                <Image source={{ uri: profile.photo }} style={[tw.w10, tw.h10, tw.rounded, tw.mR3]} />
+                <View style={[tw.flex1]}>
+                  <Text style={[tw.textGray900, tw.fontMedium]}>{profile.name}</Text>
+                  <Text style={[tw.textGray500, tw.textSm]} numberOfLines={1}>{profile.headline}</Text>
+                  <Text style={[tw.textGray400, tw.textXs]}>{profile.industries.join(', ')}</Text>
+                </View>
+                <Ionicons name="chevron-forward" size={20} color="#9ca3af" />
+              </View>
+            </TouchableOpacity>
+          ))}
+
+          {/* Dating Profiles */}
+          {profileType === 'dating' && datingProfiles.map(profile => (
+            <TouchableOpacity
+              key={`dating-${profile.id}`}
+              style={[tw.p4, tw.borderB, tw.borderGray100]}
+              onPress={() => {
+                setShowSearchResults(false);
+                // Could navigate to dating profile view
+              }}
+            >
+              <View style={[tw.flexRow, tw.itemsCenter]}>
+                <Image source={{ uri: profile.images[0] }} style={[tw.w10, tw.h10, tw.roundedFull, tw.mR3]} />
+                <View style={[tw.flex1]}>
+                  <Text style={[tw.textGray900, tw.fontMedium]}>{profile.name}, {profile.age}</Text>
+                  <Text style={[tw.textGray500, tw.textSm]} numberOfLines={2}>{profile.bio}</Text>
+                  <Text style={[tw.textGray400, tw.textXs]}>{profile.distance}</Text>
+                </View>
+                <Ionicons name="chevron-forward" size={20} color="#9ca3af" />
+              </View>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+      </View>
+    );
+  };
+
   return (
     <SafeAreaView style={[tw.flex1, tw.bgGray100]}>
       {/* Top Navigation with Logo and Search */}
@@ -660,20 +900,57 @@ const HomeScreen: React.FC = () => {
             />
           </View>
           {/* Search Bar */}
-          <View style={[tw.flex1, tw.flexRow, tw.itemsCenter, tw.bgWhite, tw.roundedFull, tw.pX4, tw.pY3, tw.shadow]}>
+          <View style={[
+            tw.flex1, 
+            tw.flexRow, 
+            tw.itemsCenter, 
+            tw.bgWhite, 
+            tw.roundedFull, 
+            tw.pX4, 
+            tw.pY3, 
+            tw.shadow,
+            tw.border,
+            tw.borderGray300,
+            searchQuery.trim() && { borderColor: '#fb6c31', borderWidth: 2 }
+          ]}>
             <TextInput
               style={[tw.flex1, tw.textBase, tw.textGray700]}
-              placeholder="Search for person, places, posts..."
+              placeholder={getSearchPlaceholder()}
               placeholderTextColor="#9ca3af"
               value={searchQuery}
-              onChangeText={setSearchQuery}
+              onChangeText={handleSearchChange}
+              onFocus={handleSearchFocus}
             />
-            <TouchableOpacity>
-              <Ionicons name="search" size={20} color="#6b7280" />
+            <TouchableOpacity onPress={handleSearchIconPress}>
+              <Ionicons 
+                name={getSearchIcon()} 
+                size={20} 
+                color={searchQuery.trim() ? "#fb6c31" : "#6b7280"} 
+              />
             </TouchableOpacity>
           </View>
         </View>
+        
+        {/* Search Results */}
+        {renderSearchResults()}
       </View>
+
+      {/* Backdrop for search results */}
+      {showSearchResults && (
+        <TouchableOpacity
+          style={[
+            tw.absolute,
+            tw.top0,
+            tw.left0,
+            tw.right0,
+            tw.bottom0,
+            { backgroundColor: 'rgba(0,0,0,0.3)', zIndex: 1 }
+          ]}
+          activeOpacity={1}
+          onPress={handleTouchOutside}
+        />
+      )}
+
       {/* Filter Tabs */}
       {/* <View style={[tw.pX4, tw.pB4]}>
         <Text style={[tw.textGray900, tw.fontBold, tw.textLg, tw.mB3]}>Categories</Text>
@@ -708,11 +985,14 @@ const HomeScreen: React.FC = () => {
       {/* Content */}
       {showDating ? (
         renderDatingInterface()
-              ) : profileType === 'networking' ? (
-          <Networking />
-        ) : (
+      ) : profileType === 'networking' ? (
+        <Networking 
+          filteredProfiles={filteredContent.networkingProfiles}
+          filteredPosts={filteredContent.networkingPosts}
+        />
+      ) : (
         <FlatList
-          data={posts}
+          data={filteredContent.posts}
           renderItem={renderPostCard}
           keyExtractor={(item) => item.id.toString()}
           showsVerticalScrollIndicator={false}

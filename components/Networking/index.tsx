@@ -8,14 +8,27 @@ import NetworkingPostCard from "../NetworkingPostCard";
 import SinglePostView, { GenericPost } from "../SinglePostView";
 import NetworkingProfileView from "../NetworkingProfileView";
 
-const Networking: React.FC = () => {
+interface NetworkingProps {
+  filteredProfiles?: NetworkingProfile[];
+  filteredPosts?: any[];
+}
+
+const Networking: React.FC<NetworkingProps> = ({ 
+  filteredProfiles = MOCK_NETWORKING_PROFILES, 
+  filteredPosts = MOCK_NETWORKING_POSTS 
+}) => {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<'profiles' | 'posts'>('posts');
-  const [networkingProfiles, setNetworkingProfiles] = useState(MOCK_NETWORKING_PROFILES);
+  const [networkingProfiles, setNetworkingProfiles] = useState(filteredProfiles);
   const [selectedPost, setSelectedPost] = useState<GenericPost | null>(null);
   const [singlePostVisible, setSinglePostVisible] = useState(false);
   const [selectedProfile, setSelectedProfile] = useState<NetworkingProfile | null>(null);
   const [profileViewVisible, setProfileViewVisible] = useState(false);
+
+  // Update profiles when filteredProfiles prop changes
+  React.useEffect(() => {
+    setNetworkingProfiles(filteredProfiles);
+  }, [filteredProfiles]);
 
   const handleConnect = (profileId: number) => {
     Alert.alert(
@@ -159,7 +172,7 @@ const Networking: React.FC = () => {
       {/* Content */}
       {activeTab === 'posts' ? (
         <FlatList
-          data={MOCK_NETWORKING_POSTS}
+          data={filteredPosts}
           renderItem={({ item }) => renderPostCard(item)}
           keyExtractor={(item) => item.id.toString()}
           showsVerticalScrollIndicator={false}

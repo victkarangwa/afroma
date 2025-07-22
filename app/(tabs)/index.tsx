@@ -745,7 +745,7 @@ const HomeScreen: React.FC = () => {
           style={[
             tw.absolute,
             { bottom: 72, right: 24 },
-            profileType === 'travel' ? tw.bgPink700 : tw.bgPurple600,
+            tw.bgPink700,
             tw.roundedFull,
             tw.w12,
             tw.h12,

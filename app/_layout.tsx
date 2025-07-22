@@ -154,6 +154,10 @@ export default function RootLayout() {
                 name="getStarted/accountType"
                 options={{ headerShown: false }}
               />
+               <Stack.Screen
+                name="posts/create"
+                options={{ headerShown: false }}
+              />
               <Stack.Screen
                 name="webview/termsAndConditions"
                 options={{

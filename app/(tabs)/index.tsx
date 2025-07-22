@@ -6,6 +6,8 @@ import { tw } from "react-native-tailwindcss";
 import { useRouter, useFocusEffect } from "expo-router";
 import LocalStorage from "@/utils/storage";
 import localStore from "@/utils/localValues";
+import Networking from "@/components/Networking";
+import SinglePostView, { GenericPost } from "@/components/SinglePostView";
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get("window");
 
@@ -81,6 +83,7 @@ const MOCK_POSTS = [
     shares: 12400,
     isBookmarked: false,
     location: "Kigali, Rwanda",
+    caption: "Exploring the beautiful landscapes of Rwanda! The mountains here are absolutely breathtaking. #TravelRwanda #Adventure",
     pictures: [
       "https://picsum.photos/400/300?random=1",
       "https://picsum.photos/400/300?random=11",
@@ -97,6 +100,7 @@ const MOCK_POSTS = [
     shares: 9600,
     isBookmarked: true,
     location: "Nairobi, Kenya",
+    caption: "Just finished an amazing networking event in Nairobi! Met so many inspiring entrepreneurs. The tech scene here is incredible! #Networking #TechAfrica",
     pictures: [
       "https://picsum.photos/400/300?random=2",
       "https://picsum.photos/400/300?random=12"
@@ -112,6 +116,7 @@ const MOCK_POSTS = [
     shares: 14800,
     isBookmarked: false,
     location: "Cape Town, South Africa",
+    caption: "Cape Town never disappoints! The views from Table Mountain are absolutely stunning. Perfect weather for hiking today! #CapeTown #Travel",
     pictures: [
       "https://picsum.photos/400/300?random=3"
     ],
@@ -126,52 +131,13 @@ const MOCK_POSTS = [
     shares: 3400,
     isBookmarked: false,
     location: "Accra, Ghana",
+    caption: "Excited to be speaking at the African Tech Summit in Accra! Great discussions about the future of fintech in Africa. #TechSummit #Fintech #Ghana",
     pictures: [
       "https://picsum.photos/400/300?random=4",
       "https://picsum.photos/400/300?random=14",
       "https://picsum.photos/400/300?random=24",
       "https://picsum.photos/400/300?random=34"
     ],
-  },
-];
-
-// Mock data for networking profiles
-const MOCK_NETWORKING_PROFILES = [
-  {
-    id: 1,
-    name: "Linda Mensah",
-    headline: "Product Manager at FinTech Africa",
-    summary: "Building digital products for financial inclusion. Passionate about mentoring women in tech.",
-    photo: "https://randomuser.me/api/portraits/women/12.jpg",
-    industries: ["Technology", "Finance"],
-    collaboration: ["Mentoring", "Partnerships"],
-  },
-  {
-    id: 2,
-    name: "Kwame Boateng",
-    headline: "Founder, EduConnect",
-    summary: "Connecting students with global learning opportunities. Always open to new partnerships.",
-    photo: "https://randomuser.me/api/portraits/men/13.jpg",
-    industries: ["Education", "Technology"],
-    collaboration: ["Partnerships", "Job Opportunities"],
-  },
-  {
-    id: 3,
-    name: "Fatima Diallo",
-    headline: "Marketing Strategist",
-    summary: "Helping brands grow in Africa. Let’s collaborate on creative campaigns!",
-    photo: "https://randomuser.me/api/portraits/women/14.jpg",
-    industries: ["Marketing", "Design"],
-    collaboration: ["Partnerships", "Mentoring"],
-  },
-  {
-    id: 4,
-    name: "Samuel Okoro",
-    headline: "Healthcare Consultant",
-    summary: "Improving healthcare systems across West Africa. Interested in health tech partnerships.",
-    photo: "https://randomuser.me/api/portraits/men/14.jpg",
-    industries: ["Healthcare", "Consulting"],
-    collaboration: ["Job Opportunities", "Partnerships"],
   },
 ];
 
@@ -319,35 +285,7 @@ const DatingCard = ({ profile, onSwipe, isTopCard }: {
   );
 };
 
-// Networking Card Component
-const NetworkingCard = ({ profile }: { profile: typeof MOCK_NETWORKING_PROFILES[0] }) => (
-  <View style={[tw.bgWhite, tw.roundedLg, tw.mB4, tw.shadow, tw.mX4, tw.p4, tw.flexRow]}> 
-    <Image
-      source={{ uri: profile.photo }}
-      style={[tw.w20, tw.h20, tw.rounded]}
-      resizeMode="cover"
-    />
-    <View style={[tw.flex1, tw.mL4, tw.justifyCenter]}> 
-      <Text style={[tw.textGray900, tw.fontBold, tw.textLg]}>{profile.name}</Text>
-      <Text style={[tw.textGray700, tw.textBase, tw.mT1]}>{profile.headline}</Text>
-      <Text style={[tw.textGray600, tw.textSm, tw.mT2]} numberOfLines={3}>{profile.summary}</Text>
-      <View style={[tw.flexRow, tw.flexWrap, tw.mT2]}> 
-        {profile.industries.map((industry, idx) => (
-          <View key={idx} style={[tw.bgGray200, tw.roundedFull, tw.pX3, tw.pY1, tw.mR2, tw.mB1]}>
-            <Text style={[tw.textGray700, tw.textXs]}>{industry}</Text>
-          </View>
-        ))}
-      </View>
-      <View style={[tw.flexRow, tw.flexWrap, tw.mT1]}> 
-        {profile.collaboration.map((item, idx) => (
-          <View key={idx} style={[tw.bgPink100, tw.roundedFull, tw.pX3, tw.pY1, tw.mR2, tw.mB1]}>
-            <Text style={[tw.textPink700, tw.textXs, tw.fontBold]}>{item}</Text>
-          </View>
-        ))}
-      </View>
-    </View>
-  </View>
-);
+
 
 const HomeScreen: React.FC = () => {
   const router = useRouter();
@@ -355,20 +293,36 @@ const HomeScreen: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [posts, setPosts] = useState(MOCK_POSTS);
   const [datingProfiles, setDatingProfiles] = useState(MOCK_DATING_PROFILES);
-  const [networkingProfiles] = useState(MOCK_NETWORKING_PROFILES);
   const [currentProfileIndex, setCurrentProfileIndex] = useState(0);
   const [showDating, setShowDating] = useState(false);
   const [profileType, setProfileType] = useState<'travel' | 'networking' | 'dating' | null>(null);
   const [imageModalVisible, setImageModalVisible] = useState(false);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [selectedPost, setSelectedPost] = useState<GenericPost | null>(null);
+  const [singlePostVisible, setSinglePostVisible] = useState(false);
+  const [newPostData, setNewPostData] = useState<{
+    images: string[];
+    caption: string;
+    location: string;
+  } | null>(null);
 
   // On mount and on focus, read profileType from local storage
   useFocusEffect(
     React.useCallback(() => {
       (async () => {
+        console.log('Home screen focused'); // Debug log
         const storedType = await LocalStorage.getItem<'travel' | 'networking' | 'dating'>(localStore.profileType);
         if (storedType) setProfileType(storedType);
         setShowDating(storedType === 'dating');
+        
+        // Check for new post data from local storage
+        const newPost = await LocalStorage.getItem('newPost');
+        console.log('Checking for new post data:', newPost); // Debug log
+        if (newPost && typeof newPost === 'object' && 'images' in newPost && 'caption' in newPost && 'location' in newPost) {
+          console.log('Found new post data, adding to feed'); // Debug log
+          addNewPost(newPost as { images: string[]; caption: string; location: string });
+          await LocalStorage.removeItem('newPost'); // Clear the data
+        }
       })();
     }, [])
   );
@@ -402,8 +356,67 @@ const HomeScreen: React.FC = () => {
     handleSwipe(direction);
   };
 
+  const renderCaptionWithHashtags = (caption: string) => {
+    const parts = caption.split(/(#\w+)/g);
+    return parts.map((part, index) => {
+      if (part.startsWith('#')) {
+        return (
+          <Text key={index} style={[tw.textBlue600, tw.fontBold, tw.textSm]}>
+            {part}
+          </Text>
+        );
+      }
+      return part;
+    });
+  };
+
+  const addNewPost = (postData: { images: string[]; caption: string; location: string }) => {
+    const newPost: typeof MOCK_POSTS[0] = {
+      id: Date.now(), // Use timestamp as unique ID
+      user: { 
+        name: "You", 
+        avatar: "https://randomuser.me/api/portraits/men/1.jpg" // Default avatar
+      },
+      timestamp: "Just now",
+      image: postData.images[0], // Use first image as main image
+      likes: 0,
+      comments: 0,
+      shares: 0,
+      isBookmarked: false,
+      location: postData.location,
+      caption: postData.caption,
+      pictures: postData.images,
+    };
+
+    console.log('Adding new post:', newPost); // Debug log
+    setPosts(prevPosts => {
+      const updatedPosts = [newPost, ...prevPosts];
+      console.log('Updated posts count:', updatedPosts.length); // Debug log
+      return updatedPosts;
+    });
+  };
+
   const renderPostCard = ({ item }: { item: typeof MOCK_POSTS[0] }) => (
-    <View style={[tw.bgWhite, tw.roundedLg, tw.mB4, tw.shadow, tw.mX4]}>
+    <TouchableOpacity 
+      style={[tw.bgWhite, tw.roundedLg, tw.mB4, tw.shadow, tw.mX4]}
+      onPress={() => {
+        // Convert MOCK_POSTS item to GenericPost format
+        const genericPost: GenericPost = {
+          id: item.id,
+          user: item.user,
+          timestamp: item.timestamp,
+          location: item.location,
+          caption: item.caption,
+          images: item.pictures || [item.image],
+          likes: item.likes,
+          comments: item.comments,
+          shares: item.shares,
+          isBookmarked: item.isBookmarked,
+        };
+        setSelectedPost(genericPost);
+        setSinglePostVisible(true);
+      }}
+    >
       {/* Header */}
       <View style={[tw.flexRow, tw.itemsCenter, tw.justifyBetween, tw.p4, tw.pB2]}>
         <View style={[tw.flexRow, tw.itemsCenter]}>
@@ -510,6 +523,15 @@ const HomeScreen: React.FC = () => {
           />
         </View>
       )}
+      {/* Caption for Travel and Networking */}
+      {(profileType === 'travel' || profileType === 'networking' || profileType === null) && item.caption && (
+        <View style={[tw.pX4, tw.pB3]}>
+          <Text style={[tw.textGray800, tw.textBase]} numberOfLines={3}>
+            <Text style={[tw.fontBold]}>{item.user.name}</Text>
+            <Text style={[tw.textSm]}> {renderCaptionWithHashtags(item.caption)}</Text>
+          </Text>
+        </View>
+      )}
       {/* Engagement Metrics */}
       <View style={[tw.flexRow, tw.itemsCenter, tw.justifyBetween, tw.pX4, tw.pB4]}>
         <View style={[tw.flexRow, tw.itemsCenter]}>
@@ -548,7 +570,7 @@ const HomeScreen: React.FC = () => {
           )}
         </TouchableOpacity>
       </Modal>
-    </View>
+    </TouchableOpacity>
   );
 
   const renderDatingInterface = () => {
@@ -680,15 +702,9 @@ const HomeScreen: React.FC = () => {
       {/* Content */}
       {showDating ? (
         renderDatingInterface()
-      ) : profileType === 'networking' ? (
-        <FlatList
-          data={networkingProfiles}
-          renderItem={({ item }) => <NetworkingCard profile={item} />}
-          keyExtractor={(item) => item.id.toString()}
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={[{ paddingBottom: 80 }]}
-            />
-          ) : (
+              ) : profileType === 'networking' ? (
+          <Networking />
+        ) : (
         <FlatList
           data={posts}
           renderItem={renderPostCard}
@@ -696,6 +712,55 @@ const HomeScreen: React.FC = () => {
           showsVerticalScrollIndicator={false}
           contentContainerStyle={[{ paddingBottom: 80 }]}
         />
+      )}
+      
+      {/* Single Post View */}
+      <SinglePostView
+        visible={singlePostVisible}
+        post={selectedPost}
+        onClose={() => {
+          setSinglePostVisible(false);
+          setSelectedPost(null);
+        }}
+        onToggleBookmark={toggleBookmark}
+        onLike={(postId) => {
+          setPosts(prevPosts =>
+            prevPosts.map(post =>
+              post.id === postId ? { ...post, likes: post.likes + 1 } : post
+            )
+          );
+        }}
+        onComment={(postId) => {
+          console.log('Comment on post:', postId);
+        }}
+        onShare={(postId) => {
+          console.log('Share post:', postId);
+        }}
+        profileType={profileType}
+      />
+
+      {/* Floating Action Button */}
+      {(profileType === 'travel' || profileType === 'networking') && (
+        <TouchableOpacity
+          style={[
+            tw.absolute,
+            { bottom: 72, right: 24 },
+            profileType === 'travel' ? tw.bgPink700 : tw.bgPurple600,
+            tw.roundedFull,
+            tw.w12,
+            tw.h12,
+            tw.justifyCenter,
+            tw.itemsCenter,
+            tw.shadow,
+            { elevation: 8 }
+          ]}
+          onPress={() => {
+            setNewPostData(null);
+            router.push(`/posts/create?profileType=${profileType}`);
+          }}
+        >
+          <Ionicons name="add" size={28} color="white" />
+        </TouchableOpacity>
       )}
     </SafeAreaView>
   );

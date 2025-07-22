@@ -172,14 +172,7 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({
       // Default handling
       switch (notification.action) {
         case 'accept_decline':
-          Alert.alert(
-            'Connection Request',
-            'Would you like to accept this connection request?',
-            [
-              { text: 'Decline', style: 'cancel' },
-              { text: 'Accept', onPress: () => console.log('Connection accepted') }
-            ]
-          );
+          // Don't show alert for connection requests - let the inline buttons handle it
           break;
         case 'view_post':
         case 'view_comment':
@@ -194,73 +187,159 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({
     }
   };
 
+  const handleAcceptConnection = (notification: Notification) => {
+    Alert.alert(
+      'Accept Connection',
+      `Accept connection request from ${notification.message.split(' wants to connect')[0]}?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { 
+          text: 'Accept', 
+          onPress: () => {
+            // Update notification status
+            setNotifications(prev =>
+              prev.map(n =>
+                n.id === notification.id 
+                  ? { ...n, isRead: true, action: 'connected' }
+                  : n
+              )
+            );
+            console.log('Connection accepted:', notification.id);
+            // Here you would typically make an API call to accept the connection
+          }
+        }
+      ]
+    );
+  };
+
+  const handleDeclineConnection = (notification: Notification) => {
+    Alert.alert(
+      'Decline Connection',
+      `Decline connection request from ${notification.message.split(' wants to connect')[0]}?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { 
+          text: 'Decline', 
+          style: 'destructive',
+          onPress: () => {
+            // Remove the notification
+            setNotifications(prev =>
+              prev.filter(n => n.id !== notification.id)
+            );
+            console.log('Connection declined:', notification.id);
+            // Here you would typically make an API call to decline the connection
+          }
+        }
+      ]
+    );
+  };
+
   const renderNotification = ({ item }: { item: Notification }) => {
     const icon = getNotificationIcon(item.type);
     
     return (
-      <TouchableOpacity
-        style={[
-          tw.bgWhite,
-          tw.p4,
-          tw.mB2,
-          tw.roundedLg,
-          tw.shadow,
-          tw.mX4,
-          !item.isRead && tw.borderL4,
-          !item.isRead && { borderLeftColor: '#fb6c31' }
-        ]}
-        onPress={() => handleNotificationPress(item)}
-      >
-        <View style={[tw.flexRow, tw.itemsStart]}>
-          {/* Avatar or Icon */}
-          {item.avatar ? (
-            <Image
-              source={{ uri: item.avatar }}
-              style={[tw.w12, tw.h12, tw.roundedFull, tw.mR3]}
-            />
-          ) : (
-            <View style={[
-              tw.w12, 
-              tw.h12, 
-              tw.roundedFull, 
-              tw.mR3, 
-              tw.justifyCenter, 
-              tw.itemsCenter,
-              { backgroundColor: `${icon.color}20` }
-            ]}>
-              <Ionicons name={icon.name as any} size={20} color={icon.color} />
-            </View>
-          )}
-
-          {/* Content */}
-          <View style={[tw.flex1]}>
-            <View style={[tw.flexRow, tw.itemsCenter, tw.justifyBetween]}>
-              <Text style={[
-                tw.textGray900, 
-                tw.fontMedium, 
-                tw.textBase,
-                !item.isRead && tw.fontBold
+      <View style={[
+        tw.bgWhite,
+        tw.p4,
+        tw.mB2,
+        tw.roundedLg,
+        tw.shadow,
+        tw.mX4,
+        !item.isRead && tw.borderL4,
+        !item.isRead && { borderLeftColor: '#fb6c31' }
+      ]}>
+        <TouchableOpacity
+          onPress={() => handleNotificationPress(item)}
+        >
+          <View style={[tw.flexRow, tw.itemsStart]}>
+            {/* Avatar or Icon */}
+            {item.avatar ? (
+              <Image
+                source={{ uri: item.avatar }}
+                style={[tw.w12, tw.h12, tw.roundedFull, tw.mR3]}
+              />
+            ) : (
+              <View style={[
+                tw.w12, 
+                tw.h12, 
+                tw.roundedFull, 
+                tw.mR3, 
+                tw.justifyCenter, 
+                tw.itemsCenter,
+                { backgroundColor: `${icon.color}20` }
               ]}>
-                {item.title}
-              </Text>
-              <Text style={[tw.textGray400, tw.textXs]}>{item.timestamp}</Text>
-            </View>
-            <Text style={[
-              tw.textGray600, 
-              tw.textSm, 
-              tw.mT1,
-              !item.isRead && tw.fontMedium
-            ]} numberOfLines={2}>
-              {item.message}
-            </Text>
-          </View>
+                <Ionicons name={icon.name as any} size={20} color={icon.color} />
+              </View>
+            )}
 
-          {/* Unread indicator */}
-          {!item.isRead && (
-            <View style={[tw.w2, tw.h2, tw.roundedFull, tw.bgPink700, tw.mL2]} />
-          )}
-        </View>
-      </TouchableOpacity>
+            {/* Content */}
+            <View style={[tw.flex1]}>
+              <View style={[tw.flexRow, tw.itemsCenter, tw.justifyBetween]}>
+                <Text style={[
+                  tw.textGray900, 
+                  tw.fontMedium, 
+                  tw.textBase,
+                  !item.isRead && tw.fontBold
+                ]}>
+                  {item.title}
+                </Text>
+                <Text style={[tw.textGray400, tw.textXs]}>{item.timestamp}</Text>
+              </View>
+              <Text style={[
+                tw.textGray600, 
+                tw.textSm, 
+                tw.mT1,
+                !item.isRead && tw.fontMedium
+              ]} numberOfLines={2}>
+                {item.message}
+              </Text>
+            </View>
+
+            {/* Unread indicator */}
+            {!item.isRead && (
+              <View style={[tw.w2, tw.h2, tw.roundedFull, tw.bgPink700, tw.mL2]} />
+            )}
+          </View>
+        </TouchableOpacity>
+
+        {/* Action buttons for connection requests */}
+        {item.type === 'connection_request' && item.action === 'accept_decline' && (
+          <View style={[tw.flexRow, tw.justifyEnd, tw.mT3, tw.pT3, tw.borderT, tw.borderGray200]}>
+            <TouchableOpacity
+              style={[
+                tw.bgRed500,
+                tw.roundedFull,
+                tw.pX4,
+                tw.pY2,
+                tw.mR2
+              ]}
+              onPress={() => handleDeclineConnection(item)}
+            >
+              <Text style={[tw.textWhite, tw.fontMedium, tw.textSm]}>Decline</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[
+                tw.bgGreen500,
+                tw.roundedFull,
+                tw.pX4,
+                tw.pY2
+              ]}
+              onPress={() => handleAcceptConnection(item)}
+            >
+              <Text style={[tw.textWhite, tw.fontMedium, tw.textSm]}>Accept</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
+        {/* Status for accepted connections */}
+        {item.type === 'connection_request' && item.action === 'connected' && (
+          <View style={[tw.flexRow, tw.justifyEnd, tw.mT3, tw.pT3, tw.borderT, tw.borderGray200]}>
+            <View style={[tw.bgGreen100, tw.roundedFull, tw.pX4, tw.pY2]}>
+              <Text style={[tw.textGreen700, tw.fontMedium, tw.textSm]}>✓ Connected</Text>
+            </View>
+          </View>
+        )}
+      </View>
     );
   };
 

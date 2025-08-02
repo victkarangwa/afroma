@@ -7,6 +7,7 @@ import {
   ScrollView,
   FlatList,
   Modal,
+  Alert,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
@@ -17,6 +18,7 @@ import { ApiResponse } from "@/types";
 import { removeUserData } from "@/utils";
 import * as ImagePicker from "expo-image-picker";
 import LocalStorage from "@/utils/storage";
+import { clearAuthData } from "@/utils/auth";
 import localStore from "@/utils/localValues";
 import NotificationBadge from "@/components/NotificationBadge";
 import { MOCK_NOTIFICATIONS } from "@/components/NotificationCenter";
@@ -58,6 +60,22 @@ const ProfileScreen: React.FC = () => {
   const [isUploading, setIsUploading] = useState(false);
   const [profileType, setProfileType] = useState<'travel' | 'networking' | 'dating'>('travel');
   const [modalVisible, setModalVisible] = useState(false);
+  const [isLoadingProfile, setIsLoadingProfile] = useState(true);
+  const [profileError, setProfileError] = useState<string | null>(null);
+
+  // Calculate age from dateOfBirth
+  const calculateAge = (dateOfBirth: string) => {
+    if (!dateOfBirth) return null;
+    const birthDate = new Date(dateOfBirth);
+    const today = new Date();
+    const age = today.getFullYear() - birthDate.getFullYear();
+    const monthDiff = today.getMonth() - birthDate.getMonth();
+    
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+      return age - 1;
+    }
+    return age;
+  };
 
   // On mount, read profileType from local storage
   useEffect(() => {
@@ -68,12 +86,26 @@ const ProfileScreen: React.FC = () => {
   }, []);
 
   const getMyBasicProfile = async () => {
-    const result = await send("get", "/bonded-user-service/users/me");
-    if (result?.errors) {
+    try {
+      setIsLoadingProfile(true);
+      setProfileError(null);
+      
+      const result = await send("get", "/users/me");
+      if (result?.errors) {
+        console.error("Error fetching user profile:", result.errors);
+        setProfileError(result.errors);
+        handleLogout();
+        return;
+      }
+      console.log("User profile data:", result);
+      setProfile(result);
+    } catch (error) {
+      console.error("Error fetching user profile:", error);
+      setProfileError("Failed to load profile");
       handleLogout();
-      return;
+    } finally {
+      setIsLoadingProfile(false);
     }
-    setProfile(result);
   };
 
   useFocusEffect(
@@ -83,9 +115,41 @@ const ProfileScreen: React.FC = () => {
   );
 
   const handleLogout = async () => {
-    // const result = await send("post", "/bonded-user-service/auth/logout");
-    // removeUserData();
-    // router.push({ pathname: "/getStarted/login" });
+    try {
+      // Show confirmation dialog
+      Alert.alert(
+        "Logout",
+        "Are you sure you want to logout?",
+        [
+          {
+            text: "Cancel",
+            style: "cancel"
+          },
+          {
+            text: "Logout",
+            style: "destructive",
+            onPress: async () => {
+              try {
+                // Clear authentication data
+                await clearAuthData();
+                
+                // Clear any other user data
+                removeUserData();
+                
+                // Navigate to login screen
+                router.replace("/getStarted/login");
+              } catch (error) {
+                console.error("Error during logout:", error);
+                Alert.alert("Error", "Failed to logout. Please try again.");
+              }
+            }
+          }
+        ]
+      );
+    } catch (error) {
+      console.error("Error during logout:", error);
+      Alert.alert("Error", "Failed to logout. Please try again.");
+    }
   };
 
   const pickImage = async () => {
@@ -196,6 +260,9 @@ const ProfileScreen: React.FC = () => {
             <TouchableOpacity style={[tw.mL4]} onPress={() => router.push('/settings')}>
               <Ionicons name="settings-outline" size={24} color="#6b7280" />
             </TouchableOpacity>
+            <TouchableOpacity style={[tw.mL4]} onPress={handleLogout}>
+              <Ionicons name="log-out-outline" size={24} color="#ef4444" />
+            </TouchableOpacity>
           </View>
         </View>
       </View>
@@ -228,7 +295,8 @@ const ProfileScreen: React.FC = () => {
             <View style={[tw.relative]}>
               <Image
                 source={{
-                  uri: profile?.gallery?.find((img: any) => img.featured)?.thumbnailUrl || 
+                  uri: profile?.profilePicture || 
+                       profile?.gallery?.find((img: any) => img.featured)?.thumbnailUrl || 
                        "https://randomuser.me/api/portraits/women/5.jpg"
                 }}
                 style={[tw.w24, tw.h24, tw.roundedFull, tw.border4, tw.borderWhite]}
@@ -241,9 +309,7 @@ const ProfileScreen: React.FC = () => {
               {/* Profile Type Tag */}
               <View style={[tw.absolute, { bottom: -12, left: '50%', transform: [{ translateX: -30 }] }, tw.bgGray900, tw.pX3, tw.pY1, tw.roundedFull, tw.itemsCenter, tw.justifyCenter, { minWidth: 60, zIndex: 2 }]}> 
                 <Text style={[tw.textWhite, tw.textXs, tw.fontBold, { textAlign: 'center' }]}> 
-                  {profileType === 'travel' && 'Travel'}
-                  {profileType === 'networking' && 'Networking'}
-                  {profileType === 'dating' && 'Dating'}
+                  {profile?.profileType || profileType === 'travel' && 'Travel' || profileType === 'networking' && 'Networking' || profileType === 'dating' && 'Dating'}
                 </Text>
               </View>
             </View>
@@ -301,27 +367,109 @@ const ProfileScreen: React.FC = () => {
 
           {/* Profile Info */}
           <View style={[tw.itemsCenter]}>
-            <Text style={[tw.textGray900, tw.text2xl, tw.fontBold]}>
-              {profile?.firstname || "Alex"} {profile?.lastname || "Tsimikas"}
-            </Text>
-            <Text style={[tw.textGray600, tw.textBase, tw.mT1]}>
-              Brooklyn, NY
-            </Text>
-            <Text style={[tw.textGray700, tw.textBase, tw.mT2, tw.textCenter]}>
-              Writer by Profession. Artist by Passion!
-            </Text>
+            {isLoadingProfile ? (
+              <View style={[tw.itemsCenter, tw.pY4]}>
+                <Text style={[tw.textGray600, tw.textBase]}>Loading profile...</Text>
+              </View>
+            ) : profileError ? (
+              <View style={[tw.itemsCenter, tw.pY4]}>
+                <Text style={[tw.textRed600, tw.textBase, tw.textCenter]}>{profileError}</Text>
+                <TouchableOpacity 
+                  style={[tw.mT2, tw.bgPink700, tw.pX4, tw.pY2, tw.rounded]}
+                  onPress={getMyBasicProfile}
+                >
+                  <Text style={[tw.textWhite, tw.fontBold]}>Retry</Text>
+                </TouchableOpacity>
+              </View>
+            ) : (
+              <>
+                <Text style={[tw.textGray900, tw.text2xl, tw.fontBold]}>
+                  {profile?.firstname || profile?.name || "User"} {profile?.lastname || ""}
+                </Text>
+                <Text style={[tw.textGray600, tw.textBase, tw.mT1]}>
+                  {profile?.city || profile?.location || "Location not set"}
+                  {profile?.latitude && profile?.longitude && profile.latitude !== 0 && profile.longitude !== 0 ? 
+                    ` (${profile.latitude.toFixed(2)}, ${profile.longitude.toFixed(2)})` : ""}
+                </Text>
+                <Text style={[tw.textGray700, tw.textBase, tw.mT2, tw.textCenter]}>
+                  {profile?.bio || profile?.description || 
+                    `${profile?.gender || ""}${profile?.dateOfBirth ? ` • ${calculateAge(profile.dateOfBirth)} years old` : ""}${profile?.profileType ? ` • ${profile.profileType}` : ""}`
+                  }
+                </Text>
+              </>
+            )}
           </View>
 
           {/* Stats */}
-          <View style={[tw.flexRow, tw.justifyCenter, tw.mT6, tw.mB6]}>
-            <View style={[tw.itemsCenter, tw.mR8]}>
-              <Text style={[tw.textGray900, tw.textLg, tw.fontBold]}>2,447</Text>
-              <Text style={[tw.textGray600, tw.textSm]}>Followers</Text>
+          {!isLoadingProfile && !profileError && (
+            <View style={[tw.flexRow, tw.justifyCenter, tw.mT6, tw.mB6]}>
+              <View style={[tw.itemsCenter, tw.mR8]}>
+                <Text style={[tw.textGray900, tw.textLg, tw.fontBold]}>
+                  {profile?.followersCount || profile?.followers?.length || 0}
+                </Text>
+                <Text style={[tw.textGray600, tw.textSm]}>Followers</Text>
+              </View>
+              <View style={[tw.itemsCenter, tw.mR8]}>
+                <Text style={[tw.textGray900, tw.textLg, tw.fontBold]}>
+                  {profile?.followingCount || profile?.following?.length || 0}
+                </Text>
+                <Text style={[tw.textGray600, tw.textSm]}>Following</Text>
+              </View>
+              <View style={[tw.itemsCenter]}>
+                <Text style={[tw.textGray900, tw.textLg, tw.fontBold]}>
+                  {profile?.postsCount || profile?.posts?.length || 0}
+                </Text>
+                <Text style={[tw.textGray600, tw.textSm]}>Posts</Text>
+              </View>
             </View>
-            <View style={[tw.itemsCenter, tw.mR8]}>
-              <Text style={[tw.textGray900, tw.textLg, tw.fontBold]}>1,589</Text>
-              <Text style={[tw.textGray600, tw.textSm]}>Following</Text>
+          )}
+
+          {/* Additional Profile Details */}
+          {!isLoadingProfile && !profileError && profile && (
+            <View style={[tw.bgWhite, tw.roundedLg, tw.p4, tw.mB4, tw.shadow]}>
+              <Text style={[tw.textPink700, tw.textLg, tw.fontBold, tw.mB3]}>Profile Details</Text>
+              <View style={[tw.flexRow, tw.justifyBetween, tw.mB2]}>
+                <Text style={[tw.textGray600, tw.textBase]}>Gender:</Text>
+                <Text style={[tw.textGray900, tw.textBase, tw.fontBold]}>{profile.gender || "Not specified"}</Text>
+              </View>
+              {profile.interestedIn && (
+                <View style={[tw.flexRow, tw.justifyBetween, tw.mB2]}>
+                  <Text style={[tw.textGray600, tw.textBase]}>Interested In:</Text>
+                  <Text style={[tw.textGray900, tw.textBase, tw.fontBold]}>{profile.interestedIn}</Text>
+                </View>
+              )}
+              {profile.dateOfBirth && (
+                <View style={[tw.flexRow, tw.justifyBetween, tw.mB2]}>
+                  <Text style={[tw.textGray600, tw.textBase]}>Age:</Text>
+                  <Text style={[tw.textGray900, tw.textBase, tw.fontBold]}>{calculateAge(profile.dateOfBirth)} years old</Text>
+                </View>
+              )}
+              <View style={[tw.flexRow, tw.justifyBetween, tw.mB2]}>
+                <Text style={[tw.textGray600, tw.textBase]}>Account Type:</Text>
+                <Text style={[tw.textGray900, tw.textBase, tw.fontBold]}>
+                  {profile.publicFigure ? "Public Figure" : "Regular User"}
+                </Text>
+              </View>
+              {profile.profileTypes && profile.profileTypes.length > 0 && (
+                <View style={[tw.flexRow, tw.justifyBetween, tw.mB2]}>
+                  <Text style={[tw.textGray600, tw.textBase]}>Profile Types:</Text>
+                  <Text style={[tw.textGray900, tw.textBase, tw.fontBold]}>{profile.profileTypes.join(", ")}</Text>
+                </View>
+              )}
             </View>
+          )}
+
+          {/* Logout Button */}
+          <View style={[tw.bgWhite, tw.roundedLg, tw.p4, tw.mB4, tw.shadow]}>
+            <TouchableOpacity
+              style={[tw.bgRed500, tw.pY3, tw.pX4, tw.roundedLg, tw.itemsCenter]}
+              onPress={handleLogout}
+            >
+              <View style={[tw.flexRow, tw.itemsCenter]}>
+                <Ionicons name="log-out-outline" size={20} color="white" style={[tw.mR2]} />
+                <Text style={[tw.textWhite, tw.fontBold, tw.textBase]}>Logout</Text>
+              </View>
+            </TouchableOpacity>
           </View>
 
           {/* Tab Navigation */}

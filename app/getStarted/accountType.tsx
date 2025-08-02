@@ -8,10 +8,12 @@ import { tw } from "react-native-tailwindcss";
 import moment from "moment";
 import { FontAwesome } from '@expo/vector-icons';
 
+
 type FormData = {
-  fullName: string;
+  name: string;
+  email: string;
+  phone_number: string;
   password: string;
-  dateOfBirth: Date;
 };
 
 const AccountTypeScreen: React.FC = () => {
@@ -23,22 +25,55 @@ const AccountTypeScreen: React.FC = () => {
     watch,
   } = useForm<FormData>({
     defaultValues: {
-      fullName: "",
+      name: "",
+      email: "",
+      phone_number: "",
       password: "",
-      dateOfBirth: new Date(),
     },
   });
 
-  const [showDatePicker, setShowDatePicker] = React.useState(false);
-
-  const dateOfBirth = watch("dateOfBirth");
-  const age = dateOfBirth
-    ? moment().diff(moment(dateOfBirth), "years")
-    : "-";
-
   const onSubmit = (data: FormData) => {
-    // You can handle the data here (e.g., send to API or navigate)
-    router.push(`/getStarted/lookingFor`);
+    // Validate all required fields
+    if (!data.name || !data.email || !data.phone_number || !data.password) {
+      console.error("Missing required fields:", data);
+      return;
+    }
+
+    // Validate email format
+    const emailRegex = /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i;
+    if (!emailRegex.test(data.email)) {
+      console.error("Invalid email format");
+      return;
+    }
+
+    // Validate password length
+    if (data.password.length < 6) {
+      console.error("Password too short");
+      return;
+    }
+
+    // Validate phone number format
+    const phoneRegex = /^\+[1-9]\d{1,14}$/;
+    if (!phoneRegex.test(data.phone_number)) {
+      console.error("Invalid phone number format");
+      return;
+    }
+
+    // Store the basic registration data
+    const registrationData = {
+      ...data,
+      phone_number: data.phone_number.slice(1), // Remove the + prefix
+    };
+    
+    console.log("Basic registration data:", registrationData);
+    
+    // Navigate to lookingFor with the data
+    router.push({ 
+      pathname: "/getStarted/lookingFor", 
+      params: { 
+        registrationData: JSON.stringify(registrationData)
+      } 
+    });
   };
 
   const primaryShadow = {
@@ -63,7 +98,7 @@ const AccountTypeScreen: React.FC = () => {
         <Text style={[tw.textPink700, tw.textBase, tw.fontBold, tw.mB2]}>Full Name</Text>
         <Controller
           control={control}
-          name="fullName"
+          name="name"
           rules={{ required: "Full name is required" }}
           render={({ field: { onChange, onBlur, value } }) => (
             <TextInput
@@ -75,9 +110,65 @@ const AccountTypeScreen: React.FC = () => {
             />
           )}
         />
-        {errors.fullName && (
-          <Text style={[tw.textRed500, tw.mB2]}>{errors.fullName.message}</Text>
+        {errors.name && (
+          <Text style={[tw.textRed500, tw.mB2]}>{errors.name.message}</Text>
         )}
+
+        {/* Email */}
+        <Text style={[tw.textPink700, tw.textBase, tw.fontBold, tw.mB2]}>Email</Text>
+        <Controller
+          control={control}
+          name="email"
+          rules={{ 
+            required: "Email is required",
+            pattern: {
+              value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+              message: "Invalid email address"
+            }
+          }}
+          render={({ field: { onChange, onBlur, value } }) => (
+            <TextInput
+              style={[tw.bgWhite, tw.rounded, tw.p3, tw.mB2, primaryShadow]}
+              placeholder="Enter your email"
+              keyboardType="email-address"
+              autoCapitalize="none"
+              onBlur={onBlur}
+              onChangeText={onChange}
+              value={value}
+            />
+          )}
+        />
+        {errors.email && (
+          <Text style={[tw.textRed500, tw.mB2]}>{errors.email.message}</Text>
+        )}
+
+        {/* Phone Number */}
+        <Text style={[tw.textPink700, tw.textBase, tw.fontBold, tw.mB2]}>Phone Number</Text>
+        <Controller
+          control={control}
+          name="phone_number"
+          rules={{ 
+            required: "Phone number is required",
+            pattern: {
+              value: /^\+[1-9]\d{1,14}$/,
+              message: "Please enter a valid phone number with country code (e.g., +1234567890)"
+            }
+          }}
+          render={({ field: { onChange, onBlur, value } }) => (
+            <TextInput
+              style={[tw.bgWhite, tw.rounded, tw.p3, tw.mB2, primaryShadow]}
+              placeholder="Enter phone number with country code (e.g., +1234567890)"
+              keyboardType="phone-pad"
+              onBlur={onBlur}
+              onChangeText={onChange}
+              value={value}
+            />
+          )}
+        />
+        {errors.phone_number && (
+          <Text style={[tw.textRed500, tw.mB2]}>{errors.phone_number.message}</Text>
+        )}
+
         {/* Password */}
         <Text style={[tw.textPink700, tw.textBase, tw.fontBold, tw.mB2]}>Password</Text>
         <Controller
@@ -101,45 +192,18 @@ const AccountTypeScreen: React.FC = () => {
         {errors.password && (
           <Text style={[tw.textRed500, tw.mB2]}>{errors.password.message}</Text>
         )}
-        {/* Date of Birth */}
-        <Text style={[tw.textPink700, tw.textBase, tw.fontBold, tw.mB2]}>Date of Birth</Text>
-        <Controller
-          control={control}
-          name="dateOfBirth"
-          rules={{
-            required: "Date of birth is required",
-            validate: (date) => {
-              if (!date) return "Date of birth is required";
-              if (moment(date).isAfter(moment())) return "Date cannot be in the future";
-              return true;
-            },
-          }}
-          render={({ field: { value, onChange } }) => (
-            <>
-              <TouchableOpacity
-                style={[tw.bgWhite, tw.rounded, tw.p3, tw.mB2, primaryShadow]}
-                onPress={() => setShowDatePicker(true)}
-              >
-                <Text>{moment(value).format("YYYY-MM-DD")}</Text>
-              </TouchableOpacity>
-              {showDatePicker && (
-                <DateTimePicker
-                  value={value || new Date()}
-                  mode="date"
-                  display="default"
-                  onChange={(event, selectedDate) => {
-                    setShowDatePicker(false);
-                    if (selectedDate) onChange(selectedDate);
-                  }}
-                  maximumDate={new Date()}
-                  style={[tw.bgWhite]}
-                />
-              )}
-            </>
-          )}
-        />
-        {errors.dateOfBirth && (
-          <Text style={[tw.textRed500, tw.mB2]}>{errors.dateOfBirth.message}</Text>
+
+        {/* Validation Summary */}
+        {(!watch("name") || !watch("email") || !watch("phone_number") || !watch("password") || watch("password").length < 6 || !/^\+[1-9]\d{1,14}$/.test(watch("phone_number"))) && (
+          <View style={[tw.bgRed100, tw.p3, tw.rounded, tw.mT2]}>
+            <Text style={[tw.textRed700, tw.textSm, tw.fontBold]}>Please complete all fields:</Text>
+            {!watch("name") && <Text style={[tw.textRed600, tw.textSm]}>• Full name is required</Text>}
+            {!watch("email") && <Text style={[tw.textRed600, tw.textSm]}>• Valid email is required</Text>}
+            {!watch("phone_number") && <Text style={[tw.textRed600, tw.textSm]}>• Phone number with country code is required</Text>}
+            {!watch("password") && <Text style={[tw.textRed600, tw.textSm]}>• Password is required</Text>}
+            {watch("password") && watch("password").length < 6 && <Text style={[tw.textRed600, tw.textSm]}>• Password must be at least 6 characters</Text>}
+            {watch("phone_number") && !/^\+[1-9]\d{1,14}$/.test(watch("phone_number")) && <Text style={[tw.textRed600, tw.textSm]}>• Phone number must be valid (e.g., +1234567890)</Text>}
+          </View>
         )}
         {/* Submit Button */}
         <Button
@@ -147,6 +211,14 @@ const AccountTypeScreen: React.FC = () => {
           onPress={handleSubmit(onSubmit)}
           style={[tw.bgPink700, tw.mT4]}
           labelStyle={[tw.textWhite]}
+          disabled={
+            !watch("name") ||
+            !watch("email") ||
+            !watch("phone_number") ||
+            !watch("password") ||
+            watch("password").length < 6 ||
+            !/^\+[1-9]\d{1,14}$/.test(watch("phone_number"))
+          }
         >
           Continue
         </Button>

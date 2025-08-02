@@ -43,8 +43,8 @@ const SignupScreen: React.FC = () => {
     btnText: "Try Again",
     onDismiss: () => {},
   });
-  const [socialMediaInfo, setSocialMediaInfo] = React.useState(null);
-  const [location, setLocation] = React.useState(null);
+  const [socialMediaInfo, setSocialMediaInfo] = React.useState<any>(null);
+  const [location, setLocation] = React.useState<any>(null);
 
   const {
     control,
@@ -74,65 +74,37 @@ const SignupScreen: React.FC = () => {
     try {
       const { name, email, phone_number, password } = data;
 
-
-      const otherFields = JSON.parse(profileFields as string);
-
-      let req;
+      // For social media signup, handle differently
       if (isSocialNewAccount) {
-        req = {
-          name: socialMediaInfo?.names,
-          email: socialMediaInfo?.email,
-          phone_number: phone_number.slice(1),
-          socialMediaSignup: true,
-          latitude: location?.coords?.latitude,
-          longitude: location?.coords?.longitude,
-          ...otherFields,
-          dateOfBirth:
-            otherFields.dateOfBirth.slice(0, 10) + "T18:18:37.124+00:00",
-        };
-      } else {
-        req = {
-          name,
-          email,
-          phone_number: phone_number.slice(1),
-          password,
-          latitude: location?.coords?.latitude as number,
-          longitude: location?.coords?.longitude as number,
-          ...otherFields,
-          dateOfBirth:
-            otherFields.dateOfBirth.slice(0, 10) + "T18:18:37.124+00:00",
-        };
-      }
-      console.log("-------", req);
-      // return console.log("-------", req);
-      router.push({ pathname: "/getStarted/lookingFor" });
-      const result = await send(
-        "post",
-        "/bonded-user-service/users/register",
-        req
-      );
-
-      if (result?.errors) {
-        setModalInfo({
-          title: "Error",
-          description: result?.errors || "An error occurred. Please try again.",
-          status: "error",
-          btnText: "Try Again",
-          onDismiss: () => setVisible(false),
-        });
-        setVisible(true);
+        // Handle social media registration here if needed
+        router.push({ pathname: "/getStarted/lookingFor" });
         return;
       }
-      setVisible(true);
-      setModalInfo({
-        title: "Success",
-        description: "Account created successfully",
-        status: "success",
-        btnText: "Continue to login",
-        onDismiss: () => {
-          router.push({ pathname: "/getStarted/login" });
-          setVisible(false);
-        },
+
+      // For regular signup, store data and navigate to lookingFor
+      // We'll use AsyncStorage to pass data between screens
+      const registrationData = {
+        name,
+        email,
+        phone_number: phone_number.slice(1),
+        password,
+      };
+      
+      // Store the data temporarily
+      console.log("Storing registration data:", registrationData);
+      await LocalStorage.setItem("tempRegistrationData", registrationData);
+      
+      // Verify the data was stored correctly
+      const storedData = await LocalStorage.getItem("tempRegistrationData");
+      console.log("Verification - stored data:", storedData);
+      
+      console.log("Data stored successfully");
+      
+      router.push({ 
+        pathname: "/getStarted/lookingFor", 
+        params: { 
+          purpose: "networking" // Default purpose, will be updated in lookingFor
+        } 
       });
     } catch (error) {
       console.log("error", error);
@@ -307,6 +279,7 @@ const SignupScreen: React.FC = () => {
                   }
                   onBlur={onBlur}
                   onChangeText={(value) => onChange(value)}
+                  autoFocus={false}
                 />
               )}
             />
@@ -368,6 +341,7 @@ const SignupScreen: React.FC = () => {
                   left={<TextInput.Icon icon="email-outline" color="gray" />}
                   onBlur={onBlur}
                   onChangeText={(value) => onChange(value)}
+                  autoFocus={false}
                 />
               )}
             />
@@ -389,6 +363,7 @@ const SignupScreen: React.FC = () => {
                   left={<TextInput.Icon icon="lock-outline" color="gray" />}
                   onBlur={onBlur}
                   onChangeText={(value) => onChange(value)}
+                  autoFocus={false}
                 />
               )}
             />
@@ -413,6 +388,7 @@ const SignupScreen: React.FC = () => {
                   left={<TextInput.Icon icon="lock-outline" color="gray" />}
                   onBlur={onBlur}
                   onChangeText={(value) => onChange(value)}
+                  autoFocus={false}
                 />
               )}
             />

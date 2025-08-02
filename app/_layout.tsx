@@ -1,3 +1,4 @@
+import "react-native-get-random-values";
 import {
   DarkTheme,
   DefaultTheme,
@@ -34,15 +35,41 @@ export default function RootLayout() {
       if (loaded) {
         try {
           await SplashScreen.hideAsync();
-          const token = await LocalStorage.getItem("token");
-          if (token && token !== undefined) {
+          
+          // Check for auth token
+          const authToken = await LocalStorage.getItem("authToken");
+          const tokenExpiresAt = await LocalStorage.getItem("tokenExpiresAt");
+          
+          // Check if token exists and is not expired
+          if (authToken && tokenExpiresAt && typeof tokenExpiresAt === 'string') {
+            const expirationDate = new Date(tokenExpiresAt);
+            const currentDate = new Date();
+            
+            if (currentDate < expirationDate) {
+              console.log("Valid token found, navigating to home screen");
+              router.replace({ pathname: "/(tabs)" });
+              return;
+            } else {
+              console.log("Token expired, clearing storage");
+              await LocalStorage.removeItem("authToken");
+              await LocalStorage.removeItem("tokenExpiresAt");
+            }
+          }
+          
+          // Fallback to old token check for backward compatibility
+          const oldToken = await LocalStorage.getItem("token");
+          if (oldToken && oldToken !== undefined) {
+            console.log("Old token found, navigating to home screen");
             router.replace({ pathname: "/(tabs)" });
             return;
           }
-          // if (router.canDismiss()) router.dismissAll();
+          
+          console.log("No valid token found, navigating to registration");
           router.replace({ pathname: "/getStarted/accountType" });
         } catch (error) {
           console.error("Initialization Error:", error);
+          // On error, navigate to registration
+          router.replace({ pathname: "/getStarted/accountType" });
         }
       }
     };
@@ -160,6 +187,10 @@ export default function RootLayout() {
               />
               <Stack.Screen
                 name="notifications/index"
+                options={{ headerShown: false }}
+              />
+              <Stack.Screen
+                name="getStarted/profileInfo"
                 options={{ headerShown: false }}
               />
               <Stack.Screen

@@ -1,7 +1,8 @@
 import React from "react";
 import { View, TouchableOpacity, Image, Text } from "react-native";
-import { useRouter } from "expo-router";
+import { useRouter, useLocalSearchParams } from "expo-router";
 import { tw } from "react-native-tailwindcss";
+import LocalStorage from "@/utils/storage";
 
 const OPTIONS = [
   {
@@ -26,6 +27,7 @@ const OPTIONS = [
 
 const LookingForScreen: React.FC = () => {
   const router = useRouter();
+  const params = useLocalSearchParams();
   const [selected, setSelected] = React.useState<string[]>([]);
 
   const handleToggle = (key: string) => {
@@ -34,10 +36,53 @@ const LookingForScreen: React.FC = () => {
     );
   };
 
-  const handleContinue = () => {
+  const handleContinue = async () => {
+    // Validate that a purpose is selected
+    if (selected.length === 0) {
+      console.error("No purpose selected");
+      return;
+    }
+
     // Pass the selected purpose(s) as a param (use the first selected for now)
     if (selected.length > 0) {
-      router.push({ pathname: "/form/completeProfile", params: { purpose: selected[0] } });
+      // Map the purpose to profileTypes
+      const purposeToProfileType = {
+        "relationship": "RELATIONSHIP",
+        "networking": "NETWORKING", 
+        "travel": "TRAVEL"
+      };
+      const profileType = purposeToProfileType[selected[0] as keyof typeof purposeToProfileType] || "NETWORKING";
+      
+      // Get the basic registration data from params
+      const registrationDataStr = params.registrationData as string;
+      let registrationData = {
+        name: "",
+        email: "",
+        phone_number: "",
+        password: ""
+      };
+      
+      if (registrationDataStr) {
+        try {
+          registrationData = JSON.parse(registrationDataStr);
+          console.log("Registration data from params:", registrationData);
+        } catch (error) {
+          console.error("Error parsing registration data:", error);
+          return;
+        }
+      } else {
+        console.error("No registration data found in params!");
+        return;
+      }
+      
+      router.push({ 
+        pathname: "/getStarted/profileInfo", 
+        params: { 
+          ...registrationData,
+          purpose: selected[0],
+          profileType: profileType
+        } 
+      });
     }
   };
 

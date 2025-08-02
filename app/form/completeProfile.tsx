@@ -7,6 +7,7 @@ import { Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import NavBar from "@/components/navigation/NavBar";
+import { GooglePlacesAutocomplete } from 'react-native-google-places-autocomplete';
 
 const HEIGHT_OPTIONS = [
   { label: "150 cm", value: "150" },
@@ -16,14 +17,7 @@ const HEIGHT_OPTIONS = [
   { label: "190 cm", value: "190" },
   { label: "Other", value: "other" },
 ];
-const NATIONALITIES = [
-  { label: "Nigeria", value: "ng", flag: "🇳🇬" },
-  { label: "Kenya", value: "ke", flag: "🇰🇪" },
-  { label: "Ghana", value: "gh", flag: "🇬🇭" },
-  { label: "South Africa", value: "za", flag: "🇿🇦" },
-  { label: "Rwanda", value: "rw", flag: "🇷🇼" },
-  { label: "Other", value: "other", flag: "🌍" },
-];
+const GOOGLE_MAPS_API_KEY = "AIzaSyBYRk6B2lK6YxM1MNzgvc9nXr6GsCw5CEo";
 const LANGUAGES = [
   "English",
   "French",
@@ -58,7 +52,7 @@ const CompleteProfileScreen: React.FC = () => {
   const [photos, setPhotos] = useState<string[]>([]);
   const [height, setHeight] = useState<string>("");
   const [customHeight, setCustomHeight] = useState<string>("");
-  const [nationalities, setNationalities] = useState<string[]>([]);
+  const [city, setCity] = useState<string>("");
   const [languages, setLanguages] = useState<string[]>([]);
   const [interests, setInterests] = useState<string[]>([]);
   const [institutions, setInstitutions] = useState([
@@ -69,7 +63,7 @@ const CompleteProfileScreen: React.FC = () => {
   const [step, setStep] = useState(0);
   const steps = [
     "Photos",
-    "Height & Nationality",
+    "Height & City",
     "Languages & Interests",
     "Final Details",
   ];
@@ -81,7 +75,7 @@ const CompleteProfileScreen: React.FC = () => {
       case 0:
         return photos.length > 0;
       case 1:
-        return height && nationalities.length > 0;
+        return height && city;
       case 2:
         return languages.length > 0 && interests.length > 0;
       case 3:
@@ -103,7 +97,29 @@ const CompleteProfileScreen: React.FC = () => {
   const handleFinish = () => {
     // Get purpose from params (should be passed from lookingFor)
     const purpose = params.purpose || '';
-    router.push(`/form/categoryProfile?purpose=${purpose}`);
+    
+    // Collect all profile data
+    const profileData = {
+      photos,
+      height,
+      customHeight,
+      city,
+      languages,
+      interests,
+      institutions,
+      employer,
+      jobTitle,
+    };
+    
+    console.log("Complete profile data:", profileData);
+    
+    // If user came from the new registration flow, go to main app
+    // Otherwise continue to category profile
+    if (params.fromRegistration === 'true') {
+      router.push("/(tabs)");
+    } else {
+      router.push(`/form/categoryProfile?purpose=${purpose}`);
+    }
   };
 
   const handleInstitutionChange = (idx: number, value: string) => {
@@ -215,30 +231,67 @@ const CompleteProfileScreen: React.FC = () => {
                 </View>
               </View>
               <View style={[tw.bgWhite, tw.roundedLg, tw.p4, tw.shadow]}>
-                <Text style={[tw.textPink700, tw.textLg, tw.fontBold, tw.mB2]}>Nationality</Text>
-                <View style={[tw.flexRow, tw.flexWrap, tw.mB2]}>
-                  {NATIONALITIES.map((nat) => (
-                    <TouchableOpacity
-                      key={nat.value}
-                      style={[
-                        tw.bgGray100,
-                        tw.pX3,
-                        tw.pY2,
-                        tw.roundedFull,
-                        tw.mR2,
-                        tw.mB2,
-                        tw.border2,
-                        nationalities.includes(nat.value) ? tw.borderPink700 : tw.borderGray300,
-                        tw.flexRow,
-                        tw.itemsCenter,
-                      ]}
-                      onPress={() => toggleMulti(nationalities, nat.value, setNationalities)}
-                    >
-                      <Text style={[tw.textBase, tw.mR1]}>{nat.flag}</Text>
-                      <Text style={[tw.textGray700, tw.textBase, tw.fontBold]}>{nat.label}</Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
+                <Text style={[tw.textPink700, tw.textLg, tw.fontBold, tw.mB2]}>City</Text>
+                <GooglePlacesAutocomplete
+                  placeholder="Search for a city"
+                  onPress={(data, details = null) => {
+                    console.log("Selected city:", data);
+                    setCity(data.description);
+                  }}
+                  query={{
+                    key: GOOGLE_MAPS_API_KEY,
+                    types: '(cities)',
+                  }}
+                  styles={{
+                    container: {
+                      flex: 0,
+                    },
+                    textInput: {
+                      height: 44,
+                      color: '#5d5d5d',
+                      fontSize: 16,
+                      borderWidth: 1,
+                      borderColor: '#d1d1d1',
+                      borderRadius: 8,
+                      paddingHorizontal: 12,
+                    },
+                    listView: {
+                      backgroundColor: 'white',
+                      borderRadius: 8,
+                      marginTop: 4,
+                      elevation: 3,
+                      shadowColor: '#000',
+                      shadowOffset: { width: 0, height: 2 },
+                      shadowOpacity: 0.25,
+                      shadowRadius: 3.84,
+                    },
+                    row: {
+                      backgroundColor: 'white',
+                      padding: 13,
+                      minHeight: 44,
+                      flexDirection: 'row',
+                    },
+                    separator: {
+                      height: 0.5,
+                      backgroundColor: '#c8c7cc',
+                    },
+                    description: {
+                      fontSize: 15,
+                      color: '#5d5d5d',
+                    },
+                  }}
+                  enablePoweredByContainer={false}
+                  fetchDetails={true}
+                  returnKeyType={'search'}
+                  minLength={2}
+                  nearbyPlacesAPI="GooglePlacesSearch"
+                  debounce={300}
+                />
+                {city && (
+                  <View style={[tw.mT2, tw.p2, tw.bgPink100, tw.rounded]}>
+                    <Text style={[tw.textPink700, tw.fontBold]}>Selected: {city}</Text>
+                  </View>
+                )}
               </View>
             </>
           )}

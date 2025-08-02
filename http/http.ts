@@ -13,7 +13,7 @@ const authRequestInterceptor = async (settings: any) => {
 }
 
 const http = Axios.create({
-  baseURL: Constants.expoConfig?.extra?.apiUrl,
+  baseURL: `${Constants.expoConfig?.extra?.apiUrl}/afroma-master-service`,
 })
 
 http.interceptors.request.use(authRequestInterceptor)

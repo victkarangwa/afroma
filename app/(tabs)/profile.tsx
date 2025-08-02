@@ -366,7 +366,7 @@ const ProfileScreen: React.FC = () => {
           </Modal>
 
           {/* Profile Info */}
-          <View style={[tw.itemsCenter]}>
+          <View style={[tw.itemsCenter, tw.mY4]}>
             {isLoadingProfile ? (
               <View style={[tw.itemsCenter, tw.pY4]}>
                 <Text style={[tw.textGray600, tw.textBase]}>Loading profile...</Text>
@@ -400,29 +400,7 @@ const ProfileScreen: React.FC = () => {
             )}
           </View>
 
-          {/* Stats */}
-          {!isLoadingProfile && !profileError && (
-            <View style={[tw.flexRow, tw.justifyCenter, tw.mT6, tw.mB6]}>
-              <View style={[tw.itemsCenter, tw.mR8]}>
-                <Text style={[tw.textGray900, tw.textLg, tw.fontBold]}>
-                  {profile?.followersCount || profile?.followers?.length || 0}
-                </Text>
-                <Text style={[tw.textGray600, tw.textSm]}>Followers</Text>
-              </View>
-              <View style={[tw.itemsCenter, tw.mR8]}>
-                <Text style={[tw.textGray900, tw.textLg, tw.fontBold]}>
-                  {profile?.followingCount || profile?.following?.length || 0}
-                </Text>
-                <Text style={[tw.textGray600, tw.textSm]}>Following</Text>
-              </View>
-              <View style={[tw.itemsCenter]}>
-                <Text style={[tw.textGray900, tw.textLg, tw.fontBold]}>
-                  {profile?.postsCount || profile?.posts?.length || 0}
-                </Text>
-                <Text style={[tw.textGray600, tw.textSm]}>Posts</Text>
-              </View>
-            </View>
-          )}
+
 
           {/* Additional Profile Details */}
           {!isLoadingProfile && !profileError && profile && (
@@ -460,7 +438,7 @@ const ProfileScreen: React.FC = () => {
           )}
 
           {/* Logout Button */}
-          <View style={[tw.bgWhite, tw.roundedLg, tw.p4, tw.mB4, tw.shadow]}>
+          <View style={[tw.bgWhite, tw.roundedLg, tw.p4, tw.mB16, tw.shadow]}>
             <TouchableOpacity
               style={[tw.bgRed500, tw.pY3, tw.pX4, tw.roundedLg, tw.itemsCenter]}
               onPress={handleLogout}
@@ -499,25 +477,6 @@ const ProfileScreen: React.FC = () => {
             ))}
           </View> */}
 
-          {/* Posts Content */}
-          {activeTab === 0 && (
-            <FlatList
-              data={MOCK_USER_POSTS}
-              renderItem={renderPost}
-              keyExtractor={(item) => item.id.toString()}
-              scrollEnabled={false}
-              contentContainerStyle={[{ paddingBottom: 120 }]}
-            />
-          )}
-
-          {/* Other tabs content */}
-          {activeTab !== 0 && (
-            <View style={[tw.itemsCenter, tw.pY16]}>
-              <Text style={[tw.textGray500, tw.textBase]}>
-                {PROFILE_TABS[activeTab]} content coming soon
-              </Text>
-            </View>
-          )}
         </View>
       </ScrollView>
     </SafeAreaView>

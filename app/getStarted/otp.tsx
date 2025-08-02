@@ -6,11 +6,12 @@ import { Button } from "react-native-paper";
 import { tw } from "react-native-tailwindcss";
 import { FontAwesome } from '@expo/vector-icons';
 import OTPTextView from "react-native-otp-textinput";
-// import useApiRequest from "@/hooks/useApiRequest";
-// import { ApiResponse } from "@/types";
-// import Modal from "@/components/Modal";
-// import localStore from "@/utils/localValues";
-// import LocalStorage from "@/utils/storage";
+import useApiRequest from "@/hooks/useApiRequest";
+import { ApiResponse } from "@/types";
+import Modal from "@/components/Modal";
+import localStore from "@/utils/localValues";
+import LocalStorage from "@/utils/storage";
+import { saveAuthData } from "@/utils/auth";
 
 const primaryShadow = {
   shadowColor: '#fb6c31',
@@ -29,19 +30,110 @@ const OtpScreen: React.FC = () => {
   const { control, handleSubmit, formState: { errors } } = useForm<FormData>({
     defaultValues: { code: "" },
   });
-  // const { loading, send, error } = useApiRequest<ApiResponse>();
-  // const [visible, setVisible] = React.useState(false);
+  const { loading, send, error } = useApiRequest<ApiResponse>();
+  const [visible, setVisible] = React.useState(false);
+  const [modalInfo, setModalInfo] = React.useState<{
+    title: string;
+    description: string;
+    status: "error" | "success" | "warning" | "info";
+    btnText: string;
+    onDismiss: () => void;
+  }>({
+    title: "",
+    description: "",
+    status: "error",
+    btnText: "Try Again",
+    onDismiss: () => {},
+  });
 
-  const onSubmit = (data: FormData) => {
-    // Temporarily skip API call and go to main screen
-    // const result = await send("post", "/bonded-user-service/auth/login-auth2", { code: data.code });
-    // if (result?.errors) { setVisible(true); return; }
-    // LocalStorage.setItem(localStore.token, result?.token);
-    router.push({ pathname: "/(tabs)" });
+  const onSubmit = async (data: FormData) => {
+    try {
+      // Get the OTP token from storage
+      const otpToken = await LocalStorage.getItem<string>(localStore.token);
+      
+      if (!otpToken) {
+        setModalInfo({
+          title: "Error",
+          description: "OTP token not found. Please try logging in again.",
+          status: "error",
+          btnText: "Go Back",
+          onDismiss: () => {
+            router.push("/getStarted/login");
+            setVisible(false);
+          },
+        });
+        setVisible(true);
+        return;
+      }
+
+      console.log("Verifying OTP:", data.code);
+      console.log("OTP Token:", otpToken);
+
+      const result = await send("post", "/auth/login-auth2", { 
+        code: data.code,
+        otpToken: otpToken
+      });
+
+      console.log("OTP verification result:", result);
+
+      if (result?.errors) {
+        setModalInfo({
+          title: "Verification Failed",
+          description: result.errors || "Invalid OTP code. Please try again.",
+          status: "error",
+          btnText: "Try Again",
+          onDismiss: () => setVisible(false),
+        });
+        setVisible(true);
+        return;
+      }
+
+      // Check if verification was successful
+      if (result && result.code === "00" && result.token) {
+        // Store the authentication token
+        await saveAuthData(result.token, result.expiresAt);
+        
+        // Clear the OTP token
+        await LocalStorage.removeItem(localStore.token);
+        
+        console.log("OTP verification successful, token stored:", result.token);
+        
+        // Navigate to home screen
+        router.replace("/(tabs)");
+      } else {
+        // Handle unexpected response
+        setModalInfo({
+          title: "Verification Failed",
+          description: "Unexpected response from server. Please try again.",
+          status: "error",
+          btnText: "Try Again",
+          onDismiss: () => setVisible(false),
+        });
+        setVisible(true);
+      }
+    } catch (error) {
+      console.error("OTP verification error:", error);
+      setModalInfo({
+        title: "Verification Failed",
+        description: "An error occurred during verification. Please try again.",
+        status: "error",
+        btnText: "Try Again",
+        onDismiss: () => setVisible(false),
+      });
+      setVisible(true);
+    }
   };
 
   return (
     <View style={[{ backgroundColor: '#FFFFFF' }, tw.hFull, tw.pX8, tw.justifyCenter]}>
+      <Modal
+        title={modalInfo.title}
+        description={modalInfo.description}
+        status={modalInfo.status}
+        btnText={modalInfo.btnText}
+        visible={visible}
+        onDismiss={modalInfo.onDismiss}
+      />
       <View style={[tw.itemsCenter]}>
         <Image
           source={require("../../assets/images/afroma_logo.png")}
@@ -66,8 +158,6 @@ const OtpScreen: React.FC = () => {
                 width: 48,
                 borderRadius: 8,
                 marginHorizontal: 6,
-                fontSize: 20,
-                color: '#111827',
                 ...primaryShadow,
               }}
               tintColor={"#fb6c31"}
@@ -85,6 +175,8 @@ const OtpScreen: React.FC = () => {
         onPress={handleSubmit(onSubmit)}
         style={[tw.bgPink700, tw.mT8]}
         labelStyle={[tw.textWhite]}
+        loading={loading}
+        disabled={loading}
       >
         Verify
       </Button>

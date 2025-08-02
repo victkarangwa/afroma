@@ -1,7 +1,8 @@
 import React from "react";
 import { useForm, Controller } from "react-hook-form";
 import { useRouter } from "expo-router";
-import { View, Image, TouchableOpacity, TextInput, Text, Platform } from "react-native";
+import { View, Image, TouchableOpacity, TextInput, Text, Platform, ScrollView } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import { Button } from "react-native-paper";
 import { tw } from "react-native-tailwindcss";
 import { FontAwesome } from '@expo/vector-icons';
@@ -12,6 +13,7 @@ import { removeUserData } from "@/utils";
 import localStore from "@/utils/localValues";
 import LocalStorage from "@/utils/storage";
 import moment from "moment";
+import { saveAuthData } from "@/utils/auth";
 
 type FormData = {
   username: string;
@@ -32,7 +34,14 @@ const LoginScreen: React.FC = () => {
   });
 
   const [visible, setVisible] = React.useState(false);
-  const [modalInfo, setModalInfo] = React.useState({
+  const [showPassword, setShowPassword] = React.useState(false);
+  const [modalInfo, setModalInfo] = React.useState<{
+    title: string;
+    description: string;
+    status: "error" | "success" | "warning" | "info";
+    btnText: string;
+    onDismiss: () => void;
+  }>({
     title: "",
     description: "",
     status: "error",
@@ -43,24 +52,77 @@ const LoginScreen: React.FC = () => {
   const { loading, send, error } = useApiRequest<ApiResponse>();
 
   const handleLogin = async (credentials: FormData) => {
-    // removeUserData();
-    // const basicAuth = btoa(`${credentials.username}:${credentials.password}`);
-    // const result = await send(
-    //   "post",
-    //   "/bonded-user-service/auth/login",
-    //   {},
-    //   {
-    //     headers: {
-    //       Authorization: `Basic ${basicAuth}`,
-    //       "Content-Type": "application/json",
-    //     },
-    //   }
-    // );
-    // if (result?.errors) {
-    //   return setVisible(true);
-    // }
-    // LocalStorage.setItem(localStore.token, result?.otpToken);
-    router.push({ pathname: "/getStarted/otp" });
+    try {
+      // Clear any existing user data
+      removeUserData();
+      
+      // Create basic auth header
+      const basicAuth = btoa(`${credentials.username}:${credentials.password}`);
+      
+      console.log("Attempting login with:", credentials.username);
+      
+      const result = await send(
+        "post",
+        "/auth/login",
+        {},
+        {
+          headers: {
+            Authorization: `Basic ${basicAuth}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      console.log("Login result:", result);
+
+      if (result?.errors) {
+        console.error("Login error:", result.errors);
+        setModalInfo({
+          title: "Login Failed",
+          description: result.errors || "Invalid credentials. Please try again.",
+          status: "error",
+          btnText: "OK",
+          onDismiss: () => setVisible(false),
+        });
+        setVisible(true);
+        return;
+      }
+
+      // Check if login was successful
+      if (result && result.code === "00" && result.token) {
+        // Store the authentication token
+        await saveAuthData(result.token, result.expiresAt);
+        
+        console.log("Login successful, token stored:", result.token);
+        
+        // Navigate to home screen directly (skip OTP for now)
+        router.replace("/(tabs)");
+      } else if (result && result.otpToken) {
+        // If OTP is required, store the OTP token and navigate to OTP screen
+        await LocalStorage.setItem(localStore.token, result.otpToken);
+        router.push({ pathname: "/getStarted/otp" });
+      } else {
+        // Handle unexpected response
+        setModalInfo({
+          title: "Login Failed",
+          description: "Unexpected response from server. Please try again.",
+          status: "error",
+          btnText: "OK",
+          onDismiss: () => setVisible(false),
+        });
+        setVisible(true);
+      }
+    } catch (error) {
+      console.error("Login error:", error);
+      setModalInfo({
+        title: "Login Failed",
+        description: "An error occurred during login. Please try again.",
+        status: "error",
+        btnText: "OK",
+        onDismiss: () => setVisible(false),
+      });
+      setVisible(true);
+    }
   };
 
   const primaryShadow = {
@@ -74,14 +136,21 @@ const LoginScreen: React.FC = () => {
   const handleModal = () => setVisible(false);
 
   return (
-    <View style={[{ backgroundColor: '#FFFFFF' }, tw.hFull, tw.pX8, tw.justifyCenter]}>
+    <ScrollView 
+      style={[{ backgroundColor: '#FFFFFF' }, tw.flex1]} 
+      contentContainerStyle={[tw.pX8, tw.pY8]}
+      showsVerticalScrollIndicator={false}
+      keyboardShouldPersistTaps="handled"
+    >
       <Modal
-        title="Error"
-        description={error ?? "An error occurred. Please try again."}
+        title={modalInfo.title}
+        description={modalInfo.description}
+        status={modalInfo.status}
+        btnText={modalInfo.btnText}
         visible={visible}
-        onDismiss={handleModal}
+        onDismiss={modalInfo.onDismiss}
       />
-      <View style={[tw.itemsCenter]}>
+      <View style={[tw.itemsCenter, tw.mB8]}>
         <Image
           source={require("../../assets/images/afroma_logo.png")}
           style={[tw.w32, tw.h32, tw.mT24]}
@@ -117,14 +186,26 @@ const LoginScreen: React.FC = () => {
           name="password"
           rules={{ required: "Password is required" }}
           render={({ field: { onChange, onBlur, value } }) => (
-            <TextInput
-              style={[tw.bgWhite, tw.rounded, tw.p3, tw.mB2, primaryShadow]}
-              placeholder="Enter your password"
-              secureTextEntry
-              onBlur={onBlur}
-              onChangeText={onChange}
-              value={value}
-            />
+            <View style={[tw.relative, tw.mB2]}>
+              <TextInput
+                style={[tw.bgWhite, tw.rounded, tw.p3, primaryShadow, tw.pR12]}
+                placeholder="Enter your password"
+                secureTextEntry={!showPassword}
+                onBlur={onBlur}
+                onChangeText={onChange}
+                value={value}
+              />
+              <TouchableOpacity
+                style={[tw.absolute, tw.right0, tw.top0, tw.bottom0, tw.justifyCenter, tw.p2]}
+                onPress={() => setShowPassword(!showPassword)}
+              >
+                <Ionicons
+                  name={showPassword ? "eye-off" : "eye"}
+                  size={20}
+                  color="#6b7280"
+                />
+              </TouchableOpacity>
+            </View>
           )}
         />
         {errors.password && (
@@ -163,7 +244,7 @@ const LoginScreen: React.FC = () => {
           </TouchableOpacity>
         </View>
       </View>
-    </View>
+    </ScrollView>
   );
 };
 

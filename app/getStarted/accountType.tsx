@@ -1,7 +1,7 @@
 import React from "react";
 import { useForm, Controller } from "react-hook-form";
 import { useRouter } from "expo-router";
-import { View, Image, TouchableOpacity, TextInput, Text } from "react-native";
+import { View, Image, TouchableOpacity, TextInput, Text, ScrollView } from "react-native";
 import { Button } from "react-native-paper";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { tw } from "react-native-tailwindcss";
@@ -85,8 +85,13 @@ const AccountTypeScreen: React.FC = () => {
   };
 
   return (
-    <View style={[{ backgroundColor: '#FFFFFF' }, tw.hFull, tw.pX8, tw.justifyCenter]}>
-      <View style={[tw.itemsCenter]}>
+    <ScrollView 
+      style={[{ backgroundColor: '#FFFFFF' }, tw.flex1]} 
+      contentContainerStyle={[tw.pX8, tw.pY8]}
+      showsVerticalScrollIndicator={false}
+      keyboardShouldPersistTaps="handled"
+    >
+      <View style={[tw.itemsCenter, tw.mB8]}>
         <Image
           source={require("../../assets/images/afroma_logo.png")}
           style={[tw.w32, tw.h32, tw.mT24]}
@@ -244,7 +249,7 @@ const AccountTypeScreen: React.FC = () => {
           </TouchableOpacity>
         </View>
       </View>
-    </View>
+    </ScrollView>
   );
 };
 

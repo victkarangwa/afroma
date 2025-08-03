@@ -5,13 +5,19 @@ import {
   AuthenticationToken,
   LoginManager,
 } from "react-native-fbsdk-next";
+import { socialLoginConfig } from "@/configs/socialLoginConfig";
 
-// export default function App() {
-
+// Configure Google Sign-In
 if (Platform.OS === "android") {
   GoogleSignin.configure({
-    webClientId:
-      "104521571553-70cj474frto1ascll6mfukhilpveqdvp.apps.googleusercontent.com",
+    webClientId: socialLoginConfig.google.webClientId,
+    offlineAccess: true,
+  });
+} else if (Platform.OS === "ios") {
+  GoogleSignin.configure({
+    webClientId: socialLoginConfig.google.webClientId,
+    iosClientId: socialLoginConfig.google.iosClientId,
+    offlineAccess: true,
   });
 }
 export async function onGoogleButtonPress() {
@@ -20,6 +26,13 @@ export async function onGoogleButtonPress() {
     await GoogleSignin.hasPlayServices({
       showPlayServicesUpdateDialog: true,
     });
+    
+    // Check if user is already signed in
+    const isSignedIn = await GoogleSignin.isSignedIn();
+    if (isSignedIn) {
+      await GoogleSignin.signOut();
+    }
+    
     // Get the users ID token
     const signInResult = await GoogleSignin.signIn();
 
@@ -34,42 +47,47 @@ export async function onGoogleButtonPress() {
       throw new Error("No ID token found");
     }
 
-    //   console.log("---GOOGLE_ID_TOKEM---", idToken);
+    console.log("Google login successful, ID token obtained");
     return idToken;
   } catch (error) {
-    console.log("---GOOGLE_LOGIN_ERROR--", JSON.stringify(error));
+    console.error("Google login error:", error);
+    throw error;
   }
 }
 
 export async function onFacebookButtonPress() {
   try {
     const nonce = Math.random().toString(36).substring(2);
-    // const nonceSha256 = await sha256(nonce);
+    
     // Attempt login with permissions
     const result = await LoginManager.logInWithPermissions(
       ["public_profile", "email"],
       "limited",
       nonce
     );
+    
     if (result.isCancelled) {
-      throw "User cancelled the login process";
+      throw new Error("User cancelled the login process");
     }
     
     // Once signed in, get the users AccessToken
     let data;
     if (Platform.OS === "ios") {
       data = await AuthenticationToken.getAuthenticationTokenIOS();
-      console.log("----FB_LOGIN_RESULT---", data);
+      console.log("Facebook login result (iOS):", data);
     } else {
       data = await AccessToken.getCurrentAccessToken();
+      console.log("Facebook login result (Android):", data);
     }
 
     if (!data) {
-      throw "Something went wrong obtaining access token";
+      throw new Error("Something went wrong obtaining access token");
     }
-    // console.log("---FB_ACCESS_TOKEM---", data);
+    
+    console.log("Facebook login successful, access token obtained");
     return data;
   } catch (error) {
-    console.log("---FB_LOGIN_ERROR--", error);
+    console.error("Facebook login error:", error);
+    throw error;
   }
 }

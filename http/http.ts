@@ -17,7 +17,7 @@ const authRequestInterceptor = async (settings: any) => {
       if (authToken) {
         // Use Bearer token format for the new auth system
         settings.headers.Authorization = `Bearer ${authToken}`;
-        console.log('Adding Bearer token to request:', authToken.substring(0, 20) + '...');
+        console.log('Adding Bearer token to request:', authToken);
       }
     } else {
       // Fallback to old token system for backward compatibility

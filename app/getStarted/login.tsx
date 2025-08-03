@@ -14,6 +14,7 @@ import localStore from "@/utils/localValues";
 import LocalStorage from "@/utils/storage";
 import moment from "moment";
 import { saveAuthData } from "@/utils/auth";
+import { onGoogleButtonPress, onFacebookButtonPress } from "@/components/SocialLogin";
 
 type FormData = {
   username: string;
@@ -117,6 +118,144 @@ const LoginScreen: React.FC = () => {
       setModalInfo({
         title: "Login Failed",
         description: "An error occurred during login. Please try again.",
+        status: "error",
+        btnText: "OK",
+        onDismiss: () => setVisible(false),
+      });
+      setVisible(true);
+    }
+  };
+
+  const handleSocialLogin = async (provider: 'google' | 'facebook', token: string) => {
+    try {
+      // Clear any existing user data
+      removeUserData();
+      
+      console.log(`Attempting ${provider} login`);
+      
+      const result = await send(
+        "post",
+        `/auth/${provider}/login`,
+        {
+          token: token,
+          provider: provider
+        },
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      console.log(`${provider} login result:`, result);
+
+      if (result?.errors) {
+        console.error(`${provider} login error:`, result.errors);
+        setModalInfo({
+          title: `${provider.charAt(0).toUpperCase() + provider.slice(1)} Login Failed`,
+          description: result.errors || `Failed to login with ${provider}. Please try again.`,
+          status: "error",
+          btnText: "OK",
+          onDismiss: () => setVisible(false),
+        });
+        setVisible(true);
+        return;
+      }
+
+      // Check if login was successful
+      if (result && result.code === "00" && result.token) {
+        // Store the authentication token
+        await saveAuthData(result.token, result.expiresAt);
+        
+        console.log(`${provider} login successful, token stored:`, result.token);
+        
+        // Navigate to home screen directly (skip OTP for now)
+        router.replace("/(tabs)");
+      } else if (result && result.otpToken) {
+        // If OTP is required, store the OTP token and navigate to OTP screen
+        await LocalStorage.setItem(localStore.token, result.otpToken);
+        router.push({ pathname: "/getStarted/otp" });
+      } else {
+        // Handle unexpected response
+        setModalInfo({
+          title: `${provider.charAt(0).toUpperCase() + provider.slice(1)} Login Failed`,
+          description: `Unexpected response from server. Please try again.`,
+          status: "error",
+          btnText: "OK",
+          onDismiss: () => setVisible(false),
+        });
+        setVisible(true);
+      }
+    } catch (error) {
+      console.error(`${provider} login error:`, error);
+      setModalInfo({
+        title: `${provider.charAt(0).toUpperCase() + provider.slice(1)} Login Failed`,
+        description: `An error occurred during ${provider} login. Please try again.`,
+        status: "error",
+        btnText: "OK",
+        onDismiss: () => setVisible(false),
+      });
+      setVisible(true);
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    try {
+      const idToken = await onGoogleButtonPress();
+      if (idToken) {
+        await handleSocialLogin('google', idToken);
+      } else {
+        setModalInfo({
+          title: "Google Login Failed",
+          description: "Failed to get Google authentication token. Please try again.",
+          status: "error",
+          btnText: "OK",
+          onDismiss: () => setVisible(false),
+        });
+        setVisible(true);
+      }
+    } catch (error) {
+      console.error("Google login error:", error);
+      setModalInfo({
+        title: "Google Login Failed",
+        description: "An error occurred during Google login. Please try again.",
+        status: "error",
+        btnText: "OK",
+        onDismiss: () => setVisible(false),
+      });
+      setVisible(true);
+    }
+  };
+
+  const handleFacebookLogin = async () => {
+    try {
+      const accessToken = await onFacebookButtonPress();
+      if (accessToken) {
+        // For Facebook, we need to send the access token
+        let token: string;
+        if (Platform.OS === 'ios') {
+          // @ts-ignore - authenticationToken exists on FBAuthenticationToken
+          token = accessToken.authenticationToken;
+        } else {
+          // @ts-ignore - accessToken exists on FBAccessToken
+          token = accessToken.accessToken;
+        }
+        await handleSocialLogin('facebook', token);
+      } else {
+        setModalInfo({
+          title: "Facebook Login Failed",
+          description: "Failed to get Facebook authentication token. Please try again.",
+          status: "error",
+          btnText: "OK",
+          onDismiss: () => setVisible(false),
+        });
+        setVisible(true);
+      }
+    } catch (error) {
+      console.error("Facebook login error:", error);
+      setModalInfo({
+        title: "Facebook Login Failed",
+        description: "An error occurred during Facebook login. Please try again.",
         status: "error",
         btnText: "OK",
         onDismiss: () => setVisible(false),
@@ -229,10 +368,10 @@ const LoginScreen: React.FC = () => {
           <View style={[tw.flex1, tw.hPx, tw.bgGray300, tw.mL2]} />
         </View>
         <View style={[tw.flex, tw.flexRow, tw.justifyCenter, tw.itemsCenter, tw.mT4]}>
-          <TouchableOpacity style={[tw.bgWhite, tw.roundedFull, tw.p3, primaryShadow, tw.mX2]} onPress={() => {/* TODO: Add Facebook login */}}>
+          <TouchableOpacity style={[tw.bgWhite, tw.roundedFull, tw.p3, primaryShadow, tw.mX2]} onPress={handleFacebookLogin}>
             <FontAwesome name="facebook" size={24} color="#1877F3" />
           </TouchableOpacity>
-          <TouchableOpacity style={[tw.bgWhite, tw.roundedFull, tw.p3, primaryShadow, tw.mX2]} onPress={() => {/* TODO: Add Google login */}}>
+          <TouchableOpacity style={[tw.bgWhite, tw.roundedFull, tw.p3, primaryShadow, tw.mX2]} onPress={handleGoogleLogin}>
             <FontAwesome name="google" size={24} color="#EA4335" />
           </TouchableOpacity>
         </View>

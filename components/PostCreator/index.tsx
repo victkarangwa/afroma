@@ -15,6 +15,8 @@ import { Ionicons } from "@expo/vector-icons";
 import { tw } from "react-native-tailwindcss";
 import * as ImagePicker from "expo-image-picker";
 import { useRouter } from "expo-router";
+import { useCreatePost } from "@/hooks/useCreatePost";
+import { useMediaUpload } from "@/hooks/useMediaUpload";
 
 interface PostCreatorProps {
   profileType: 'travel' | 'networking' | 'dating' | null;
@@ -30,8 +32,13 @@ const PostCreator: React.FC<PostCreatorProps> = ({ profileType, onPostCreated })
   const [caption, setCaption] = useState("");
   const [location, setLocation] = useState("");
   const [selectedImages, setSelectedImages] = useState<string[]>([]);
-  const [isPosting, setIsPosting] = useState(false);
   const captionInputRef = useRef<TextInput>(null);
+  
+  // Use the create post hook
+  const { createPost, loading: isPosting, error, success, reset } = useCreatePost();
+  
+  // Use the media upload hook
+  const { uploadImages, loading: isUploading, error: uploadError, success: uploadSuccess, reset: resetUpload } = useMediaUpload();
 
   const getProfileTypeConfig = () => {
     switch (profileType) {
@@ -128,26 +135,40 @@ const PostCreator: React.FC<PostCreatorProps> = ({ profileType, onPostCreated })
       return;
     }
 
-    setIsPosting(true);
-
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      const postData = {
-        images: selectedImages,
-        caption: caption.trim(),
-        location: location.trim(),
-      };
-
-      onPostCreated?.(postData);
+      let mediaFileIds: number[] = [];
       
-      // Navigate back
-      router.back();
+      // Upload images if any are selected
+      if (selectedImages.length > 0) {
+        const uploadedIds = await uploadImages(selectedImages);
+        if (uploadedIds) {
+          mediaFileIds = uploadedIds;
+        } else {
+          Alert.alert('Error', uploadError || 'Failed to upload images. Please try again.');
+          return;
+        }
+      }
+
+      // Create post using the API with media file IDs
+      const response = await createPost(caption.trim(), mediaFileIds);
+      
+      if (response && response.success) {
+        // Call the callback with the post data
+        const postData = {
+          images: selectedImages,
+          caption: caption.trim(),
+          location: location.trim(),
+        };
+        
+        onPostCreated?.(postData);
+        
+        // Navigate back
+        router.back();
+      } else {
+        Alert.alert('Error', error || 'Failed to create post. Please try again.');
+      }
     } catch (error) {
       Alert.alert('Error', 'Failed to create post. Please try again.');
-    } finally {
-      setIsPosting(false);
     }
   };
 
@@ -174,7 +195,7 @@ const PostCreator: React.FC<PostCreatorProps> = ({ profileType, onPostCreated })
           
           <TouchableOpacity
             onPress={handlePost}
-            disabled={!canPost || isPosting}
+            disabled={!canPost || isPosting || isUploading}
             style={[
               tw.pX4,
               tw.pY2,
@@ -186,7 +207,7 @@ const PostCreator: React.FC<PostCreatorProps> = ({ profileType, onPostCreated })
               tw.fontBold,
               canPost ? tw.textWhite : tw.textGray500,
             ]}>
-              {isPosting ? 'Posting...' : 'Post'}
+              {isPosting || isUploading ? 'Posting...' : 'Post'}
             </Text>
           </TouchableOpacity>
         </View>
@@ -271,7 +292,7 @@ const PostCreator: React.FC<PostCreatorProps> = ({ profileType, onPostCreated })
                 Add Media
               </Text>
               
-              <View style={[tw.flexRow, tw.spaceX4]}>
+              <View style={[tw.flexRow, { gap: 16 }]}>
                 <TouchableOpacity
                   style={[
                     tw.flex1,

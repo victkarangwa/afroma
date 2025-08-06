@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from "react";
-import { View, Text, TextInput, ScrollView, Image, TouchableOpacity, FlatList, Dimensions, PanResponder, Animated, Modal } from "react-native";
+import { View, Text, TextInput, ScrollView, Image, TouchableOpacity, FlatList, Dimensions, PanResponder, Animated, Modal, RefreshControl } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { tw } from "react-native-tailwindcss";
@@ -11,6 +11,11 @@ import SinglePostView, { GenericPost } from "@/components/SinglePostView";
 import { MOCK_NETWORKING_PROFILES, MOCK_NETWORKING_POSTS } from "@/components/NetworkingCard";
 import NotificationBadge from "@/components/NotificationBadge";
 import { MOCK_NOTIFICATIONS } from "@/components/NotificationCenter";
+import { usePosts } from "@/hooks/usePosts";
+import { Post } from "@/types";
+import { getTimeAgo } from "@/utils/timeAgo";
+import { getUserInitials } from "@/utils/userInitials";
+import LoadingIndicator from "@/components/LoadingIndicator";
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get("window");
 
@@ -73,78 +78,6 @@ const MOCK_DATING_PROFILES = [
     verified: true,
   },
 ];
-
-// Mock data for posts
-const MOCK_POSTS = [
-  {
-    id: 1,
-    user: { name: "Michelle Ogilvy", avatar: "https://randomuser.me/api/portraits/women/1.jpg" },
-    timestamp: "1h ago",
-    image: "https://picsum.photos/400/300?random=1",
-    likes: 18600,
-    comments: 4700,
-    shares: 12400,
-    isBookmarked: false,
-    location: "Kigali, Rwanda",
-    caption: "Exploring the beautiful landscapes of Rwanda! The mountains here are absolutely breathtaking. #TravelRwanda #Adventure",
-    pictures: [
-      "https://picsum.photos/400/300?random=1",
-      "https://picsum.photos/400/300?random=11",
-      "https://picsum.photos/400/300?random=21"
-    ],
-  },
-  {
-    id: 2,
-    user: { name: "Brandon Loia", avatar: "https://randomuser.me/api/portraits/men/2.jpg" },
-    timestamp: "1h ago",
-    image: "https://picsum.photos/400/300?random=2",
-    likes: 15200,
-    comments: 3800,
-    shares: 9600,
-    isBookmarked: true,
-    location: "Nairobi, Kenya",
-    caption: "Just finished an amazing networking event in Nairobi! Met so many inspiring entrepreneurs. The tech scene here is incredible! #Networking #TechAfrica",
-    pictures: [
-      "https://picsum.photos/400/300?random=2",
-      "https://picsum.photos/400/300?random=12"
-    ],
-  },
-  {
-    id: 3,
-    user: { name: "Sarah Chen", avatar: "https://randomuser.me/api/portraits/women/3.jpg" },
-    timestamp: "2h ago",
-    image: "https://picsum.photos/400/300?random=3",
-    likes: 22100,
-    comments: 5200,
-    shares: 14800,
-    isBookmarked: false,
-    location: "Cape Town, South Africa",
-    caption: "Cape Town never disappoints! The views from Table Mountain are absolutely stunning. Perfect weather for hiking today! #CapeTown #Travel",
-    pictures: [
-      "https://picsum.photos/400/300?random=3"
-    ],
-  },
-  {
-    id: 4,
-    user: { name: "David Martinez", avatar: "https://randomuser.me/api/portraits/men/4.jpg" },
-    timestamp: "3h ago",
-    image: "https://picsum.photos/400/300?random=4",
-    likes: 8900,
-    comments: 1200,
-    shares: 3400,
-    isBookmarked: false,
-    location: "Accra, Ghana",
-    caption: "Excited to be speaking at the African Tech Summit in Accra! Great discussions about the future of fintech in Africa. #TechSummit #Fintech #Ghana",
-    pictures: [
-      "https://picsum.photos/400/300?random=4",
-      "https://picsum.photos/400/300?random=14",
-      "https://picsum.photos/400/300?random=24",
-      "https://picsum.photos/400/300?random=34"
-    ],
-  },
-];
-
-const FILTER_TABS = ["All", "People", "Posts", "Events", "Groups"];
 
 // Dating Card Component
 const DatingCard = ({ profile, onSwipe, isTopCard }: { 
@@ -294,7 +227,6 @@ const HomeScreen: React.FC = () => {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState(0);
   const [searchQuery, setSearchQuery] = useState("");
-  const [posts, setPosts] = useState(MOCK_POSTS);
   const [datingProfiles, setDatingProfiles] = useState(MOCK_DATING_PROFILES);
   const [currentProfileIndex, setCurrentProfileIndex] = useState(0);
   const [showDating, setShowDating] = useState(false);
@@ -309,6 +241,22 @@ const HomeScreen: React.FC = () => {
     location: string;
   } | null>(null);
   const [showSearchResults, setShowSearchResults] = useState(false);
+
+  // Use the posts hook for real API data
+  const {
+    posts: apiPosts,
+    loading: postsLoading,
+    error: postsError,
+    hasMore,
+    loadMore,
+    refresh,
+    searchPosts
+  } = usePosts({
+    initialPage: 1,
+    pageSize: 20,
+    autoLoad: true,
+    // profileType: profileType ? profileType.toUpperCase() : undefined
+  });
 
   // On mount and on focus, read profileType from local storage
   useFocusEffect(
@@ -339,11 +287,9 @@ const HomeScreen: React.FC = () => {
   };
 
   const toggleBookmark = (postId: number) => {
-    setPosts(prevPosts =>
-      prevPosts.map(post =>
-        post.id === postId ? { ...post, isBookmarked: !post.isBookmarked } : post
-      )
-    );
+    // Note: This function now only works with local state since API posts don't have isBookmarked property
+    // In a real implementation, you would need to make an API call to update the bookmark status
+    console.log('Toggle bookmark for post:', postId);
   };
 
   const handleSwipe = (direction: 'left' | 'right' | 'up') => {
@@ -375,48 +321,33 @@ const HomeScreen: React.FC = () => {
   };
 
   const addNewPost = (postData: { images: string[]; caption: string; location: string }) => {
-    const newPost: typeof MOCK_POSTS[0] = {
-      id: Date.now(), // Use timestamp as unique ID
-      user: { 
-        name: "You", 
-        avatar: "https://randomuser.me/api/portraits/men/1.jpg" // Default avatar
-      },
-      timestamp: "Just now",
-      image: postData.images[0], // Use first image as main image
-      likes: 0,
-      comments: 0,
-      shares: 0,
-      isBookmarked: false,
-      location: postData.location,
-      caption: postData.caption,
-      pictures: postData.images,
-    };
-
-    console.log('Adding new post:', newPost); // Debug log
-    setPosts(prevPosts => {
-      const updatedPosts = [newPost, ...prevPosts];
-      console.log('Updated posts count:', updatedPosts.length); // Debug log
-      return updatedPosts;
-    });
+    // Note: This function now only logs since we're using API posts
+    // In a real implementation, you would make an API call to create a new post
+    console.log('Adding new post:', postData);
+    // Refresh posts to get the latest data
+    refresh();
   };
 
-  const renderPostCard = ({ item }: { item: typeof MOCK_POSTS[0] }) => (
+  const renderPostCard = ({ item }: { item: Post }) => (
     <TouchableOpacity 
       style={[tw.bgWhite, tw.roundedLg, tw.mB4, tw.shadow, tw.mX4]}
       onPress={() => {
         console.log('Post tapped:', item.id);
-        // Convert MOCK_POSTS item to GenericPost format
+        // Convert API Post to GenericPost format
         const genericPost: GenericPost = {
           id: item.id,
-          user: item.user,
-          timestamp: item.timestamp,
-          location: item.location,
-          caption: item.caption,
-          images: item.pictures || [item.image],
-          likes: item.likes,
-          comments: item.comments,
-          shares: item.shares,
-          isBookmarked: item.isBookmarked,
+          user: {
+            name: `${item.user.firstname} ${item.user.lastname}`,
+            avatar: "https://randomuser.me/api/portraits/men/1.jpg" // Default avatar since API doesn't provide one
+          },
+          timestamp: getTimeAgo(item.createdAt),
+          location: "", // API doesn't provide location
+          caption: item.content,
+          images: item.attachments.length > 0 ? item.attachments.map(att => att.mediaUrl) : [],
+          likes: item.likeCount,
+          comments: 0, // API doesn't provide comment count
+          shares: 0, // API doesn't provide share count
+          isBookmarked: false, // API doesn't provide bookmark status
         };
         console.log('Setting selected post:', genericPost);
         console.log('Post images:', genericPost.images);
@@ -430,57 +361,64 @@ const HomeScreen: React.FC = () => {
       {/* Header */}
       <View style={[tw.flexRow, tw.itemsCenter, tw.justifyBetween, tw.p4, tw.pB2]}>
         <View style={[tw.flexRow, tw.itemsCenter]}>
-          <Image
-            source={{ uri: item.user.avatar }}
-            style={[tw.w10, tw.h10, tw.roundedFull, tw.mR3]}
-          />
+          <View style={[tw.w10, tw.h10, tw.roundedFull, tw.mR3, tw.bgGray300, tw.justifyCenter, tw.itemsCenter]}>
+            <Text style={[tw.textGray700, tw.fontBold, tw.textSm]}>
+              {getUserInitials(item.user.firstname, item.user.lastname)}
+            </Text>
+          </View>
           <View>
-            <Text style={[tw.textGray900, tw.fontBold, tw.textBase]}>{item.user.name}</Text>
-            {/* Show location if profileType is travel */}
-            {profileType === 'travel' && item.location && (
-              <Text style={[tw.textGray500, tw.textXs]}>{item.location}</Text>
-            )}
-            <Text style={[tw.textGray500, tw.textSm]}>{item.timestamp}</Text>
+            <Text style={[tw.textGray900, tw.fontBold, tw.textBase]}>{`${item.user.firstname} ${item.user.lastname}`}</Text>
+            <Text style={[tw.textGray500, tw.textSm]}>{getTimeAgo(item.createdAt)}</Text>
           </View>
         </View>
         <TouchableOpacity onPress={() => toggleBookmark(item.id)}>
           <Ionicons
-            name={item.isBookmarked ? "bookmark" : "bookmark-outline"}
+            name="bookmark-outline"
             size={24}
-            color={item.isBookmarked ? "#fb6c31" : "#6b7280"}
+            color="#6b7280"
           />
         </TouchableOpacity>
       </View>
+      
+      {/* Content/Caption - Always show above media */}
+      {item.content && (
+        <View style={[tw.pX4, tw.pB3]}>
+          <Text style={[tw.textGray800, tw.textBase]} numberOfLines={3}>
+            {renderCaptionWithHashtags(item.content)}
+          </Text>
+        </View>
+      )}
+      
       {/* Main Image or Grid for Travel */}
       {profileType === 'travel' ? (
         <View style={[tw.pX4, tw.pB2]}> 
-          {item.pictures && item.pictures.length === 1 && (
+          {item.attachments && item.attachments.length === 1 && (
             <TouchableOpacity
               onPress={() => {
-                setSelectedImage(item.pictures[0]);
+                setSelectedImage(item.attachments[0].mediaUrl);
                 setImageModalVisible(true);
               }}
             >
               <Image
-                source={{ uri: item.pictures[0] }}
+                source={{ uri: item.attachments[0].mediaUrl }}
                 style={[tw.wFull, { height: 240 }, tw.roundedLg]}
                 resizeMode="cover"
               />
             </TouchableOpacity>
           )}
-          {item.pictures && item.pictures.length === 2 && (
+          {item.attachments && item.attachments.length === 2 && (
             <View style={{ flexDirection: 'row', gap: 8 }}>
-              {item.pictures.map((img, idx) => (
+              {item.attachments.map((attachment, idx) => (
                 <TouchableOpacity
-                  key={idx}
+                  key={attachment.id}
                   style={{ flex: 1 }}
                   onPress={() => {
-                    setSelectedImage(img);
+                    setSelectedImage(attachment.mediaUrl);
                     setImageModalVisible(true);
                   }}
                 >
                   <Image
-                    source={{ uri: img }}
+                    source={{ uri: attachment.mediaUrl }}
                     style={[{ width: '100%', height: 180, borderRadius: 12 }]}
                     resizeMode="cover"
                   />
@@ -488,33 +426,33 @@ const HomeScreen: React.FC = () => {
               ))}
             </View>
           )}
-          {item.pictures && item.pictures.length >= 3 && (
+          {item.attachments && item.attachments.length >= 3 && (
             <View style={{ flexDirection: 'row', gap: 8, height: 200 }}>
               <TouchableOpacity
                 style={{ flex: 2, marginRight: 4 }}
                 onPress={() => {
-                  setSelectedImage(item.pictures[0]);
+                  setSelectedImage(item.attachments[0].mediaUrl);
                   setImageModalVisible(true);
                 }}
               >
                 <Image
-                  source={{ uri: item.pictures[0] }}
+                  source={{ uri: item.attachments[0].mediaUrl }}
                   style={[{ width: '100%', height: '100%', borderRadius: 12, flex: 1 }]} 
                   resizeMode="cover"
                 />
               </TouchableOpacity>
               <View style={{ flex: 1, justifyContent: 'space-between' }}>
-                {[item.pictures[1], item.pictures[2]].map((img, idx) => (
+                {[item.attachments[1], item.attachments[2]].map((attachment, idx) => (
                   <TouchableOpacity
-                    key={idx}
+                    key={attachment.id}
                     style={{ flex: 1, marginBottom: idx === 0 ? 4 : 0 }}
                     onPress={() => {
-                      setSelectedImage(img);
+                      setSelectedImage(attachment.mediaUrl);
                       setImageModalVisible(true);
                     }}
                   >
                     <Image
-                      source={{ uri: img }}
+                      source={{ uri: attachment.mediaUrl }}
                       style={[{ width: '100%', height: '100%', borderRadius: 12, flex: 1 }]} 
                       resizeMode="cover"
                     />
@@ -527,19 +465,10 @@ const HomeScreen: React.FC = () => {
       ) : (
         <View style={[tw.pX4, tw.pB2]}>
           <Image
-            source={{ uri: item.image }}
+            source={{ uri: item.attachments && item.attachments.length > 0 ? item.attachments[0].mediaUrl : "https://picsum.photos/400/300?random=1" }}
             style={[tw.wFull, { height: 240 }, tw.roundedLg]}
             resizeMode="cover"
           />
-        </View>
-      )}
-      {/* Caption for Travel and Networking */}
-      {(profileType === 'travel' || profileType === 'networking' || profileType === null) && item.caption && (
-        <View style={[tw.pX4, tw.pB3]}>
-          <Text style={[tw.textGray800, tw.textBase]} numberOfLines={3}>
-            <Text style={[tw.fontBold]}>{item.user.name}</Text>
-            <Text style={[tw.textSm]}> {renderCaptionWithHashtags(item.caption)}</Text>
-          </Text>
         </View>
       )}
       {/* Engagement Metrics */}
@@ -547,15 +476,15 @@ const HomeScreen: React.FC = () => {
         <View style={[tw.flexRow, tw.itemsCenter]}>
           <TouchableOpacity style={[tw.flexRow, tw.itemsCenter, tw.mR6]}>
             <Ionicons name="heart-outline" size={20} color="#6b7280" />
-            <Text style={[tw.textGray600, tw.textSm, tw.mL1]}>{formatNumber(item.likes)}</Text>
+            <Text style={[tw.textGray600, tw.textSm, tw.mL1]}>{formatNumber(item.likeCount)}</Text>
           </TouchableOpacity>
           <TouchableOpacity style={[tw.flexRow, tw.itemsCenter, tw.mR6]}>
             <Ionicons name="chatbubble-outline" size={20} color="#6b7280" />
-            <Text style={[tw.textGray600, tw.textSm, tw.mL1]}>{formatNumber(item.comments)}</Text>
+            <Text style={[tw.textGray600, tw.textSm, tw.mL1]}>{formatNumber(0)}</Text>
           </TouchableOpacity>
           <TouchableOpacity style={[tw.flexRow, tw.itemsCenter]}>
             <Ionicons name="arrow-redo-outline" size={20} color="#6b7280" />
-            <Text style={[tw.textGray600, tw.textSm, tw.mL1]}>{formatNumber(item.shares)}</Text>
+            <Text style={[tw.textGray600, tw.textSm, tw.mL1]}>{formatNumber(0)}</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -654,7 +583,7 @@ const HomeScreen: React.FC = () => {
   const filteredContent = useMemo(() => {
     if (!searchQuery.trim()) {
       return {
-        posts: posts,
+        posts: apiPosts,
         datingProfiles: datingProfiles,
         networkingProfiles: MOCK_NETWORKING_PROFILES,
         networkingPosts: MOCK_NETWORKING_POSTS
@@ -664,11 +593,11 @@ const HomeScreen: React.FC = () => {
     const query = searchQuery.toLowerCase();
 
     if (profileType === 'travel') {
-      const filteredPosts = posts.filter(post =>
-        post.user.name.toLowerCase().includes(query) ||
-        post.caption.toLowerCase().includes(query) ||
-        post.location.toLowerCase().includes(query) ||
-        post.caption.split(' ').some(word => word.startsWith('#') && word.toLowerCase().includes(query))
+      const filteredPosts = apiPosts.filter(post =>
+        post.user.firstname.toLowerCase().includes(query) ||
+        post.user.lastname.toLowerCase().includes(query) ||
+        post.content.toLowerCase().includes(query) ||
+        post.content.split(' ').some(word => word.startsWith('#') && word.toLowerCase().includes(query))
       );
       return { posts: filteredPosts, datingProfiles: [], networkingProfiles: [], networkingPosts: [] };
     }
@@ -708,10 +637,10 @@ const HomeScreen: React.FC = () => {
     }
 
     // Default: search across all content
-    const filteredPosts = posts.filter(post =>
-      post.user.name.toLowerCase().includes(query) ||
-      post.caption.toLowerCase().includes(query) ||
-      post.location.toLowerCase().includes(query)
+    const filteredPosts = apiPosts.filter(post =>
+      post.user.firstname.toLowerCase().includes(query) ||
+      post.user.lastname.toLowerCase().includes(query) ||
+      post.content.toLowerCase().includes(query)
     );
 
     const filteredDatingProfiles = datingProfiles.filter(profile =>
@@ -726,7 +655,7 @@ const HomeScreen: React.FC = () => {
       networkingProfiles: [], 
       networkingPosts: [] 
     };
-  }, [searchQuery, profileType, posts, datingProfiles]);
+  }, [searchQuery, profileType, apiPosts, datingProfiles]);
 
   const getSearchPlaceholder = () => {
     switch (profileType) {
@@ -781,10 +710,18 @@ const HomeScreen: React.FC = () => {
 
     const { posts, datingProfiles, networkingProfiles, networkingPosts } = filteredContent;
     const totalResults = posts.length + datingProfiles.length + networkingProfiles.length + networkingPosts.length;
+    
+    console.log('Search results debug:', {
+      showSearchResults,
+      searchQuery: searchQuery.trim(),
+      totalResults,
+      postsLength: posts.length,
+      profileType
+    });
 
     if (totalResults === 0) {
       return (
-        <View style={[tw.bgWhite, tw.roundedLg, tw.mX4, tw.p6, tw.shadow, { zIndex: 10, position: 'relative' }]}>
+        <View style={[tw.bgWhite, tw.roundedLg, tw.mX4, tw.p6, tw.shadow, { zIndex: 1000, position: 'absolute', top: 80, left: 0, right: 0 }]}>
           <View style={[tw.itemsCenter, tw.pY4]}>
             <Ionicons name="search-outline" size={48} color="#9ca3af" />
             <Text style={[tw.textGray500, tw.textLg, tw.fontMedium, tw.mT2]}>No results found</Text>
@@ -797,42 +734,62 @@ const HomeScreen: React.FC = () => {
     }
 
     return (
-      <View style={[tw.bgWhite, tw.roundedLg, tw.mX4, tw.shadow, { maxHeight: 400, zIndex: 10, position: 'relative' }]}>
+      <View style={[tw.bgWhite, tw.roundedLg, tw.mX4, tw.shadow, { maxHeight: 400, zIndex: 1000, position: 'absolute', top: 80, left: 0, right: 0 }]}>
         <View style={[tw.p4, tw.borderB, tw.borderGray200]}>
           <Text style={[tw.textGray600, tw.fontMedium]}>
             {totalResults} result{totalResults !== 1 ? 's' : ''} for "{searchQuery}"
           </Text>
         </View>
         
-        <ScrollView style={{ maxHeight: 350 }}>
+        <ScrollView 
+          style={{ maxHeight: 350 }} 
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl
+              refreshing={postsLoading}
+              onRefresh={refresh}
+              colors={["#fb6c31"]}
+              tintColor="#fb6c31"
+            />
+          }
+        >
           {/* Travel Posts */}
           {profileType === 'travel' && posts.map(post => (
             <TouchableOpacity
               key={`post-${post.id}`}
               style={[tw.p4, tw.borderB, tw.borderGray100]}
               onPress={() => {
-                setSelectedPost({
+                // Convert API Post to GenericPost format
+                const genericPost: GenericPost = {
                   id: post.id,
-                  user: post.user,
-                  timestamp: post.timestamp,
-                  location: post.location,
-                  caption: post.caption,
-                  images: post.pictures || [post.image],
-                  likes: post.likes,
-                  comments: post.comments,
-                  shares: post.shares,
-                  isBookmarked: post.isBookmarked,
-                });
+                  user: {
+                    name: `${post.user.firstname} ${post.user.lastname}`,
+                    avatar: "https://randomuser.me/api/portraits/men/1.jpg"
+                  },
+                  timestamp: getTimeAgo(post.createdAt),
+                  location: "",
+                  caption: post.content,
+                  images: post.attachments.length > 0 ? post.attachments.map(att => att.mediaUrl) : [],
+                  likes: post.likeCount,
+                  comments: 0,
+                  shares: 0,
+                  isBookmarked: false,
+                };
+                setSelectedPost(genericPost);
                 setSinglePostVisible(true);
                 setShowSearchResults(false);
               }}
             >
               <View style={[tw.flexRow, tw.itemsCenter]}>
-                <Image source={{ uri: post.user.avatar }} style={[tw.w10, tw.h10, tw.roundedFull, tw.mR3]} />
+                <View style={[tw.w10, tw.h10, tw.roundedFull, tw.mR3, tw.bgGray300, tw.justifyCenter, tw.itemsCenter]}>
+                  <Text style={[tw.textGray700, tw.fontBold, tw.textSm]}>
+                    {getUserInitials(post.user.firstname, post.user.lastname)}
+                  </Text>
+                </View>
                 <View style={[tw.flex1]}>
-                  <Text style={[tw.textGray900, tw.fontMedium]}>{post.user.name}</Text>
-                  <Text style={[tw.textGray500, tw.textSm]} numberOfLines={2}>{post.caption}</Text>
-                  <Text style={[tw.textGray400, tw.textXs]}>{post.timestamp}</Text>
+                  <Text style={[tw.textGray900, tw.fontMedium]}>{`${post.user.firstname} ${post.user.lastname}`}</Text>
+                  <Text style={[tw.textGray500, tw.textSm]} numberOfLines={2}>{post.content}</Text>
+                  <Text style={[tw.textGray400, tw.textXs]}>{getTimeAgo(post.createdAt)}</Text>
                 </View>
                 <Ionicons name="chevron-forward" size={20} color="#9ca3af" />
               </View>
@@ -1002,6 +959,10 @@ const HomeScreen: React.FC = () => {
           filteredProfiles={filteredContent.networkingProfiles}
           filteredPosts={filteredContent.networkingPosts}
         />
+      ) : postsLoading && filteredContent.posts.length === 0 ? (
+        <View style={[tw.flex1, tw.justifyCenter, tw.itemsCenter]}>
+          <LoadingIndicator message="Loading posts..." />
+        </View>
       ) : (
         <FlatList
           data={filteredContent.posts}
@@ -1009,6 +970,16 @@ const HomeScreen: React.FC = () => {
           keyExtractor={(item) => item.id.toString()}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={[{ paddingBottom: 120 }]}
+          refreshing={postsLoading}
+          onRefresh={refresh}
+          refreshControl={
+            <RefreshControl
+              refreshing={postsLoading}
+              onRefresh={refresh}
+              colors={["#fb6c31"]}
+              tintColor="#fb6c31"
+            />
+          }
         />
       )}
       
@@ -1022,11 +993,9 @@ const HomeScreen: React.FC = () => {
         }}
         onToggleBookmark={toggleBookmark}
         onLike={(postId) => {
-          setPosts(prevPosts =>
-            prevPosts.map(post =>
-              post.id === postId ? { ...post, likes: post.likes + 1 } : post
-            )
-          );
+          // Note: This function now only logs since we're using API posts
+          // In a real implementation, you would make an API call to like a post
+          console.log('Like post:', postId);
         }}
         onComment={(postId) => {
           console.log('Comment on post:', postId);

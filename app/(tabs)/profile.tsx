@@ -384,7 +384,7 @@ const ProfileScreen: React.FC = () => {
             ) : (
               <>
                 <Text style={[tw.textGray900, tw.text2xl, tw.fontBold]}>
-                  {profile?.firstname || profile?.name || "User"} {profile?.lastname || ""}
+                  {"Tangishaka Loic"}
                 </Text>
                 <Text style={[tw.textGray600, tw.textBase, tw.mT1]}>
                   {profile?.city || profile?.location || "Location not set"}

@@ -461,10 +461,32 @@ const HomeScreen: React.FC = () => {
               {formatNumber(optimisticLikeCounts.get(item.id) ?? item.likeCount)}
             </Text>
           </TouchableOpacity>
-          {/* <TouchableOpacity style={[tw.flexRow, tw.itemsCenter, tw.mR6]}>
+          <TouchableOpacity 
+            style={[tw.flexRow, tw.itemsCenter, tw.mR6]}
+            onPress={() => {
+              // Convert API Post to GenericPost format for comment view
+              const genericPost: GenericPost = {
+                id: item.id,
+                user: {
+                  name: `${item.user.firstname} ${item.user.lastname}`,
+                  avatar: "" // Not used anymore, we use initials instead
+                },
+                timestamp: getTimeAgo(item.createdAt),
+                location: "",
+                caption: item.content,
+                images: item.attachments.length > 0 ? item.attachments.map(att => att.mediaUrl) : [],
+                likes: item.likeCount,
+                comments: 0, // TODO: Get actual comment count from API
+                shares: 0,
+                isBookmarked: false,
+              };
+              setSelectedPost(genericPost);
+              setSinglePostVisible(true);
+            }}
+          >
             <Ionicons name="chatbubble-outline" size={20} color="#6b7280" />
             <Text style={[tw.textGray600, tw.textSm, tw.mL1]}>{formatNumber(0)}</Text>
-          </TouchableOpacity> */}
+          </TouchableOpacity>
           <TouchableOpacity style={[tw.flexRow, tw.itemsCenter]}>
             <Ionicons name="arrow-redo-outline" size={20} color="#6b7280" />
             <Text style={[tw.textGray600, tw.textSm, tw.mL1]}>{formatNumber(0)}</Text>

@@ -1,8 +1,10 @@
 import React from "react";
-import { View, Text, Image, TouchableOpacity, ScrollView, Alert, Dimensions } from "react-native";
+import { View, Text, TouchableOpacity, ScrollView, Alert, Dimensions } from "react-native";
 import { tw } from "react-native-tailwindcss";
 import { Ionicons } from "@expo/vector-icons";
 import { NetworkingProfile } from "../NetworkingCard";
+import ImageWithFallback from "../ImageWithFallback";
+import { getUserInitials } from "@/utils/userInitials";
 
 interface NetworkingProfileViewProps {
   profile: NetworkingProfile;
@@ -44,7 +46,7 @@ const NetworkingProfileView: React.FC<NetworkingProfileViewProps> = ({
         );
       default:
         return (
-          <View style={[tw.flexRow, tw.spaceX3]}>
+          <View style={[tw.flexRow]}>
             <TouchableOpacity
               style={[tw.flex1, tw.bgPink700, tw.roundedLg, tw.pX6, tw.pY3, tw.flexRow, tw.itemsCenter, tw.justifyCenter, tw.mX2]}
               onPress={() => onConnect?.(profile.id)}
@@ -94,7 +96,7 @@ const NetworkingProfileView: React.FC<NetworkingProfileViewProps> = ({
     ]}>
       <View style={[
         tw.bgWhite, 
-        tw.roundedXl, 
+        tw.roundedLg, 
         { 
           width: '100%', 
           maxWidth: 400, 
@@ -114,11 +116,19 @@ const NetworkingProfileView: React.FC<NetworkingProfileViewProps> = ({
         <ScrollView style={[tw.flex1, tw.p4]} showsVerticalScrollIndicator={false}>
           {/* Profile Image and Basic Info */}
           <View style={[tw.flexRow, tw.mB4]}>
-            <Image
-              source={{ uri: profile.photo }}
-              style={[tw.w20, tw.h20, tw.roundedFull]}
-              resizeMode="cover"
-            />
+            {profile.photo ? (
+              <ImageWithFallback
+                source={{ uri: profile.photo }}
+                style={[tw.w20, tw.h20, tw.roundedFull]}
+                resizeMode="cover"
+              />
+            ) : (
+              <View style={[tw.w20, tw.h20, tw.roundedFull, tw.bgGray300, tw.justifyCenter, tw.itemsCenter]}>
+                <Text style={[tw.textGray700, tw.fontBold, tw.textLg]}>
+                  {getUserInitials(profile.name.split(' ')[0] || '', profile.name.split(' ')[1] || '')}
+                </Text>
+              </View>
+            )}
             <View style={[tw.flex1, tw.mL4, tw.justifyCenter]}>
               <Text style={[tw.textGray900, tw.fontBold, tw.textXl]}>{profile.name}</Text>
               <Text style={[tw.textGray700, tw.textBase, tw.mT1]}>{profile.headline}</Text>
@@ -133,32 +143,36 @@ const NetworkingProfileView: React.FC<NetworkingProfileViewProps> = ({
           {/* Summary */}
           <View style={[tw.mB4]}>
             <Text style={[tw.textGray900, tw.fontBold, tw.textLg, tw.mB2]}>About</Text>
-            <Text style={[tw.textGray700, tw.textBase, tw.leading6]}>{profile.summary}</Text>
+            <Text style={[tw.textGray700, tw.textBase]}>{profile.summary}</Text>
           </View>
 
           {/* Industries */}
-          <View style={[tw.mB4]}>
-            <Text style={[tw.textGray900, tw.fontBold, tw.textLg, tw.mB2]}>Industries</Text>
-            <View style={[tw.flexRow, tw.flexWrap]}>
-              {profile.industries.map((industry, idx) => (
-                <View key={idx} style={[tw.bgGray200, tw.roundedFull, tw.pX3, tw.pY1, tw.mR2, tw.mB1]}>
-                  <Text style={[tw.textGray700, tw.textSm, tw.fontMedium]}>{industry}</Text>
-                </View>
-              ))}
+          {profile.industries && profile.industries.length > 0 && (
+            <View style={[tw.mB4]}>
+              <Text style={[tw.textGray900, tw.fontBold, tw.textLg, tw.mB2]}>Industries</Text>
+              <View style={[tw.flexRow, tw.flexWrap]}>
+                {profile.industries.map((industry, idx) => (
+                  <View key={idx} style={[tw.bgGray200, tw.roundedFull, tw.pX3, tw.pY1, tw.mR2, tw.mB1]}>
+                    <Text style={[tw.textGray700, tw.textSm, tw.fontMedium]}>{industry}</Text>
+                  </View>
+                ))}
+              </View>
             </View>
-          </View>
+          )}
 
           {/* Collaboration Preferences */}
-          <View style={[tw.mB4]}>
-            <Text style={[tw.textGray900, tw.fontBold, tw.textLg, tw.mB2]}>Looking For</Text>
-            <View style={[tw.flexRow, tw.flexWrap]}>
-              {profile.collaboration.map((item, idx) => (
-                <View key={idx} style={[tw.bgPink100, tw.roundedFull, tw.pX3, tw.pY1, tw.mR2, tw.mB1]}>
-                  <Text style={[tw.textPink700, tw.textSm, tw.fontBold]}>{item}</Text>
-                </View>
-              ))}
+          {profile.collaboration && profile.collaboration.length > 0 && (
+            <View style={[tw.mB4]}>
+              <Text style={[tw.textGray900, tw.fontBold, tw.textLg, tw.mB2]}>Looking For</Text>
+              <View style={[tw.flexRow, tw.flexWrap]}>
+                {profile.collaboration.map((item, idx) => (
+                  <View key={idx} style={[tw.bgPink100, tw.roundedFull, tw.pX3, tw.pY1, tw.mR2, tw.mB1]}>
+                    <Text style={[tw.textPink700, tw.textSm, tw.fontBold]}>{item}</Text>
+                  </View>
+                ))}
+              </View>
             </View>
-          </View>
+          )}
 
           {/* Connection Status */}
           <View style={[tw.mB4]}>
@@ -185,6 +199,25 @@ const NetworkingProfileView: React.FC<NetworkingProfileViewProps> = ({
               )}
             </View>
           </View>
+
+          {/* Friendship Details */}
+          {/* {profile.friendshipId && (
+            <View style={[tw.mB4]}>
+              <Text style={[tw.textGray900, tw.fontBold, tw.textLg, tw.mB2]}>Friendship Details</Text>
+              <View style={[tw.bgBlue100, tw.roundedLg, tw.p3]}>
+                <View style={[tw.flexRow, tw.justifyBetween, tw.mB2]}>
+                  <Text style={[tw.textGray700, tw.textSm, tw.fontMedium]}>Friendship ID:</Text>
+                  <Text style={[tw.textGray900, tw.textSm, tw.fontBold]}>{profile.friendshipId}</Text>
+                </View>
+                {profile.friendshipStatus && (
+                  <View style={[tw.flexRow, tw.justifyBetween]}>
+                    <Text style={[tw.textGray700, tw.textSm, tw.fontMedium]}>Status:</Text>
+                    <Text style={[tw.textGray900, tw.textSm, tw.fontBold]}>{profile.friendshipStatus}</Text>
+                  </View>
+                )}
+              </View>
+            </View>
+          )} */}
         </ScrollView>
 
         {/* Action Buttons */}

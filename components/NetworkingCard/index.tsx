@@ -1,7 +1,9 @@
 import React from "react";
-import { View, Text, Image, TouchableOpacity } from "react-native";
+import { View, Text, TouchableOpacity, ActivityIndicator } from "react-native";
 import { tw } from "react-native-tailwindcss";
 import { Ionicons } from "@expo/vector-icons";
+import ImageWithFallback from "../ImageWithFallback";
+import { getUserInitials } from "@/utils/userInitials";
 
 // Mock data for networking profiles
 export const MOCK_NETWORKING_PROFILES = [
@@ -170,7 +172,19 @@ export const MOCK_NETWORKING_POSTS = [
   },
 ];
 
-export type NetworkingProfile = typeof MOCK_NETWORKING_PROFILES[0];
+export interface NetworkingProfile {
+  id: number;
+  name: string;
+  headline: string;
+  summary: string;
+  photo?: string;
+  industries: string[];
+  collaboration: string[];
+  connectionStatus: "none" | "pending" | "connected";
+  friendshipId?: number;
+  friendshipStatus?: string;
+  apiData?: any; // Store the original API response data
+}
 export type NetworkingPost = typeof MOCK_NETWORKING_POSTS[0];
 
 interface NetworkingCardProps {
@@ -178,13 +192,15 @@ interface NetworkingCardProps {
   onConnect?: (profileId: number) => void;
   onMessage?: (profileId: number) => void;
   onViewProfile?: (profile: NetworkingProfile) => void;
+  isConnecting?: boolean;
 }
 
 const NetworkingCard: React.FC<NetworkingCardProps> = ({ 
   profile, 
   onConnect, 
   onMessage,
-  onViewProfile 
+  onViewProfile,
+  isConnecting = false
 }) => {
   const getConnectionButton = () => {
     switch (profile.connectionStatus) {
@@ -213,12 +229,18 @@ const NetworkingCard: React.FC<NetworkingCardProps> = ({
             <TouchableOpacity
               style={[tw.bgPink700, tw.roundedFull, tw.w12, tw.h12, tw.justifyCenter, tw.itemsCenter, tw.mR2]}
               onPress={() => onConnect?.(profile.id)}
+              disabled={isConnecting}
             >
-              <Ionicons name="person-add-outline" size={20} color="white" />
+              {isConnecting ? (
+                <ActivityIndicator size="small" color="white" />
+              ) : (
+                <Ionicons name="person-add-outline" size={20} color="white" />
+              )}
             </TouchableOpacity>
             <TouchableOpacity
               style={[tw.bgGray500, tw.roundedFull, tw.w12, tw.h12, tw.justifyCenter, tw.itemsCenter, tw.mL2]}
               onPress={() => onMessage?.(profile.id)}
+              disabled={isConnecting}
             >
               <Ionicons name="chatbubble-outline" size={20} color="white" />
             </TouchableOpacity>
@@ -231,33 +253,45 @@ const NetworkingCard: React.FC<NetworkingCardProps> = ({
     <TouchableOpacity onPress={() => onViewProfile?.(profile)}>
       <View style={[tw.bgWhite, tw.roundedLg, tw.mB4, tw.shadow, tw.mX4, tw.p4]}> 
         <View style={[tw.flexRow]}>
-          <Image
-            source={{ uri: profile.photo }}
-            style={[tw.w20, tw.h20, tw.rounded]}
-            resizeMode="cover"
-          />
+          {profile.photo ? (
+            <ImageWithFallback
+              source={{ uri: profile.photo }}
+              style={[tw.w20, tw.h20, tw.rounded]}
+              resizeMode="cover"
+            />
+          ) : (
+            <View style={[tw.w20, tw.h20, tw.rounded, tw.bgGray300, tw.justifyCenter, tw.itemsCenter]}>
+              <Text style={[tw.textGray700, tw.fontBold, tw.textSm]}>
+                {getUserInitials(profile.name.split(' ')[0] || '', profile.name.split(' ')[1] || '')}
+              </Text>
+            </View>
+          )}
           <View style={[tw.flex1, tw.mL4, tw.justifyCenter]}> 
             <Text style={[tw.textGray900, tw.fontBold, tw.textLg]}>{profile.name}</Text>
             <Text style={[tw.textGray700, tw.textBase, tw.mT1]}>{profile.headline}</Text>
             <Text style={[tw.textGray600, tw.textSm, tw.mT2]} numberOfLines={3}>{profile.summary}</Text>
             
             {/* Industries */}
-            <View style={[tw.flexRow, tw.flexWrap, tw.mT2]}> 
-              {profile.industries.map((industry, idx) => (
-                <View key={idx} style={[tw.bgGray200, tw.roundedFull, tw.pX3, tw.pY1, tw.mR2, tw.mB1]}>
-                  <Text style={[tw.textGray700, tw.textXs]}>{industry}</Text>
-                </View>
-              ))}
-            </View>
+            {profile.industries && profile.industries.length > 0 && (
+              <View style={[tw.flexRow, tw.flexWrap, tw.mT2]}> 
+                {profile.industries.map((industry, idx) => (
+                  <View key={idx} style={[tw.bgGray200, tw.roundedFull, tw.pX3, tw.pY1, tw.mR2, tw.mB1]}>
+                    <Text style={[tw.textGray700, tw.textXs]}>{industry}</Text>
+                  </View>
+                ))}
+              </View>
+            )}
             
             {/* Collaboration Preferences */}
-            <View style={[tw.flexRow, tw.flexWrap, tw.mT1]}> 
-              {profile.collaboration.map((item, idx) => (
-                <View key={idx} style={[tw.bgPink100, tw.roundedFull, tw.pX3, tw.pY1, tw.mR2, tw.mB1]}>
-                  <Text style={[tw.textPink700, tw.textXs, tw.fontBold]}>{item}</Text>
-                </View>
-              ))}
-            </View>
+            {profile.collaboration && profile.collaboration.length > 0 && (
+              <View style={[tw.flexRow, tw.flexWrap, tw.mT1]}> 
+                {profile.collaboration.map((item, idx) => (
+                  <View key={idx} style={[tw.bgPink100, tw.roundedFull, tw.pX3, tw.pY1, tw.mR2, tw.mB1]}>
+                    <Text style={[tw.textPink700, tw.textXs, tw.fontBold]}>{item}</Text>
+                  </View>
+                ))}
+              </View>
+            )}
           </View>
         </View>
         

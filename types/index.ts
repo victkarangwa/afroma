@@ -98,10 +98,68 @@ export interface CreatePostResponse {
   message: string;
   data?: {
     id: number;
-    content: string;
-    createdAt: string;
-    status: string;
   };
+}
+
+// Comment API Types
+export interface CommentUser {
+  id: number;
+  telephone: string;
+  email: string;
+  username: string;
+  firstname: string;
+  middlename: string;
+  lastname: string;
+  gender: string;
+  interestedIn: string;
+  bio: string;
+  dateOfBirth: string;
+  lastOnline: string;
+  gallery: {
+    id: number;
+    thumbnailUrl: string;
+    mediaUrl: string;
+    fileName: string;
+    featured: boolean;
+    mediaType: string;
+  }[];
+  publicFigure: boolean;
+  verified: boolean;
+  latitude: number;
+  longitude: number;
+  profileType: string;
+  profileTypes: string[];
+  status: string;
+  hasPendingRequest: boolean;
+  friend: boolean;
+}
+
+export interface Comment {
+  id: number;
+  user: CommentUser;
+  status: string;
+  comment: string;
+  postId: number;
+  createdAt: string;
+  topPosition: string;
+}
+
+export interface CommentListResponse {
+  desc: string;
+  code: string;
+  success: boolean;
+  message: string;
+  list: Comment[];
+  filters: PostFilter[];
+  totalPages: number;
+  totalRecords: number;
+  pageSize: number;
+  currentPage: number;
+}
+
+export interface CreateCommentRequest {
+  comment: string;
+  postId: number;
 }
 
 // Media Upload API Types

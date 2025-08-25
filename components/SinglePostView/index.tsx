@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -9,10 +9,14 @@ import {
   Modal,
   SafeAreaView,
   StatusBar,
+  ActivityIndicator,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { tw } from "react-native-tailwindcss";
 import { getUserInitials } from "@/utils/userInitials";
+import CommentSection from "../CommentSection";
+import { Comment, CommentListResponse } from "@/types";
+import useApiRequest from "@/hooks/useApiRequest";
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get("window");
 
@@ -57,6 +61,41 @@ const SinglePostView: React.FC<SinglePostViewProps> = ({
   profileType,
 }) => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [showComments, setShowComments] = useState(false);
+  const [comments, setComments] = useState<Comment[]>([]);
+  const [commentsLoading, setCommentsLoading] = useState(false);
+  const [commentCount, setCommentCount] = useState(0);
+
+  const { send } = useApiRequest<CommentListResponse>();
+
+  // Load comments when post is visible
+  const loadComments = async () => {
+    if (!post || commentsLoading) return;
+    
+    try {
+      setCommentsLoading(true);
+      const response = await send('post', `/comment/list-by-post/${post.id}`, {
+        page: 1,
+        pageSize: 10,
+      });
+      
+      if (response?.success && response?.list) {
+        setComments(response.list);
+        setCommentCount(response.totalRecords || response.list.length);
+      }
+    } catch (error) {
+      console.error('Error loading comments:', error);
+    } finally {
+      setCommentsLoading(false);
+    }
+  };
+
+  // Load comments when component becomes visible
+  useEffect(() => {
+    if (visible && post) {
+      loadComments();
+    }
+  }, [visible, post?.id]);
 
   console.log('SinglePostView props:', { visible, post: post?.id, profileType });
 
@@ -190,7 +229,10 @@ const SinglePostView: React.FC<SinglePostViewProps> = ({
             <View style={[tw.flexRow, tw.itemsCenter, tw.mB3]}>
               <View style={[tw.w12, tw.h12, tw.roundedFull, tw.mR3, tw.bgGray300, tw.justifyCenter, tw.itemsCenter]}>
                 <Text style={[tw.textGray700, tw.fontBold, tw.textSm]}>
-                  {getUserInitials(post.user.name)}
+                  {(() => {
+                    const nameParts = post.user.name.split(' ');
+                    return getUserInitials(nameParts[0] || '', nameParts[1] || '');
+                  })()}
                 </Text>
               </View>
               <View style={[tw.flex1]}>
@@ -238,10 +280,10 @@ const SinglePostView: React.FC<SinglePostViewProps> = ({
                 </TouchableOpacity>
                 <TouchableOpacity 
                   style={[tw.flexRow, tw.itemsCenter, tw.mR6]}
-                  onPress={() => onComment?.(post.id)}
+                  onPress={() => setShowComments(true)}
                 >
                   <Ionicons name="chatbubble-outline" size={20} color="#6b7280" />
-                  <Text style={[tw.textGray600, tw.textSm, tw.mL1]}>{formatNumber(post.comments)}</Text>
+                  <Text style={[tw.textGray600, tw.textSm, tw.mL1]}>{formatNumber(commentCount)}</Text>
                 </TouchableOpacity>
                 <TouchableOpacity 
                   style={[tw.flexRow, tw.itemsCenter]}
@@ -252,9 +294,78 @@ const SinglePostView: React.FC<SinglePostViewProps> = ({
                 </TouchableOpacity>
               </View>
             </View>
+
+            {/* Comments Preview */}
+            {commentsLoading ? (
+              <View style={[tw.pT3, tw.borderT, tw.borderGray200]}>
+                <View style={[tw.pY2, tw.itemsCenter]}>
+                  <ActivityIndicator size="small" color="#fb6c31" />
+                  <Text style={[tw.textGray500, tw.textSm, tw.mT2]}>Loading comments...</Text>
+                </View>
+              </View>
+            ) : comments.length > 0 ? (
+              <View style={[tw.pT3, tw.borderT, tw.borderGray200]}>
+                <TouchableOpacity 
+                  style={[tw.pY2]}
+                  onPress={() => setShowComments(true)}
+                >
+                  <Text style={[tw.textGray600, tw.fontMedium, tw.textSm, tw.mB2]}>
+                    View all {commentCount} comments
+                  </Text>
+                  {/* Show first 2 comments as preview */}
+                  {comments.slice(0, 2).map((comment, index) => (
+                    <View key={comment.id} style={[tw.flexRow, tw.mB2]}>
+                      <View style={[tw.w8, tw.h8, tw.roundedFull, tw.mR2, tw.bgGray300, tw.justifyCenter, tw.itemsCenter]}>
+                        <Text style={[tw.textGray700, tw.fontBold, tw.textXs]}>
+                          {getUserInitials(comment.user.firstname, comment.user.lastname)}
+                        </Text>
+                      </View>
+                      <View style={[tw.flex1]}>
+                        <Text style={[tw.textGray900, tw.fontMedium, tw.textSm]}>
+                          {comment.user.firstname} {comment.user.lastname}
+                        </Text>
+                        <Text style={[tw.textGray800, tw.textSm]} numberOfLines={2}>
+                          {comment.comment}
+                        </Text>
+                      </View>
+                    </View>
+                  ))}
+                  {commentCount > 2 && (
+                    <Text style={[tw.textGray500, tw.textSm, tw.mT1]}>
+                      View {commentCount - 2} more comments
+                    </Text>
+                  )}
+                </TouchableOpacity>
+              </View>
+            ) : commentCount === 0 && !commentsLoading ? (
+              <View style={[tw.pT3, tw.borderT, tw.borderGray200]}>
+                <TouchableOpacity 
+                  style={[tw.pY2]}
+                  onPress={() => setShowComments(true)}
+                >
+                  <Text style={[tw.textGray500, tw.textSm]}>
+                    Be the first to comment
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            ) : null}
           </View>
         </ScrollView>
       </SafeAreaView>
+
+      {/* Comment Section Modal */}
+      <Modal
+        visible={showComments}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={() => setShowComments(false)}
+      >
+        <CommentSection
+          postId={post.id}
+          visible={showComments}
+          onClose={() => setShowComments(false)}
+        />
+      </Modal>
     </Modal>
   );
 };

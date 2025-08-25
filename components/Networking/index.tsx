@@ -23,10 +23,13 @@ const Networking: React.FC<NetworkingProps> = ({
 }) => {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<'profiles' | 'posts' | 'requests'>('posts');
-  const [networkingProfiles, setNetworkingProfiles] = useState(filteredProfiles);
+  const [networkingProfiles, setNetworkingProfiles] = useState<any[]>([]);
+  const [profilesLoading, setProfilesLoading] = useState(false);
+  const [profilesError, setProfilesError] = useState<string | null>(null);
+  const [connectingProfiles, setConnectingProfiles] = useState<Set<number>>(new Set());
   const [selectedPost, setSelectedPost] = useState<GenericPost | null>(null);
   const [singlePostVisible, setSinglePostVisible] = useState(false);
-  const [selectedProfile, setSelectedProfile] = useState<NetworkingProfile | null>(null);
+  const [selectedProfile, setSelectedProfile] = useState<any | null>(null);
   const [profileViewVisible, setProfileViewVisible] = useState(false);
   const [likedPosts, setLikedPosts] = useState<Set<number>>(new Set());
   const [likingPosts, setLikingPosts] = useState<Set<number>>(new Set());
@@ -51,6 +54,30 @@ const Networking: React.FC<NetworkingProps> = ({
   // Use the API request hook for like/unlike functionality
   const { loading: apiLoading, send } = useApiRequest<ApiResponse>();
 
+  // Load networking profiles from API
+  const loadNetworkingProfiles = React.useCallback(async () => {
+    try {
+      setProfilesLoading(true);
+      setProfilesError(null);
+      
+      const response = await send('get', '/friendship/potential');
+      
+      if (response?.success && Array.isArray(response.data)) {
+        setNetworkingProfiles(response.data);
+      } else if (Array.isArray(response)) {
+        // Handle direct array response
+        setNetworkingProfiles(response);
+      } else {
+        setProfilesError('Invalid response format');
+      }
+    } catch (error) {
+      console.error('Error loading networking profiles:', error);
+      setProfilesError('Failed to load profiles');
+    } finally {
+      setProfilesLoading(false);
+    }
+  }, [send]);
+
   // console.log('apiPosts', apiPosts);
 
   // Function to load user's liked posts (if API endpoint exists)
@@ -74,16 +101,28 @@ const Networking: React.FC<NetworkingProps> = ({
   );
 
   // Update profiles when filteredProfiles prop changes
-  React.useEffect(() => {
-    setNetworkingProfiles(filteredProfiles);
-  }, [filteredProfiles]);
+  // React.useEffect(() => {
+  //   setNetworkingProfiles(filteredProfiles);
+  // }, [filteredProfiles]);
 
   // Load user's liked posts on component mount
   React.useEffect(() => {
     loadUserLikedPosts();
   }, [loadUserLikedPosts]);
 
-  const handleConnect = (profileId: number) => {
+  // Load networking profiles when component mounts or profiles tab is selected
+  React.useEffect(() => {
+    if (activeTab === 'profiles') {
+      loadNetworkingProfiles();
+    }
+  }, [activeTab]);
+
+  const handleConnect = async (profileId: number) => {
+    // Prevent multiple requests for the same profile
+    if (connectingProfiles.has(profileId)) {
+      return;
+    }
+
     Alert.alert(
       "Send Connection Request",
       "Would you like to send a connection request to this person?",
@@ -91,13 +130,42 @@ const Networking: React.FC<NetworkingProps> = ({
         { text: "Cancel", style: "cancel" },
         {
           text: "Send Request",
-          onPress: () => {
-            setNetworkingProfiles(prevProfiles =>
-              prevProfiles.map(profile =>
-                profile.id === profileId ? { ...profile, connectionStatus: "pending" } : profile
-              )
-            );
-            Alert.alert("Success", "Connection request sent!");
+          onPress: async () => {
+            try {
+              setConnectingProfiles(prev => new Set(prev).add(profileId));
+              
+              const response = await send('post', '/friendship/request', {
+                receiverId: profileId
+              });
+              
+              console.log('Friend request response:', response);
+              
+              if (response?.success || response?.id) {
+                // Update local state to show pending status
+                setNetworkingProfiles(prevProfiles =>
+                  prevProfiles.map(profile =>
+                    profile.id === profileId ? { 
+                      ...profile, 
+                      hasPendingRequest: true,
+                      friendshipId: response.id,
+                      friendshipStatus: response.status
+                    } : profile
+                  )
+                );
+                Alert.alert("Success", "Connection request sent!");
+              } else {
+                Alert.alert("Error", "Failed to send connection request. Please try again.");
+              }
+            } catch (error) {
+              console.error('Error sending connection request:', error);
+              Alert.alert("Error", "Failed to send connection request. Please try again.");
+            } finally {
+              setConnectingProfiles(prev => {
+                const newSet = new Set(prev);
+                newSet.delete(profileId);
+                return newSet;
+              });
+            }
           },
         },
       ]
@@ -106,7 +174,7 @@ const Networking: React.FC<NetworkingProps> = ({
 
   const handleMessage = (profileId: number) => {
     const profile = networkingProfiles.find(p => p.id === profileId);
-    if (profile?.connectionStatus === "connected") {
+    if (profile?.friend === true) {
       console.log('Opening chat with:', profile.name);
     } else {
       Alert.alert(
@@ -120,7 +188,7 @@ const Networking: React.FC<NetworkingProps> = ({
     }
   };
 
-  const handleViewProfile = (profile: NetworkingProfile) => {
+  const handleViewProfile = (profile: any) => {
     setSelectedProfile(profile);
     setProfileViewVisible(true);
   };
@@ -434,7 +502,29 @@ const Networking: React.FC<NetworkingProps> = ({
               {optimisticLikeCounts.get(item.id) ?? item.likeCount}
             </Text>
           </TouchableOpacity>
-          <TouchableOpacity style={[tw.flexRow, tw.itemsCenter, tw.mR6]} onPress={() => handleComment(item.id)}>
+          <TouchableOpacity 
+            style={[tw.flexRow, tw.itemsCenter, tw.mR6]} 
+            onPress={() => {
+              // Convert API Post to GenericPost format for comment view
+              const genericPost: GenericPost = {
+                id: item.id,
+                user: {
+                  name: `${item.user.firstname} ${item.user.lastname}`,
+                  avatar: "" // Not used anymore, we use initials instead
+                },
+                timestamp: getTimeAgo(item.createdAt),
+                location: "",
+                caption: item.content,
+                images: item.attachments.length > 0 ? item.attachments.map(att => att.mediaUrl) : [],
+                likes: item.likeCount,
+                comments: 0, // TODO: Get actual comment count from API
+                shares: 0,
+                isBookmarked: false,
+              };
+              setSelectedPost(genericPost);
+              setSinglePostVisible(true);
+            }}
+          >
             <Ionicons name="chatbubble-outline" size={18} color="#6b7280" />
             <Text style={[tw.textGray600, tw.textSm, tw.mL1]}>0</Text>
           </TouchableOpacity>
@@ -590,7 +680,28 @@ const Networking: React.FC<NetworkingProps> = ({
           />
         )
       ) : activeTab === 'profiles' ? (
-        networkingProfiles.length === 0 ? (
+        profilesLoading && networkingProfiles.length === 0 ? (
+          <View style={[tw.flex1, tw.justifyCenter, tw.itemsCenter]}>
+            <ActivityIndicator size="large" color="#fb6c31" />
+            <Text style={[tw.textGray500, tw.textLg, tw.mT4]}>Loading profiles...</Text>
+          </View>
+        ) : profilesError ? (
+          <View style={[tw.flex1, tw.justifyCenter, tw.itemsCenter, tw.p8]}>
+            <Ionicons name="cloud-offline-outline" size={64} color="#9ca3af" />
+            <Text style={[tw.textGray500, tw.textLg, tw.fontMedium, tw.mT4, tw.textCenter]}>
+              Unable to load profiles
+            </Text>
+            <Text style={[tw.textGray400, tw.textBase, tw.mT2, tw.textCenter]}>
+              {profilesError}
+            </Text>
+            <TouchableOpacity
+              style={[tw.bgPink700, tw.roundedFull, tw.pX6, tw.pY3, tw.mT6]}
+              onPress={loadNetworkingProfiles}
+            >
+              <Text style={[tw.textWhite, tw.fontBold]}>Retry</Text>
+            </TouchableOpacity>
+          </View>
+        ) : networkingProfiles.length === 0 ? (
           <View style={[tw.flex1, tw.justifyCenter, tw.itemsCenter, tw.p8]}>
             <Ionicons name="people-outline" size={64} color="#9ca3af" />
             <Text style={[tw.textGray500, tw.textLg, tw.fontMedium, tw.mT4, tw.textCenter]}>
@@ -605,15 +716,37 @@ const Networking: React.FC<NetworkingProps> = ({
             data={networkingProfiles}
             renderItem={({ item }) => (
               <NetworkingCard
-                profile={item}
+                profile={{
+                  id: item.id,
+                  name: `${item.firstname} ${item.lastname}`,
+                  headline: item.bio || 'No bio available',
+                  summary: item.bio || 'No bio available',
+                  photo: item.gallery && item.gallery.length > 0 ? item.gallery[0].mediaUrl : undefined,
+                  industries: [], // Not available in API response
+                  collaboration: [], // Not available in API response
+                  connectionStatus: item.hasPendingRequest ? 'pending' : item.friend ? 'connected' : 'none',
+                  friendshipId: item.friendshipId,
+                  friendshipStatus: item.friendshipStatus,
+                  // Add API-specific fields
+                  apiData: item
+                }}
                 onConnect={handleConnect}
                 onMessage={handleMessage}
                 onViewProfile={handleViewProfile}
+                isConnecting={connectingProfiles.has(item.id)}
               />
             )}
             keyExtractor={(item) => item.id.toString()}
             showsVerticalScrollIndicator={false}
             contentContainerStyle={[{ paddingBottom: 120 }]}
+            refreshControl={
+              <RefreshControl
+                refreshing={profilesLoading}
+                onRefresh={loadNetworkingProfiles}
+                colors={["#fb6c31"]}
+                tintColor="#fb6c31"
+              />
+            }
           />
         )
       ) : (

@@ -108,6 +108,7 @@ export interface CreatePostResponse {
 export interface MediaUploadRequest {
   fileContent: string;
   mediaType: 'PHOTO' | 'VIDEO' | 'AUDIO';
+  fileRefType: 'POST' | 'PROFILE';
   featured: boolean;
 }
 
@@ -120,4 +121,34 @@ export interface MediaUploadResponse {
     mediaType: string;
     featured: boolean;
   };
+}
+
+// Dating Matches Types
+export interface DatingMatchMedia {
+  id: number;
+  thumbnailUrl: string;
+  mediaUrl: string;
+  fileName: string;
+  featured: boolean;
+  mediaType: string;
+}
+
+export interface MatchingResult {
+  matchingRate: number;
+  matchedQuestions: any[];
+}
+
+export interface DatingMatch {
+  id: number;
+  firstName: string;
+  middleName: string;
+  gender: string;
+  distance: number;
+  matchingResult: MatchingResult;
+  age: number;
+  mediaList: DatingMatchMedia[];
+}
+
+export interface DatingMatchesResponse {
+  list: DatingMatch[];
 }

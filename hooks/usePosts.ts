@@ -90,6 +90,16 @@ export const usePosts = (options: UsePostsOptions = {}): UsePostsReturn => {
     await loadPosts(1, searchTerm);
   }, [loadPosts]);
 
+  // Update posts when profileType changes
+  useEffect(() => {
+    if (autoLoad) {
+      setPosts([]);
+      setCurrentPage(1);
+      setHasMore(true);
+      loadPosts(1);
+    }
+  }, [profileType, autoLoad, loadPosts]);
+
   // Auto-load posts on mount
   useEffect(() => {
     if (autoLoad) {

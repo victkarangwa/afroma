@@ -1,22 +1,25 @@
-import React, { useState } from "react";
-import { View, Text, FlatList, TouchableOpacity, Alert, Image } from "react-native";
+import React, { useState, useMemo } from "react";
+import { View, Text, FlatList, TouchableOpacity, Alert, Image, RefreshControl, ActivityIndicator } from "react-native";
 import { tw } from "react-native-tailwindcss";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import NetworkingCard, { MOCK_NETWORKING_PROFILES, MOCK_NETWORKING_POSTS, NetworkingProfile } from "../NetworkingCard";
-import NetworkingPostCard from "../NetworkingPostCard";
+import NetworkingCard, { NetworkingProfile } from "../NetworkingCard";
 import SinglePostView, { GenericPost } from "../SinglePostView";
 import NetworkingProfileView from "../NetworkingProfileView";
 import { MOCK_NOTIFICATIONS } from "../NotificationCenter";
+import { Post, ApiResponse } from "@/types";
+import { getTimeAgo } from "@/utils/timeAgo";
+import { getUserInitials } from "@/utils/userInitials";
+import { usePosts } from "@/hooks/usePosts";
+import useApiRequest from "@/hooks/useApiRequest";
+import ImageWithFallback from "../ImageWithFallback";
 
 interface NetworkingProps {
   filteredProfiles?: NetworkingProfile[];
-  filteredPosts?: any[];
 }
 
 const Networking: React.FC<NetworkingProps> = ({ 
-  filteredProfiles = MOCK_NETWORKING_PROFILES, 
-  filteredPosts = MOCK_NETWORKING_POSTS 
+  filteredProfiles = []
 }) => {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<'profiles' | 'posts' | 'requests'>('posts');
@@ -25,8 +28,47 @@ const Networking: React.FC<NetworkingProps> = ({
   const [singlePostVisible, setSinglePostVisible] = useState(false);
   const [selectedProfile, setSelectedProfile] = useState<NetworkingProfile | null>(null);
   const [profileViewVisible, setProfileViewVisible] = useState(false);
+  const [likedPosts, setLikedPosts] = useState<Set<number>>(new Set());
+  const [likingPosts, setLikingPosts] = useState<Set<number>>(new Set());
+  const [optimisticLikeCounts, setOptimisticLikeCounts] = useState<Map<number, number>>(new Map());
 
-  // Get connection requests from notifications
+  // Use the posts hook for networking posts
+  const {
+    posts: apiPosts,
+    loading: postsLoading,
+    error: postsError,
+    hasMore,
+    loadMore,
+    refresh,
+    searchPosts
+  } = usePosts({
+    initialPage: 1,
+    pageSize: 10,
+    autoLoad: true,
+    profileType: 'NETWORKING'
+  });
+
+  // Use the API request hook for like/unlike functionality
+  const { loading: apiLoading, send } = useApiRequest<ApiResponse>();
+
+  // console.log('apiPosts', apiPosts);
+
+  // Function to load user's liked posts (if API endpoint exists)
+  const loadUserLikedPosts = React.useCallback(async () => {
+    try {
+      // TODO: Replace with actual API endpoint if available
+      // const result = await send('get', '/user/liked-posts');
+      // if (result?.data) {
+      //   const likedPostIds = result.data.map((post: any) => post.id);
+      //   setLikedPosts(new Set(likedPostIds));
+      // }
+    } catch (error) {
+      console.error('Error loading liked posts:', error);
+    }
+  }, []);
+
+  // Get connection requests from notifications (placeholder for now)
+  // TODO: Replace with real API call when available
   const connectionRequests = MOCK_NOTIFICATIONS.filter(
     n => n.type === 'connection_request' && n.action === 'accept_decline'
   );
@@ -35,6 +77,11 @@ const Networking: React.FC<NetworkingProps> = ({
   React.useEffect(() => {
     setNetworkingProfiles(filteredProfiles);
   }, [filteredProfiles]);
+
+  // Load user's liked posts on component mount
+  React.useEffect(() => {
+    loadUserLikedPosts();
+  }, [loadUserLikedPosts]);
 
   const handleConnect = (profileId: number) => {
     Alert.alert(
@@ -88,12 +135,83 @@ const Networking: React.FC<NetworkingProps> = ({
     setProfileViewVisible(false);
   };
 
-  const toggleBookmark = (postId: number) => {
-    console.log('Toggle bookmark for post:', postId);
+  const toggleBookmark = async (postId: number) => {
+    // Prevent multiple rapid clicks
+    if (likingPosts.has(postId)) return;
+    
+    // Store the current like state before making changes
+    const wasLiked = likedPosts.has(postId);
+    
+    try {
+      setLikingPosts(prev => new Set(prev).add(postId));
+      
+      const result = await send('get', `/post/like/${postId}/toggle`);
+      console.log('Like toggle result:', result);
+      
+      // Update local state immediately for better UX
+      setLikedPosts(prev => {
+        const newSet = new Set(prev);
+        if (wasLiked) {
+          newSet.delete(postId);
+        } else {
+          newSet.add(postId);
+        }
+        return newSet;
+      });
+      
+      // Update optimistic like count immediately
+      setOptimisticLikeCounts(prev => {
+        const newMap = new Map(prev);
+        const currentPost = apiPosts.find(post => post.id === postId);
+        if (currentPost) {
+          const currentCount = currentPost.likeCount;
+          const newCount = wasLiked ? currentCount - 1 : currentCount + 1;
+          newMap.set(postId, newCount);
+        }
+        return newMap;
+      });
+      
+      // Update like count locally instead of refreshing all posts
+      // This provides instant feedback without full screen loading
+      if (result?.data?.likeCount !== undefined) {
+        // If the API returns the updated like count, use it
+        console.log('Updated like count from API:', result.data.likeCount);
+        setOptimisticLikeCounts(prev => {
+          const newMap = new Map(prev);
+          newMap.set(postId, result.data.likeCount);
+          return newMap;
+        });
+      }
+    } catch (error) {
+      console.error('Error toggling like:', error);
+      // Revert the local state change on error
+      setLikedPosts(prev => {
+        const newSet = new Set(prev);
+        if (wasLiked) {
+          newSet.add(postId);
+        } else {
+          newSet.delete(postId);
+        }
+        return newSet;
+      });
+      
+      // Revert optimistic like count on error
+      setOptimisticLikeCounts(prev => {
+        const newMap = new Map(prev);
+        newMap.delete(postId);
+        return newMap;
+      });
+    } finally {
+      setLikingPosts(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(postId);
+        return newSet;
+      });
+    }
   };
 
   const handleLike = (postId: number) => {
-    console.log('Like post:', postId);
+    toggleBookmark(postId);
   };
 
   const handleComment = (postId: number) => {
@@ -141,10 +259,24 @@ const Networking: React.FC<NetworkingProps> = ({
     );
   };
 
+  const renderCaptionWithHashtags = (caption: string) => {
+    const parts = caption.split(/(#\w+)/g);
+    return parts.map((part, index) => {
+      if (part.startsWith('#')) {
+        return (
+          <Text key={index} style={[tw.textBlue600, tw.fontBold, tw.textSm]}>
+            {part}
+          </Text>
+        );
+      }
+      return part;
+    });
+  };
+
   const renderConnectionRequest = ({ item }: { item: any }) => (
     <View style={[tw.bgWhite, tw.p4, tw.mB4, tw.roundedLg, tw.shadow, tw.mX4]}>
       <View style={[tw.flexRow, tw.itemsCenter, tw.mB3]}>
-        <Image
+        <ImageWithFallback
           source={{ uri: item.avatar }}
           style={[tw.w12, tw.h12, tw.roundedFull, tw.mR3]}
         />
@@ -183,35 +315,137 @@ const Networking: React.FC<NetworkingProps> = ({
     </View>
   );
 
-  const renderPostCard = (item: any) => {
-    const genericPost: GenericPost = {
-      id: item.id,
-      user: item.user,
-      timestamp: item.timestamp,
-      location: item.location,
-      caption: item.caption,
-      images: item.images,
-      likes: item.likes,
-      comments: item.comments,
-      shares: item.shares,
-      isBookmarked: item.isBookmarked,
-      tags: item.tags
-    };
+  const renderPostCard = ({ item }: { item: Post }) => (
+    <TouchableOpacity 
+      style={[tw.bgWhite, tw.roundedLg, tw.mB4, tw.shadow, tw.mX4]}
+      onPress={() => {
+        console.log('Networking post tapped:', item.id);
+        // Convert API Post to GenericPost format
+        const genericPost: GenericPost = {
+          id: item.id,
+          user: {
+            name: `${item.user.firstname} ${item.user.lastname}`,
+            avatar: "" // Not used anymore, we use initials instead
+          },
+          timestamp: getTimeAgo(item.createdAt),
+          location: "",
+          caption: item.content,
+          images: item.attachments.length > 0 ? item.attachments.map(att => att.mediaUrl) : [],
+          likes: item.likeCount,
+          comments: 0,
+          shares: 0,
+          isBookmarked: false,
+        };
+        setSelectedPost(genericPost);
+        setSinglePostVisible(true);
+      }}
+    >
+      {/* Header */}
+      <View style={[tw.flexRow, tw.itemsCenter, tw.justifyBetween, tw.p4, tw.pB2]}>
+        <View style={[tw.flexRow, tw.itemsCenter]}>
+          <View style={[tw.w10, tw.h10, tw.roundedFull, tw.mR3, tw.bgGray300, tw.justifyCenter, tw.itemsCenter]}>
+            <Text style={[tw.textGray700, tw.fontBold, tw.textSm]}>
+              {getUserInitials(item.user.firstname, item.user.lastname)}
+            </Text>
+          </View>
+          <View>
+            <Text style={[tw.textGray900, tw.fontMedium, tw.textSm]}>
+              {item.user.firstname} {item.user.lastname}
+            </Text>
+            <Text style={[tw.textGray500, tw.textXs]}>{getTimeAgo(item.createdAt)}</Text>
+          </View>
+        </View>
+        <TouchableOpacity 
+          onPress={() => toggleBookmark(item.id)}
+          disabled={likingPosts.has(item.id)}
+        >
+          {likingPosts.has(item.id) ? (
+            <ActivityIndicator size="small" color="#6b7280" />
+          ) : (
+            <Ionicons 
+              name={likedPosts.has(item.id) ? "heart" : "heart-outline"} 
+              size={20} 
+              color={likedPosts.has(item.id) ? "#ef4444" : "#6b7280"} 
+            />
+          )}
+        </TouchableOpacity>
+      </View>
 
-    return (
-      <NetworkingPostCard 
-        post={item} 
-        onToggleBookmark={toggleBookmark}
-        onPress={() => {
-          console.log('Networking post tapped:', item.id);
-          console.log('Setting networking selected post:', genericPost);
-          setSelectedPost(genericPost);
-          setSinglePostVisible(true);
-          console.log('Networking single post visible set to true');
-        }}
-      />
-    );
-  };
+      {/* Content */}
+      <View style={[tw.pX4, tw.pB3]}>
+        <Text style={[tw.textGray800, tw.textSm]}>
+          {renderCaptionWithHashtags(item.content)}
+        </Text>
+      </View>
+
+
+      {/* Media */}
+      {item.attachments.length > 0 && (
+        <View style={[tw.pX4, tw.pB2]}>
+          {item.attachments.length === 1 ? (
+            <ImageWithFallback
+              source={{ uri: item.attachments[0].mediaUrl }}
+              style={[tw.wFull, { height: 240 }, tw.roundedLg]}
+              resizeMode="cover"
+            />
+          ) : item.attachments.length === 2 ? (
+            <View style={[tw.flexRow, { gap: 4 }]}>
+              <ImageWithFallback
+                source={{ uri: item.attachments[0].mediaUrl }}
+                style={[tw.flex1, { height: 200 }, tw.roundedLg]}
+                resizeMode="cover"
+              />
+              <ImageWithFallback
+                source={{ uri: item.attachments[1].mediaUrl }}
+                style={[tw.flex1, { height: 200 }, tw.roundedLg]}
+                resizeMode="cover"
+              />
+            </View>
+          ) : (
+            <View style={[tw.flexRow, { gap: 4 }]}>
+              <ImageWithFallback
+                source={{ uri: item.attachments[0].mediaUrl }}
+                style={[tw.flex1, { height: 200 }, tw.roundedLg]}
+                resizeMode="cover"
+              />
+              <View style={[tw.flex1, { gap: 4 }]}>
+                <ImageWithFallback
+                  source={{ uri: item.attachments[1].mediaUrl }}
+                  style={[tw.wFull, { height: 98 }, tw.roundedLg]}
+                  resizeMode="cover"
+                />
+                {item.attachments.length > 3 && (
+                  <View style={[tw.wFull, { height: 98 }, tw.roundedLg, tw.bgGray200, tw.justifyCenter, tw.itemsCenter]}>
+                    <Text style={[tw.textGray600, tw.fontBold]}>+{item.attachments.length - 3}</Text>
+                  </View>
+                )}
+              </View>
+            </View>
+          )}
+        </View>
+      )}
+
+      {/* Engagement */}
+      <View style={[tw.flexRow, tw.itemsCenter, tw.justifyBetween, tw.pX4, tw.pB4]}>
+        <View style={[tw.flexRow, tw.itemsCenter]}>
+          <TouchableOpacity style={[tw.flexRow, tw.itemsCenter, tw.mR6]} onPress={() => handleLike(item.id)}>
+            <Ionicons name="heart-outline" size={18} color="#fb6c31" />
+            <Text style={[tw.textGray600, tw.textSm, tw.mL1]}>
+              {optimisticLikeCounts.get(item.id) ?? item.likeCount}
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={[tw.flexRow, tw.itemsCenter, tw.mR6]} onPress={() => handleComment(item.id)}>
+            <Ionicons name="chatbubble-outline" size={18} color="#6b7280" />
+            <Text style={[tw.textGray600, tw.textSm, tw.mL1]}>0</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={[tw.flexRow, tw.itemsCenter]} onPress={() => handleShare(item.id)}>
+            <Ionicons name="arrow-redo-outline" size={18} color="#6b7280" />
+            <Text style={[tw.textGray600, tw.textSm, tw.mL1]}>0</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </TouchableOpacity>
+  );
 
   return (
     <View style={[tw.flex1, tw.bgGray100]}>
@@ -288,28 +522,100 @@ const Networking: React.FC<NetworkingProps> = ({
 
       {/* Content */}
       {activeTab === 'posts' ? (
-        <FlatList
-          data={filteredPosts}
-          renderItem={({ item }) => renderPostCard(item)}
-          keyExtractor={(item) => item.id.toString()}
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={[{ paddingBottom: 120 }]}
-        />
+        postsLoading && apiPosts.length === 0 ? (
+          <View style={[tw.flex1, tw.justifyCenter, tw.itemsCenter]}>
+            <Text style={[tw.textGray500, tw.textLg]}>Loading posts...</Text>
+          </View>
+        ) : postsError ? (
+          <View style={[tw.flex1, tw.justifyCenter, tw.itemsCenter, tw.p8]}>
+            <Ionicons name="cloud-offline-outline" size={64} color="#9ca3af" />
+            <Text style={[tw.textGray500, tw.textLg, tw.fontMedium, tw.mT4, tw.textCenter]}>
+              Unable to load posts
+            </Text>
+            <Text style={[tw.textGray400, tw.textBase, tw.mT2, tw.textCenter]}>
+              Please check your connection and try again
+            </Text>
+            <TouchableOpacity
+              style={[tw.bgPink700, tw.roundedFull, tw.pX6, tw.pY3, tw.mT6]}
+              onPress={refresh}
+            >
+              <Text style={[tw.textWhite, tw.fontBold]}>Retry</Text>
+            </TouchableOpacity>
+          </View>
+        ) : apiPosts.length === 0 ? (
+          <View style={[tw.flex1, tw.justifyCenter, tw.itemsCenter, tw.p8]}>
+            <Ionicons name="document-text-outline" size={64} color="#9ca3af" />
+            <Text style={[tw.textGray500, tw.textLg, tw.fontMedium, tw.mT4, tw.textCenter]}>
+              No networking posts yet
+            </Text>
+            <Text style={[tw.textGray400, tw.textBase, tw.mT2, tw.textCenter]}>
+              Be the first to share something with your network!
+            </Text>
+            <TouchableOpacity
+              style={[tw.bgPink700, tw.roundedFull, tw.pX6, tw.pY3, tw.mT6]}
+              onPress={() => router.push('/posts/create?profileType=networking')}
+            >
+              <Text style={[tw.textWhite, tw.fontBold]}>Create Post</Text>
+            </TouchableOpacity>
+          </View>
+        ) : (
+          <FlatList
+            data={apiPosts}
+            renderItem={renderPostCard}
+            keyExtractor={(item) => item.id.toString()}
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={[{ paddingBottom: 120 }]}
+            onEndReached={() => {
+              if (hasMore && !postsLoading) {
+                loadMore();
+              }
+            }}
+            onEndReachedThreshold={0.1}
+            ListFooterComponent={() => 
+              hasMore && postsLoading ? (
+                <View style={[tw.pY4, tw.itemsCenter]}>
+                  <ActivityIndicator size="small" color="#fb6c31" />
+                  <Text style={[tw.textGray500, tw.textSm, tw.mT2]}>Loading more posts...</Text>
+                </View>
+              ) : null
+            }
+            refreshControl={
+              <RefreshControl
+                refreshing={postsLoading}
+                onRefresh={refresh}
+                colors={["#fb6c31"]}
+                tintColor="#fb6c31"
+              />
+            }
+          />
+        )
       ) : activeTab === 'profiles' ? (
-        <FlatList
-          data={networkingProfiles}
-          renderItem={({ item }) => (
-            <NetworkingCard
-              profile={item}
-              onConnect={handleConnect}
-              onMessage={handleMessage}
-              onViewProfile={handleViewProfile}
-            />
-          )}
-          keyExtractor={(item) => item.id.toString()}
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={[{ paddingBottom: 120 }]}
-        />
+        networkingProfiles.length === 0 ? (
+          <View style={[tw.flex1, tw.justifyCenter, tw.itemsCenter, tw.p8]}>
+            <Ionicons name="people-outline" size={64} color="#9ca3af" />
+            <Text style={[tw.textGray500, tw.textLg, tw.fontMedium, tw.mT4, tw.textCenter]}>
+              No networking profiles available
+            </Text>
+            <Text style={[tw.textGray400, tw.textBase, tw.mT2, tw.textCenter]}>
+              Check back later for new connections
+            </Text>
+          </View>
+        ) : (
+          <FlatList
+            data={networkingProfiles}
+            renderItem={({ item }) => (
+              <NetworkingCard
+                profile={item}
+                onConnect={handleConnect}
+                onMessage={handleMessage}
+                onViewProfile={handleViewProfile}
+              />
+            )}
+            keyExtractor={(item) => item.id.toString()}
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={[{ paddingBottom: 120 }]}
+          />
+        )
       ) : (
         <FlatList
           data={connectionRequests}

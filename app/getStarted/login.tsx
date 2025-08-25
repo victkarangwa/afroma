@@ -16,6 +16,27 @@ import moment from "moment";
 import { saveAuthData } from "@/utils/auth";
 import { onGoogleButtonPress, onFacebookButtonPress } from "@/components/SocialLogin";
 
+// Map API profileType to local value used in app
+const mapApiProfileTypeToLocal = (apiType?: string): 'travel' | 'networking' | 'dating' | null => {
+  if (!apiType) return null;
+  const upper = apiType.toUpperCase();
+  if (upper === 'TRAVEL') return 'travel';
+  if (upper === 'NETWORKING') return 'networking';
+  if (upper === 'RELATIONSHIP' || upper === 'DATING') return 'dating';
+  return null;
+};
+
+// Choose a preferred type from an array of API types
+const pickPreferredProfileType = (apiTypes?: string[] | null): 'travel' | 'networking' | 'dating' | null => {
+  if (!apiTypes || apiTypes.length === 0) return null;
+  // Preference order: RELATIONSHIP/DATING > NETWORKING > TRAVEL
+  const upper = apiTypes.map(t => (t || '').toUpperCase());
+  if (upper.includes('RELATIONSHIP') || upper.includes('DATING')) return 'dating';
+  if (upper.includes('NETWORKING')) return 'networking';
+  if (upper.includes('TRAVEL')) return 'travel';
+  return mapApiProfileTypeToLocal(apiTypes[0]);
+};
+
 type FormData = {
   username: string;
   password: string;
@@ -95,8 +116,32 @@ const LoginScreen: React.FC = () => {
         await saveAuthData(result.token, result.expiresAt);
         
         console.log("Login successful, token stored:", result.token);
+
+        // Fetch user's profile to determine profileType and persist it
+        try {
+          const me: any = await send("get", "/users/me");
+          if (me) {
+            const apiProfileType: string | undefined = me.profileType;
+            const apiProfileTypes: string[] | undefined = me.profileTypes;
+
+            // Determine the profile type to use
+            let localProfileType = mapApiProfileTypeToLocal(apiProfileType);
+            if (!localProfileType) {
+              localProfileType = pickPreferredProfileType(apiProfileTypes);
+            }
+
+            if (localProfileType) {
+              await LocalStorage.setItem(localStore.profileType, localProfileType);
+              console.log("Saved profileType to storage:", localProfileType);
+            } else {
+              console.log("No profileType found on user; leaving unset");
+            }
+          }
+        } catch (profileErr) {
+          console.warn("Failed to fetch /users/me after login:", profileErr);
+        }
         
-        // Navigate to home screen directly (skip OTP for now)
+        // Navigate to home screen
         router.replace("/(tabs)");
       } else if (result && result.otpToken) {
         // If OTP is required, store the OTP token and navigate to OTP screen
@@ -168,8 +213,32 @@ const LoginScreen: React.FC = () => {
         await saveAuthData(result.token, result.expiresAt);
         
         console.log(`${provider} login successful, token stored:`, result.token);
+
+        // Fetch user's profile to determine profileType and persist it
+        try {
+          const me: any = await send("get", "/users/me");
+          if (me) {
+            const apiProfileType: string | undefined = me.profileType;
+            const apiProfileTypes: string[] | undefined = me.profileTypes;
+
+            // Determine the profile type to use
+            let localProfileType = mapApiProfileTypeToLocal(apiProfileType);
+            if (!localProfileType) {
+              localProfileType = pickPreferredProfileType(apiProfileTypes);
+            }
+
+            if (localProfileType) {
+              await LocalStorage.setItem(localStore.profileType, localProfileType);
+              console.log("Saved profileType to storage (social):", localProfileType);
+            } else {
+              console.log("No profileType found on user (social); leaving unset");
+            }
+          }
+        } catch (profileErr) {
+          console.warn(`Failed to fetch /users/me after ${provider} login:`, profileErr);
+        }
         
-        // Navigate to home screen directly (skip OTP for now)
+        // Navigate to home screen
         router.replace("/(tabs)");
       } else if (result && result.otpToken) {
         // If OTP is required, store the OTP token and navigate to OTP screen

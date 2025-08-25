@@ -29,6 +29,12 @@ interface SwiperComponentProps {
   relationshipStatus?: string;
   interests?: string[];
   familyPlan?: string;
+  matchingResult?: {
+    matchingRate: number;
+    matchedQuestions: any[];
+  };
+  // Additional properties that the Swiper component expects
+  [key: string]: any;
 }
 
 const SwiperComponent = ({
@@ -60,12 +66,11 @@ const SwiperComponent = ({
       setRating(null);
       setUserRate(null);
       const swipedId = data[id]?.id;
-      const result = await send("post", "/bonded-user-service/matches/swipes", {
+      const result = await send("post", "/matches/swipes", {
         swipedId,
         swipeType,
       });
 
-      // console.log("====REQ====>", swipedId, swipeType);
       if (result?.paymentRequired) {
         router.push({
           pathname: "/payment",
@@ -99,7 +104,12 @@ const SwiperComponent = ({
   // };
 
   const onMatchClick = (id: number) => {
-    setSelectedMatch(data[id]);
+    // Create a mock ApiResponse object for compatibility
+    const mockApiResponse: ApiResponse = {
+      data: data[id],
+      // Add other required properties as needed
+    };
+    setSelectedMatch(mockApiResponse);
     setShowModal(true);
   }
 
@@ -190,7 +200,7 @@ const SwiperComponent = ({
                 onPress={() => onMatchClick(currentIndex)}
               >
                 <CircularProgress
-                  value={card?.matchingResult?.matchingRate}
+                  value={card?.matchingResult?.matchingRate || 0}
                   radius={20}
                   activeStrokeWidth={5}
                   inActiveStrokeWidth={5}
@@ -299,7 +309,7 @@ const styles = StyleSheet.create({
     flex: 1,
     ...tw.flexCol,
     ...tw.roundedLg,
-    ...tw.bgGray200,
+    ...tw.bgRed400,
     height: 500,
     width: 300,
     marginTop: -300,

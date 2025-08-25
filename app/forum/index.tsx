@@ -23,7 +23,7 @@ import {
 import { db } from "@/configs/firebaseConfig";
 import moment from "moment";
 import { convertSecondsToTime, convertToMilliseconds } from "@/utils";
-import Placeholder from "@/components/Skeleton";
+import { PostSkeleton } from "@/components/Skeleton";
 import LocalStorage from "@/utils/storage";
 import config from "@/utils/localValues";
 
@@ -78,7 +78,7 @@ const ForumScreen: React.FC = () => {
     fetchThreads();
   }, [db]);
 
-  const updatePostLikes = async (postId, incrementValue = 1) => {
+  const updatePostLikes = async (postId: string, incrementValue = 1) => {
     try {
       const postRef = doc(db, "posts", postId);
 
@@ -302,7 +302,7 @@ const ForumScreen: React.FC = () => {
           ) : (
             <View>
               {[1, 2, 3].map((sk, index) => (
-                <Placeholder key={index} />
+                <PostSkeleton key={index} />
               ))}
             </View>
           )}

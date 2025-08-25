@@ -12,6 +12,7 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { tw } from "react-native-tailwindcss";
+import { getUserInitials } from "@/utils/userInitials";
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get("window");
 
@@ -20,7 +21,7 @@ export interface GenericPost {
   id: number;
   user: {
     name: string;
-    avatar: string;
+    avatar?: string; // Optional since we use initials instead
     headline?: string;
   };
   timestamp: string;
@@ -187,10 +188,11 @@ const SinglePostView: React.FC<SinglePostViewProps> = ({
           <View style={[tw.bgWhite, tw.flex1, tw.p4]}>
             {/* User Info */}
             <View style={[tw.flexRow, tw.itemsCenter, tw.mB3]}>
-              <Image
-                source={{ uri: post.user.avatar }}
-                style={[tw.w12, tw.h12, tw.roundedFull, tw.mR3]}
-              />
+              <View style={[tw.w12, tw.h12, tw.roundedFull, tw.mR3, tw.bgGray300, tw.justifyCenter, tw.itemsCenter]}>
+                <Text style={[tw.textGray700, tw.fontBold, tw.textSm]}>
+                  {getUserInitials(post.user.name)}
+                </Text>
+              </View>
               <View style={[tw.flex1]}>
                 <Text style={[tw.textGray900, tw.fontBold, tw.textBase]}>{post.user.name}</Text>
                 {post.user.headline && (

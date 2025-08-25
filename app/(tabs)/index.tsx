@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { View, Text, TextInput, ScrollView, Image, TouchableOpacity, FlatList, Dimensions, PanResponder, Animated, Modal, RefreshControl } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
@@ -8,218 +8,25 @@ import LocalStorage from "@/utils/storage";
 import localStore from "@/utils/localValues";
 import Networking from "@/components/Networking";
 import SinglePostView, { GenericPost } from "@/components/SinglePostView";
-import { MOCK_NETWORKING_PROFILES, MOCK_NETWORKING_POSTS } from "@/components/NetworkingCard";
+import ImageWithFallback from "@/components/ImageWithFallback";
+
 import NotificationBadge from "@/components/NotificationBadge";
 import { MOCK_NOTIFICATIONS } from "@/components/NotificationCenter";
 import { usePosts } from "@/hooks/usePosts";
-import { Post } from "@/types";
+import { useDatingMatches } from "@/hooks/useDatingMatches";
+import { ActivityIndicator } from "react-native";
+import { Post, DatingMatch, ApiResponse } from "@/types";
 import { getTimeAgo } from "@/utils/timeAgo";
 import { getUserInitials } from "@/utils/userInitials";
 import LoadingIndicator from "@/components/LoadingIndicator";
+import PostSkeleton from "@/components/Skeleton/PostSkeleton";
+import SearchResultSkeleton from "@/components/Skeleton/SearchResultSkeleton";
+import DatingCardSkeleton from "@/components/Skeleton/DatingCardSkeleton";
+import DatingMatchSkeleton from "@/components/Skeleton/DatingMatchSkeleton";
+import DatingCard from "@/components/DatingCard";
+import useApiRequest from "@/hooks/useApiRequest";
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get("window");
-
-// Mock data for dating profiles
-const MOCK_DATING_PROFILES = [
-  {
-    id: 1,
-    name: "Emma Gasana",
-    age: 28,
-    bio: "Adventure seeker, coffee lover, and travel enthusiast. Looking for someone to explore the world with!",
-    images: [
-      "https://randomuser.me/api/portraits/women/6.jpg",
-      "https://randomuser.me/api/portraits/women/7.jpg",
-      "https://randomuser.me/api/portraits/women/8.jpg"
-    ],
-    distance: "2 miles away",
-    interests: ["Travel", "Photography", "Hiking", "Coffee"],
-    verified: true,
-  },
-  {
-    id: 2,
-    name: "Marcus Keshua",
-    age: 32,
-    bio: "Fitness enthusiast and chef. Love cooking new recipes and staying active. Let's grab a healthy meal together!",
-    images: [
-      "https://randomuser.me/api/portraits/men/7.jpg",
-      "https://randomuser.me/api/portraits/men/8.jpg",
-      "https://randomuser.me/api/portraits/men/9.jpg"
-    ],
-    distance: "5 miles away",
-    interests: ["Fitness", "Cooking", "Music", "Reading"],
-    verified: false,
-  },
-  {
-    id: 3,
-    name: "Sofia Jayjay",
-    age: 26,
-    bio: "Artist and yoga instructor. Finding beauty in everyday moments. Love deep conversations and weekend getaways.",
-    images: [
-      "https://randomuser.me/api/portraits/women/9.jpg",
-      "https://randomuser.me/api/portraits/women/10.jpg",
-      "https://randomuser.me/api/portraits/women/11.jpg"
-    ],
-    distance: "1 mile away",
-    interests: ["Art", "Yoga", "Meditation", "Nature"],
-    verified: true,
-  },
-  {
-    id: 4,
-    name: "James Mthongozi",
-    age: 30,
-    bio: "Tech entrepreneur with a passion for innovation. When I'm not coding, you'll find me rock climbing or playing guitar.",
-    images: [
-      "https://randomuser.me/api/portraits/men/10.jpg",
-      "https://randomuser.me/api/portraits/men/11.jpg",
-      "https://randomuser.me/api/portraits/men/12.jpg"
-    ],
-    distance: "3 miles away",
-    interests: ["Technology", "Rock Climbing", "Music", "Startups"],
-    verified: true,
-  },
-];
-
-// Dating Card Component
-const DatingCard = ({ profile, onSwipe, isTopCard }: { 
-  profile: typeof MOCK_DATING_PROFILES[0], 
-  onSwipe: (direction: 'left' | 'right' | 'up') => void,
-  isTopCard: boolean 
-}) => {
-  const pan = new Animated.ValueXY();
-  const scale = new Animated.Value(1);
-  const rotate = new Animated.Value(0);
-
-  const panResponder = PanResponder.create({
-    onMoveShouldSetPanResponder: () => true,
-    onPanResponderGrant: () => {
-      pan.setOffset({
-        x: (pan.x as any)._value,
-        y: (pan.y as any)._value,
-      });
-    },
-    onPanResponderMove: (_, gestureState) => {
-      const rotation = gestureState.dx / screenWidth * 30;
-      rotate.setValue(rotation);
-      Animated.event([null, { dx: pan.x, dy: pan.y }], {
-        useNativeDriver: false,
-      })(_, gestureState);
-    },
-    onPanResponderRelease: (_, gestureState) => {
-      pan.flattenOffset();
-      const { dx, dy } = gestureState;
-      const absDx = Math.abs(dx);
-      const absDy = Math.abs(dy);
-      if (absDy > 100 && dy < 0) {
-        onSwipe('up');
-        animateOffScreen(0, -screenHeight);
-      } else if (absDx > 120) {
-        if (dx > 0) {
-          onSwipe('right');
-          animateOffScreen(screenWidth, 0);
-        } else {
-          onSwipe('left');
-          animateOffScreen(-screenWidth, 0);
-        }
-      } else {
-        Animated.parallel([
-          Animated.spring(pan, {
-            toValue: { x: 0, y: 0 },
-            useNativeDriver: false,
-          }),
-          Animated.spring(rotate, {
-            toValue: 0,
-            useNativeDriver: false,
-          }),
-        ]).start();
-      }
-    },
-  });
-
-  const animateOffScreen = (x: number, y: number) => {
-    Animated.parallel([
-      Animated.timing(pan, {
-        toValue: { x, y },
-        duration: 300,
-        useNativeDriver: false,
-      }),
-      Animated.timing(scale, {
-        toValue: 0,
-        duration: 300,
-        useNativeDriver: false,
-      }),
-    ]).start();
-  };
-
-  // Use the first image only for consistency with post card
-  const mainImage = profile.images[0];
-
-  const rotateInterpolation = rotate.interpolate({
-    inputRange: [-30, 0, 30],
-    outputRange: ['-30deg', '0deg', '30deg'],
-  });
-
-  return (
-    <Animated.View
-      style={[
-        tw.bgWhite,
-        tw.roundedLg,
-        tw.mB4,
-        tw.shadow,
-        tw.mX4,
-        { position: 'absolute', width: screenWidth - 32, height: screenHeight * 0.48, zIndex: isTopCard ? 2 : 1,
-          transform: [
-            { translateX: pan.x },
-            { translateY: pan.y },
-            { rotate: rotateInterpolation },
-            { scale: scale },
-          ],
-          opacity: !isTopCard ? 0.8 : 1,
-        },
-      ]}
-      {...(isTopCard ? panResponder.panHandlers : {})}
-    >
-      {/* Header */}
-      <View style={[tw.flexRow, tw.itemsCenter, tw.justifyBetween, tw.p4, tw.pB2]}>
-        <View style={[tw.flexRow, tw.itemsCenter]}>
-          <Image
-            source={{ uri: mainImage }}
-            style={[tw.w10, tw.h10, tw.roundedFull, tw.mR3]}
-          />
-          <View>
-            <Text style={[tw.textGray900, tw.fontBold, tw.textBase]}>{profile.name}, {profile.age}</Text>
-            <Text style={[tw.textGray500, tw.textSm]}>{profile.distance}</Text>
-          </View>
-        </View>
-        {profile.verified && (
-          <View style={[tw.bgGray900, tw.roundedFull, tw.p1]}>
-            <Ionicons name="checkmark" size={12} color="white" />
-          </View>
-        )}
-      </View>
-
-      {/* Main Image */}
-      <View style={[tw.pX4, tw.pB2]}>
-        <Image
-          source={{ uri: mainImage }}
-          style={[tw.wFull, { height: 240 }, tw.roundedLg]}
-          resizeMode="cover"
-        />
-      </View>
-
-      {/* Profile Info */}
-      <View style={[tw.pX4, tw.pB4]}> 
-        <Text style={[tw.textGray800, tw.mB2]} numberOfLines={2}>{profile.bio}</Text>
-        <View style={[tw.flexRow, tw.flexWrap, tw.mB2]}>
-          {profile.interests.slice(0, 3).map((interest, index) => (
-            <View key={index} style={[tw.bgGray200, tw.roundedFull, tw.pX3, tw.pY1, tw.mR2, tw.mB1]}>
-              <Text style={[tw.textGray700, tw.textXs]}>{interest}</Text>
-            </View>
-          ))}
-        </View>
-      </View>
-    </Animated.View>
-  );
-};
 
 
 
@@ -227,9 +34,10 @@ const HomeScreen: React.FC = () => {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState(0);
   const [searchQuery, setSearchQuery] = useState("");
-  const [datingProfiles, setDatingProfiles] = useState(MOCK_DATING_PROFILES);
+  const [datingProfiles, setDatingProfiles] = useState<DatingMatch[]>([]);
   const [currentProfileIndex, setCurrentProfileIndex] = useState(0);
   const [showDating, setShowDating] = useState(false);
+
   const [profileType, setProfileType] = useState<'travel' | 'networking' | 'dating' | null>(null);
   const [imageModalVisible, setImageModalVisible] = useState(false);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
@@ -241,6 +49,11 @@ const HomeScreen: React.FC = () => {
     location: string;
   } | null>(null);
   const [showSearchResults, setShowSearchResults] = useState(false);
+  const [likedPosts, setLikedPosts] = useState<Set<number>>(new Set());
+  const [likingPosts, setLikingPosts] = useState<Set<number>>(new Set());
+  const [optimisticLikeCounts, setOptimisticLikeCounts] = useState<Map<number, number>>(new Map());
+
+  const { loading, send } = useApiRequest<ApiResponse>();
 
   // Use the posts hook for real API data
   const {
@@ -253,10 +66,50 @@ const HomeScreen: React.FC = () => {
     searchPosts
   } = usePosts({
     initialPage: 1,
-    pageSize: 20,
+    pageSize: 10,
     autoLoad: true,
-    // profileType: profileType ? profileType.toUpperCase() : undefined
+    profileType: profileType ? profileType.toUpperCase() : undefined
   });
+
+  // Use the posts hook for networking posts specifically
+  const {
+    posts: networkingPosts,
+    loading: networkingPostsLoading,
+    error: networkingPostsError,
+    hasMore: networkingHasMore,
+    loadMore: networkingLoadMore,
+    refresh: networkingRefresh,
+    searchPosts: networkingSearchPosts
+  } = usePosts({
+    initialPage: 1,
+    pageSize: 10,
+    autoLoad: true,
+    profileType: 'NETWORKING'
+  });
+
+  // Use the dating matches hook for API data
+  const {
+    matches: apiDatingMatches,
+    loading: datingLoading,
+    error: datingError,
+    refresh: refreshDating
+  } = useDatingMatches({
+    autoLoad: true
+  });
+
+  // Function to load user's liked posts (if API endpoint exists)
+  const loadUserLikedPosts = React.useCallback(async () => {
+    try {
+      // TODO: Replace with actual API endpoint if available
+      // const result = await send('get', '/user/liked-posts');
+      // if (result?.data) {
+      //   const likedPostIds = result.data.map((post: any) => post.id);
+      //   setLikedPosts(new Set(likedPostIds));
+      // }
+    } catch (error) {
+      console.error('Error loading liked posts:', error);
+    }
+  }, []);
 
   // On mount and on focus, read profileType from local storage
   useFocusEffect(
@@ -267,6 +120,11 @@ const HomeScreen: React.FC = () => {
         if (storedType) setProfileType(storedType);
         setShowDating(storedType === 'dating');
         
+        // Update dating profiles with API data
+        if (storedType === 'dating' && apiDatingMatches.length > 0) {
+          setDatingProfiles(apiDatingMatches);
+        }
+        
         // Check for new post data from local storage
         const newPost = await LocalStorage.getItem('newPost');
         console.log('Checking for new post data:', newPost); // Debug log
@@ -275,8 +133,15 @@ const HomeScreen: React.FC = () => {
           addNewPost(newPost as { images: string[]; caption: string; location: string });
           await LocalStorage.removeItem('newPost'); // Clear the data
         }
+        
+        // TODO: Load user's liked posts if there's an API endpoint
+        // This would help initialize the likedPosts state
+        // Example: GET /user/liked-posts to get list of post IDs user has liked
+        
+        // Load user's liked posts
+        loadUserLikedPosts();
       })();
-    }, [])
+    }, [apiDatingMatches, loadUserLikedPosts])
   );
 
   const formatNumber = (num: number) => {
@@ -286,25 +151,134 @@ const HomeScreen: React.FC = () => {
     return num.toString();
   };
 
-  const toggleBookmark = (postId: number) => {
-    // Note: This function now only works with local state since API posts don't have isBookmarked property
-    // In a real implementation, you would need to make an API call to update the bookmark status
-    console.log('Toggle bookmark for post:', postId);
+  const toggleBookmark = async (postId: number) => {
+    // Prevent multiple rapid clicks
+    if (likingPosts.has(postId)) return;
+    
+    // Store the current like state before making changes
+    const wasLiked = likedPosts.has(postId);
+    
+    try {
+      setLikingPosts(prev => new Set(prev).add(postId));
+      
+      const result = await send('get', `/post/like/${postId}/toggle`);
+      console.log('Like toggle result:', result);
+      
+      // Update local state immediately for better UX
+      setLikedPosts(prev => {
+        const newSet = new Set(prev);
+        if (wasLiked) {
+          newSet.delete(postId);
+        } else {
+          newSet.add(postId);
+        }
+        return newSet;
+      });
+      
+      // Update optimistic like count immediately
+      setOptimisticLikeCounts(prev => {
+        const newMap = new Map(prev);
+        const currentPost = apiPosts.find(post => post.id === postId);
+        if (currentPost) {
+          const currentCount = currentPost.likeCount;
+          const newCount = wasLiked ? currentCount - 1 : currentCount + 1;
+          newMap.set(postId, newCount);
+        }
+        return newMap;
+      });
+      
+      // Update like count locally instead of refreshing all posts
+      // This provides instant feedback without full screen loading
+      if (result?.data?.likeCount !== undefined) {
+        // If the API returns the updated like count, use it
+        console.log('Updated like count from API:', result.data.likeCount);
+        setOptimisticLikeCounts(prev => {
+          const newMap = new Map(prev);
+          newMap.set(postId, result.data.likeCount);
+          return newMap;
+        });
+      }
+    } catch (error) {
+      console.error('Error toggling like:', error);
+      // Revert the local state change on error
+      setLikedPosts(prev => {
+        const newSet = new Set(prev);
+        if (wasLiked) {
+          newSet.add(postId);
+        } else {
+          newSet.delete(postId);
+        }
+        return newSet;
+      });
+      
+      // Revert optimistic like count on error
+      setOptimisticLikeCounts(prev => {
+        const newMap = new Map(prev);
+        newMap.delete(postId);
+        return newMap;
+      });
+    } finally {
+      setLikingPosts(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(postId);
+        return newSet;
+      });
+    }
   };
 
-  const handleSwipe = (direction: 'left' | 'right' | 'up') => {
-    console.log(`Swiped ${direction} on ${datingProfiles[currentProfileIndex]?.name}`);
+  const handleSwipe = async (direction: 'left' | 'right' | 'up') => {
+    const currentProfile = datingProfiles[currentProfileIndex];
+    if (!currentProfile) return;
     
-    // Move to next profile
-    setTimeout(() => {
-      setCurrentProfileIndex(prev => prev + 1);
-    }, 300);
+    console.log(`Swiped ${direction} on ${currentProfile?.firstName} ${currentProfile?.middleName}`);
+    
+    // Move to next profile immediately for better UX (optimistic update)
+    const nextIndex = currentProfileIndex + 1;
+    setCurrentProfileIndex(nextIndex);
+    
+    try {
+      // Map direction to swipe type
+      const swipeType = direction === 'left' ? 'dislike' : direction === 'right' ? 'like' : 'bookmark';
+      
+      // Make API call for swipe in the background
+      const result = await send('post', '/matches/swipes', {
+          swipedId: currentProfile.id,
+          swipeType: swipeType,
+      });
+
+      console.log("====RESULT====>", result);
+      
+      // Handle match or payment requirements if needed
+      if (result?.paymentRequired) {
+        // Revert the profile index if payment is required
+        setCurrentProfileIndex(currentProfileIndex);
+        router.push({
+          pathname: "/payment",
+          params: { user: JSON.stringify(currentProfile) },
+        });
+        return;
+      }
+
+      if (result?.matched) {
+        router.push({
+          pathname: "/match",
+          params: { user: JSON.stringify(currentProfile) },
+        });
+      }
+    } catch (error) {
+      console.error('Error making swipe:', error);
+      // Revert the profile index on error
+      setCurrentProfileIndex(currentProfileIndex);
+    }
   };
 
   const handleActionButton = (action: 'dislike' | 'like' | 'bookmark') => {
     const direction = action === 'dislike' ? 'left' : action === 'like' ? 'right' : 'up';
+    // Call handleSwipe immediately for instant feedback
     handleSwipe(direction);
   };
+
+
 
   const renderCaptionWithHashtags = (caption: string) => {
     const parts = caption.split(/(#\w+)/g);
@@ -338,7 +312,7 @@ const HomeScreen: React.FC = () => {
           id: item.id,
           user: {
             name: `${item.user.firstname} ${item.user.lastname}`,
-            avatar: "https://randomuser.me/api/portraits/men/1.jpg" // Default avatar since API doesn't provide one
+            avatar: "" // Not used anymore, we use initials instead
           },
           timestamp: getTimeAgo(item.createdAt),
           location: "", // API doesn't provide location
@@ -349,13 +323,8 @@ const HomeScreen: React.FC = () => {
           shares: 0, // API doesn't provide share count
           isBookmarked: false, // API doesn't provide bookmark status
         };
-        console.log('Setting selected post:', genericPost);
-        console.log('Post images:', genericPost.images);
-        console.log('Post user:', genericPost.user);
         setSelectedPost(genericPost);
         setSinglePostVisible(true);
-        console.log('Single post visible set to true');
-        console.log('State after setting:', { selectedPost: genericPost, singlePostVisible: true });
       }}
     >
       {/* Header */}
@@ -399,7 +368,7 @@ const HomeScreen: React.FC = () => {
                 setImageModalVisible(true);
               }}
             >
-              <Image
+              <ImageWithFallback
                 source={{ uri: item.attachments[0].mediaUrl }}
                 style={[tw.wFull, { height: 240 }, tw.roundedLg]}
                 resizeMode="cover"
@@ -417,7 +386,7 @@ const HomeScreen: React.FC = () => {
                     setImageModalVisible(true);
                   }}
                 >
-                  <Image
+                  <ImageWithFallback
                     source={{ uri: attachment.mediaUrl }}
                     style={[{ width: '100%', height: 180, borderRadius: 12 }]}
                     resizeMode="cover"
@@ -435,7 +404,7 @@ const HomeScreen: React.FC = () => {
                   setImageModalVisible(true);
                 }}
               >
-                <Image
+                <ImageWithFallback
                   source={{ uri: item.attachments[0].mediaUrl }}
                   style={[{ width: '100%', height: '100%', borderRadius: 12, flex: 1 }]} 
                   resizeMode="cover"
@@ -451,7 +420,7 @@ const HomeScreen: React.FC = () => {
                       setImageModalVisible(true);
                     }}
                   >
-                    <Image
+                    <ImageWithFallback
                       source={{ uri: attachment.mediaUrl }}
                       style={[{ width: '100%', height: '100%', borderRadius: 12, flex: 1 }]} 
                       resizeMode="cover"
@@ -464,7 +433,7 @@ const HomeScreen: React.FC = () => {
         </View>
       ) : (
         <View style={[tw.pX4, tw.pB2]}>
-          <Image
+          <ImageWithFallback
             source={{ uri: item.attachments && item.attachments.length > 0 ? item.attachments[0].mediaUrl : "https://picsum.photos/400/300?random=1" }}
             style={[tw.wFull, { height: 240 }, tw.roundedLg]}
             resizeMode="cover"
@@ -474,14 +443,28 @@ const HomeScreen: React.FC = () => {
       {/* Engagement Metrics */}
       <View style={[tw.flexRow, tw.itemsCenter, tw.justifyBetween, tw.pX4, tw.pB4]}>
         <View style={[tw.flexRow, tw.itemsCenter]}>
-          <TouchableOpacity style={[tw.flexRow, tw.itemsCenter, tw.mR6]}>
-            <Ionicons name="heart-outline" size={20} color="#6b7280" />
-            <Text style={[tw.textGray600, tw.textSm, tw.mL1]}>{formatNumber(item.likeCount)}</Text>
+          <TouchableOpacity 
+            style={[tw.flexRow, tw.itemsCenter, tw.mR6]}
+            onPress={() => toggleBookmark(item.id)}
+            disabled={likingPosts.has(item.id)}
+          >
+            {likingPosts.has(item.id) ? (
+              <ActivityIndicator size="small" color="#6b7280" />
+            ) : (
+              <Ionicons 
+                name={likedPosts.has(item.id) ? "heart" : "heart-outline"} 
+                size={20} 
+                color={likedPosts.has(item.id) ? "#ef4444" : "#6b7280"} 
+              />
+            )}
+            <Text style={[tw.textGray600, tw.textSm, tw.mL1]}>
+              {formatNumber(optimisticLikeCounts.get(item.id) ?? item.likeCount)}
+            </Text>
           </TouchableOpacity>
-          <TouchableOpacity style={[tw.flexRow, tw.itemsCenter, tw.mR6]}>
+          {/* <TouchableOpacity style={[tw.flexRow, tw.itemsCenter, tw.mR6]}>
             <Ionicons name="chatbubble-outline" size={20} color="#6b7280" />
             <Text style={[tw.textGray600, tw.textSm, tw.mL1]}>{formatNumber(0)}</Text>
-          </TouchableOpacity>
+          </TouchableOpacity> */}
           <TouchableOpacity style={[tw.flexRow, tw.itemsCenter]}>
             <Ionicons name="arrow-redo-outline" size={20} color="#6b7280" />
             <Text style={[tw.textGray600, tw.textSm, tw.mL1]}>{formatNumber(0)}</Text>
@@ -501,7 +484,7 @@ const HomeScreen: React.FC = () => {
           onPress={() => setImageModalVisible(false)}
         >
           {selectedImage && (
-            <Image
+            <ImageWithFallback
               source={{ uri: selectedImage }}
               style={{ width: '90%', height: '60%', borderRadius: 16 }}
               resizeMode="contain"
@@ -515,7 +498,21 @@ const HomeScreen: React.FC = () => {
   const renderDatingInterface = () => {
     const visibleProfiles = datingProfiles.slice(currentProfileIndex, currentProfileIndex + 2);
     
+    // Show skeleton while loading
+    if (datingLoading) {
+      return (
+        <View style={[tw.flex1, tw.relative, { paddingBottom: 120 }]}>
+          <View style={[tw.flex1, tw.justifyCenter, tw.pT4]}>
+            {[1, 2].map((index) => (
+              <DatingMatchSkeleton key={index} />
+            ))}
+          </View>
+        </View>
+      );
+    }
+    
     if (currentProfileIndex >= datingProfiles.length) {
+      console.log('No more profiles', datingProfiles);
       return (
         <View style={[tw.flex1, tw.justifyCenter, tw.itemsCenter, tw.p8]}>
           <Ionicons name="heart-outline" size={80} color="#fb6c31" />
@@ -529,10 +526,10 @@ const HomeScreen: React.FC = () => {
             style={[tw.bgPink700, tw.roundedFull, tw.pX6, tw.pY3, tw.mT6]}
             onPress={() => {
               setCurrentProfileIndex(0);
-              setDatingProfiles([...MOCK_DATING_PROFILES]);
+              refreshDating();
             }}
           >
-            <Text style={[tw.textWhite, tw.fontBold]}>Reset Profiles</Text>
+            <Text style={[tw.textWhite, tw.fontBold]}>Refresh</Text>
           </TouchableOpacity>
         </View>
       );
@@ -585,8 +582,8 @@ const HomeScreen: React.FC = () => {
       return {
         posts: apiPosts,
         datingProfiles: datingProfiles,
-        networkingProfiles: MOCK_NETWORKING_PROFILES,
-        networkingPosts: MOCK_NETWORKING_POSTS
+        networkingProfiles: [],
+        networkingPosts: networkingPosts
       };
     }
 
@@ -603,20 +600,14 @@ const HomeScreen: React.FC = () => {
     }
 
     if (profileType === 'networking') {
-      const filteredNetworkingProfiles = MOCK_NETWORKING_PROFILES.filter(profile =>
-        profile.name.toLowerCase().includes(query) ||
-        profile.headline.toLowerCase().includes(query) ||
-        profile.summary.toLowerCase().includes(query) ||
-        profile.industries.some(industry => industry.toLowerCase().includes(query)) ||
-        profile.collaboration.some(collab => collab.toLowerCase().includes(query))
-      );
+      // Since we don't have real networking profiles API yet, return empty array
+      const filteredNetworkingProfiles: any[] = [];
 
-      const filteredNetworkingPosts = MOCK_NETWORKING_POSTS.filter(post =>
-        post.user.name.toLowerCase().includes(query) ||
-        post.caption.toLowerCase().includes(query) ||
-        post.location.toLowerCase().includes(query) ||
-        post.tags?.some(tag => tag.toLowerCase().includes(query)) ||
-        post.caption.split(' ').some(word => word.startsWith('#') && word.toLowerCase().includes(query))
+      const filteredNetworkingPosts = networkingPosts.filter(post =>
+        post.user.firstname.toLowerCase().includes(query) ||
+        post.user.lastname.toLowerCase().includes(query) ||
+        post.content.toLowerCase().includes(query) ||
+        post.content.split(' ').some(word => word.startsWith('#') && word.toLowerCase().includes(query))
       );
 
       return { 
@@ -629,9 +620,9 @@ const HomeScreen: React.FC = () => {
 
     if (profileType === 'dating') {
       const filteredDatingProfiles = datingProfiles.filter(profile =>
-        profile.name.toLowerCase().includes(query) ||
-        profile.bio.toLowerCase().includes(query) ||
-        profile.interests.some(interest => interest.toLowerCase().includes(query))
+        profile.firstName.toLowerCase().includes(query) ||
+        profile.middleName.toLowerCase().includes(query) ||
+        profile.gender.toLowerCase().includes(query)
       );
       return { posts: [], datingProfiles: filteredDatingProfiles, networkingProfiles: [], networkingPosts: [] };
     }
@@ -644,9 +635,9 @@ const HomeScreen: React.FC = () => {
     );
 
     const filteredDatingProfiles = datingProfiles.filter(profile =>
-      profile.name.toLowerCase().includes(query) ||
-      profile.bio.toLowerCase().includes(query) ||
-      profile.interests.some(interest => interest.toLowerCase().includes(query))
+      profile.firstName.toLowerCase().includes(query) ||
+      profile.middleName.toLowerCase().includes(query) ||
+      profile.gender.toLowerCase().includes(query)
     );
 
     return { 
@@ -690,12 +681,44 @@ const HomeScreen: React.FC = () => {
     }
   };
 
+  const [searchTimeout, setSearchTimeout] = useState<NodeJS.Timeout | null>(null);
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (searchTimeout) {
+        clearTimeout(searchTimeout);
+      }
+    };
+  }, [searchTimeout]);
+
   const handleSearchChange = (text: string) => {
     setSearchQuery(text);
+    
+    // Clear existing timeout
+    if (searchTimeout) {
+      clearTimeout(searchTimeout);
+    }
+    
     if (text.trim()) {
       setShowSearchResults(true);
+      // Trigger search with debounce
+      const timeoutId = setTimeout(() => {
+        if (profileType === 'networking') {
+          networkingSearchPosts(text.trim());
+        } else {
+          searchPosts(text.trim());
+        }
+      }, 500);
+      setSearchTimeout(timeoutId);
     } else {
       setShowSearchResults(false);
+      // Reset to normal posts when search is cleared
+      if (profileType === 'networking') {
+        networkingRefresh();
+      } else {
+        refresh();
+      }
     }
   };
 
@@ -718,6 +741,22 @@ const HomeScreen: React.FC = () => {
       postsLength: posts.length,
       profileType
     });
+
+    // Show skeleton while loading
+    if (postsLoading || (profileType === 'networking' && networkingPostsLoading)) {
+      return (
+        <View style={[tw.bgWhite, tw.roundedLg, tw.mX4, tw.shadow, { zIndex: 1000, position: 'absolute', top: 80, left: 0, right: 0 }]}>
+          <View style={[tw.p4, tw.borderB, tw.borderGray200]}>
+            <View style={[tw.w32, tw.h4, tw.bgGray200, tw.rounded]} />
+          </View>
+          <ScrollView style={{ maxHeight: 350 }} showsVerticalScrollIndicator={false}>
+            {[1, 2, 3].map((index) => (
+              <SearchResultSkeleton key={index} />
+            ))}
+          </ScrollView>
+        </View>
+      );
+    }
 
     if (totalResults === 0) {
       return (
@@ -744,10 +783,27 @@ const HomeScreen: React.FC = () => {
         <ScrollView 
           style={{ maxHeight: 350 }} 
           showsVerticalScrollIndicator={false}
+          onScroll={({ nativeEvent }) => {
+            const { layoutMeasurement, contentOffset, contentSize } = nativeEvent;
+            const paddingToBottom = 20;
+            if (layoutMeasurement.height + contentOffset.y >= 
+                contentSize.height - paddingToBottom) {
+              if (profileType === 'networking') {
+                if (networkingHasMore && !networkingPostsLoading) {
+                  networkingLoadMore();
+                }
+              } else {
+                if (hasMore && !postsLoading) {
+                  loadMore();
+                }
+              }
+            }
+          }}
+          scrollEventThrottle={400}
           refreshControl={
             <RefreshControl
-              refreshing={postsLoading}
-              onRefresh={refresh}
+              refreshing={profileType === 'networking' ? networkingPostsLoading : postsLoading}
+              onRefresh={profileType === 'networking' ? networkingRefresh : refresh}
               colors={["#fb6c31"]}
               tintColor="#fb6c31"
             />
@@ -764,7 +820,50 @@ const HomeScreen: React.FC = () => {
                   id: post.id,
                   user: {
                     name: `${post.user.firstname} ${post.user.lastname}`,
-                    avatar: "https://randomuser.me/api/portraits/men/1.jpg"
+                    avatar: "" // Not used anymore, we use initials instead
+                  },
+                  timestamp: getTimeAgo(post.createdAt),
+                  location: "",
+                  caption: post.content,
+                  images: post.attachments.length > 0 ? post.attachments.map(att => att.mediaUrl) : [],
+                  likes: post.likeCount,
+                  comments: 0,
+                  shares: 0,
+                  isBookmarked: false,
+                };
+                setSelectedPost(genericPost);
+                setSinglePostVisible(true);
+                setShowSearchResults(false);
+              }}
+            >
+              <View style={[tw.flexRow, tw.itemsCenter]}>
+                <View style={[tw.w10, tw.h10, tw.roundedFull, tw.mR3, tw.bgGray300, tw.justifyCenter, tw.itemsCenter]}>
+                  <Text style={[tw.textGray700, tw.fontBold, tw.textSm]}>
+                    {getUserInitials(post.user.firstname, post.user.lastname)}
+                  </Text>
+                </View>
+                <View style={[tw.flex1]}>
+                  <Text style={[tw.textGray900, tw.fontMedium]}>{`${post.user.firstname} ${post.user.lastname}`}</Text>
+                  <Text style={[tw.textGray500, tw.textSm]} numberOfLines={2}>{post.content}</Text>
+                  <Text style={[tw.textGray400, tw.textXs]}>{getTimeAgo(post.createdAt)}</Text>
+                </View>
+                <Ionicons name="chevron-forward" size={20} color="#9ca3af" />
+              </View>
+            </TouchableOpacity>
+          ))}
+
+          {/* Networking Posts */}
+          {profileType === 'networking' && networkingPosts.map(post => (
+            <TouchableOpacity
+              key={`networking-post-${post.id}`}
+              style={[tw.p4, tw.borderB, tw.borderGray100]}
+              onPress={() => {
+                // Convert API Post to GenericPost format
+                const genericPost: GenericPost = {
+                  id: post.id,
+                  user: {
+                    name: `${post.user.firstname} ${post.user.lastname}`,
+                    avatar: "" // Not used anymore, we use initials instead
                   },
                   timestamp: getTimeAgo(post.createdAt),
                   location: "",
@@ -808,7 +907,7 @@ const HomeScreen: React.FC = () => {
               }}
             >
               <View style={[tw.flexRow, tw.itemsCenter]}>
-                <Image source={{ uri: profile.photo }} style={[tw.w10, tw.h10, tw.rounded, tw.mR3]} />
+                <ImageWithFallback source={{ uri: profile.photo }} style={[tw.w10, tw.h10, tw.rounded, tw.mR3]} />
                 <View style={[tw.flex1]}>
                   <Text style={[tw.textGray900, tw.fontMedium]}>{profile.name}</Text>
                   <Text style={[tw.textGray500, tw.textSm]} numberOfLines={1}>{profile.headline}</Text>
@@ -830,16 +929,32 @@ const HomeScreen: React.FC = () => {
               }}
             >
               <View style={[tw.flexRow, tw.itemsCenter]}>
-                <Image source={{ uri: profile.images[0] }} style={[tw.w10, tw.h10, tw.roundedFull, tw.mR3]} />
+                <ImageWithFallback 
+                  source={{ 
+                    uri: profile.mediaList && profile.mediaList.length > 0 
+                      ? profile.mediaList[0].mediaUrl 
+                      : 'https://randomuser.me/api/portraits/men/1.jpg' 
+                  }} 
+                  style={[tw.w10, tw.h10, tw.roundedFull, tw.mR3]} 
+                />
                 <View style={[tw.flex1]}>
-                  <Text style={[tw.textGray900, tw.fontMedium]}>{profile.name}, {profile.age}</Text>
-                  <Text style={[tw.textGray500, tw.textSm]} numberOfLines={2}>{profile.bio}</Text>
-                  <Text style={[tw.textGray400, tw.textXs]}>{profile.distance}</Text>
+                  <Text style={[tw.textWhite, tw.fontMedium]}>{profile.firstName} {profile.middleName}, {profile.age}</Text>
+                  <Text style={[tw.textGray500, tw.textSm]} numberOfLines={2}>{profile.gender}</Text>
+                  <Text style={[tw.textGray400, tw.textXs]}>{profile.distance}km away</Text>
                 </View>
                 <Ionicons name="chevron-forward" size={20} color="#9ca3af" />
               </View>
             </TouchableOpacity>
           ))}
+          
+          {/* Loading indicator for search results */}
+          {((profileType === 'networking' && networkingHasMore && networkingPostsLoading) || 
+            (profileType !== 'networking' && hasMore && postsLoading)) && (
+            <View style={[tw.pY4, tw.itemsCenter]}>
+              <ActivityIndicator size="small" color="#fb6c31" />
+              <Text style={[tw.textGray500, tw.textSm, tw.mT2]}>Loading more results...</Text>
+            </View>
+          )}
         </ScrollView>
       </View>
     );
@@ -957,11 +1072,12 @@ const HomeScreen: React.FC = () => {
       ) : profileType === 'networking' ? (
         <Networking 
           filteredProfiles={filteredContent.networkingProfiles}
-          filteredPosts={filteredContent.networkingPosts}
         />
       ) : postsLoading && filteredContent.posts.length === 0 ? (
-        <View style={[tw.flex1, tw.justifyCenter, tw.itemsCenter]}>
-          <LoadingIndicator message="Loading posts..." />
+        <View style={[tw.flex1]}>
+          {[1, 2, 3].map((index) => (
+            <PostSkeleton key={index} />
+          ))}
         </View>
       ) : (
         <FlatList
@@ -970,8 +1086,20 @@ const HomeScreen: React.FC = () => {
           keyExtractor={(item) => item.id.toString()}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={[{ paddingBottom: 120 }]}
-          refreshing={postsLoading}
-          onRefresh={refresh}
+          onEndReached={() => {
+            if (hasMore && !postsLoading) {
+              loadMore();
+            }
+          }}
+          onEndReachedThreshold={0.1}
+          ListFooterComponent={() => 
+            hasMore && postsLoading ? (
+              <View style={[tw.pY4, tw.itemsCenter]}>
+                <ActivityIndicator size="small" color="#fb6c31" />
+                <Text style={[tw.textGray500, tw.textSm, tw.mT2]}>Loading more posts...</Text>
+              </View>
+            ) : null
+          }
           refreshControl={
             <RefreshControl
               refreshing={postsLoading}
@@ -993,9 +1121,7 @@ const HomeScreen: React.FC = () => {
         }}
         onToggleBookmark={toggleBookmark}
         onLike={(postId) => {
-          // Note: This function now only logs since we're using API posts
-          // In a real implementation, you would make an API call to like a post
-          console.log('Like post:', postId);
+          toggleBookmark(postId);
         }}
         onComment={(postId) => {
           console.log('Comment on post:', postId);

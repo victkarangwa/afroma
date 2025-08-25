@@ -195,7 +195,7 @@ const ChatsScreen: React.FC = () => {
     return (
       <ScreenContainer showHeader={true} title="Chats">
         {/* Header */}
-        <View style={[tw.bgWhite, tw.pX4, tw.pT4, tw.pB4, tw.shadow]}>
+        {/* <View style={[tw.bgWhite, tw.pX4, tw.pT4, tw.pB4, tw.shadow]}>
           <View style={[tw.flexRow, tw.itemsCenter, tw.justifyBetween]}>
             <Text style={[tw.textGray900, tw.fontBold, tw.textXl]}>Chats</Text>
             <View style={[tw.flexRow, tw.itemsCenter]}>
@@ -206,7 +206,7 @@ const ChatsScreen: React.FC = () => {
               />
             </View>
           </View>
-        </View>
+        </View> */}
 
         <View style={[tw.bgGray100, tw.hFull, tw.wFull]}>
           {/* Activities */}

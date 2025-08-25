@@ -44,6 +44,8 @@ export const ApiProvider = ({ children }: ApiProviderProps) => {
       setLoading(false);
       return response.data as T;
     } catch (err: any) {
+      console.log("====err====>", err.data);
+
       const status = err?.status;
       const message =
         err?.data?.message || "Something went wrong. Please try again.";

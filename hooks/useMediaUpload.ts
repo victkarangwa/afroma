@@ -34,6 +34,7 @@ export const useMediaUpload = (): UseMediaUploadReturn => {
         const requestData: MediaUploadRequest = {
           fileContent: base64,
           mediaType: 'PHOTO',
+          fileRefType: 'POST',
           featured: index === 0 // First image is featured
         };
         // console.log('requestData', requestData);

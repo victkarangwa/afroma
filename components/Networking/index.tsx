@@ -27,6 +27,10 @@ const Networking: React.FC<NetworkingProps> = ({
   const [profilesLoading, setProfilesLoading] = useState(false);
   const [profilesError, setProfilesError] = useState<string | null>(null);
   const [connectingProfiles, setConnectingProfiles] = useState<Set<number>>(new Set());
+  const [connectionRequests, setConnectionRequests] = useState<any[]>([]);
+  const [requestsLoading, setRequestsLoading] = useState(false);
+  const [requestsError, setRequestsError] = useState<string | null>(null);
+  const [respondingRequests, setRespondingRequests] = useState<Set<number>>(new Set());
   const [selectedPost, setSelectedPost] = useState<GenericPost | null>(null);
   const [singlePostVisible, setSinglePostVisible] = useState(false);
   const [selectedProfile, setSelectedProfile] = useState<any | null>(null);
@@ -78,6 +82,31 @@ const Networking: React.FC<NetworkingProps> = ({
     }
   }, [send]);
 
+  // Load connection requests from API
+  const loadConnectionRequests = React.useCallback(async () => {
+    try {
+      setRequestsLoading(true);
+      setRequestsError(null);
+      
+      const response = await send('get', '/friendship/requests/received');
+      console.log('Connection requests response:', response);
+      
+      if (response?.success && Array.isArray(response.data)) {
+        setConnectionRequests(response.data);
+      } else if (Array.isArray(response)) {
+        // Handle direct array response
+        setConnectionRequests(response);
+      } else {
+        setRequestsError('Invalid response format');
+      }
+    } catch (error) {
+      console.error('Error loading connection requests:', error);
+      setRequestsError('Failed to load requests');
+    } finally {
+      setRequestsLoading(false);
+    }
+  }, [send]);
+
   // console.log('apiPosts', apiPosts);
 
   // Function to load user's liked posts (if API endpoint exists)
@@ -94,11 +123,7 @@ const Networking: React.FC<NetworkingProps> = ({
     }
   }, []);
 
-  // Get connection requests from notifications (placeholder for now)
-  // TODO: Replace with real API call when available
-  const connectionRequests = MOCK_NOTIFICATIONS.filter(
-    n => n.type === 'connection_request' && n.action === 'accept_decline'
-  );
+  // Connection requests will be loaded from API
 
   // Update profiles when filteredProfiles prop changes
   // React.useEffect(() => {
@@ -114,6 +139,13 @@ const Networking: React.FC<NetworkingProps> = ({
   React.useEffect(() => {
     if (activeTab === 'profiles') {
       loadNetworkingProfiles();
+    }
+  }, [activeTab]);
+
+  // Load connection requests when requests tab is selected
+  React.useEffect(() => {
+    if (activeTab === 'requests') {
+      loadConnectionRequests();
     }
   }, [activeTab]);
 
@@ -290,37 +322,93 @@ const Networking: React.FC<NetworkingProps> = ({
     console.log('Share post:', postId);
   };
 
-  const handleAcceptConnection = (notification: any) => {
+  const handleAcceptConnection = async (request: any) => {
+    const senderName = `${request.sender.firstname} ${request.sender.lastname}`;
+    
     Alert.alert(
       'Accept Connection',
-      `Accept connection request from ${notification.message.split(' wants to connect')[0]}?`,
+      `Accept connection request from ${senderName}?`,
       [
         { text: 'Cancel', style: 'cancel' },
         { 
           text: 'Accept', 
-          onPress: () => {
-            console.log('Connection accepted:', notification.id);
-            // Here you would typically make an API call to accept the connection
-            Alert.alert('Success', 'Connection request accepted!');
+          onPress: async () => {
+            try {
+              setRespondingRequests(prev => new Set(prev).add(request.id));
+              
+              const response = await send('put', '/friendship/respond', {
+                requestId: request.id,
+                approve: true
+              });
+              
+              console.log('Accept connection response:', response);
+              
+              if (response?.success || response?.id) {
+                // Remove the request from the list
+                setConnectionRequests(prevRequests =>
+                  prevRequests.filter(req => req.id !== request.id)
+                );
+                Alert.alert('Success', 'Connection request accepted!');
+              } else {
+                Alert.alert('Error', 'Failed to accept connection request. Please try again.');
+              }
+            } catch (error) {
+              console.error('Error accepting connection request:', error);
+              Alert.alert('Error', 'Failed to accept connection request. Please try again.');
+            } finally {
+              setRespondingRequests(prev => {
+                const newSet = new Set(prev);
+                newSet.delete(request.id);
+                return newSet;
+              });
+            }
           }
         }
       ]
     );
   };
 
-  const handleDeclineConnection = (notification: any) => {
+  const handleDeclineConnection = async (request: any) => {
+    const senderName = `${request.sender.firstname} ${request.sender.lastname}`;
+    
     Alert.alert(
       'Decline Connection',
-      `Decline connection request from ${notification.message.split(' wants to connect')[0]}?`,
+      `Decline connection request from ${senderName}?`,
       [
         { text: 'Cancel', style: 'cancel' },
         { 
           text: 'Decline', 
           style: 'destructive',
-          onPress: () => {
-            console.log('Connection declined:', notification.id);
-            // Here you would typically make an API call to decline the connection
-            Alert.alert('Success', 'Connection request declined.');
+          onPress: async () => {
+            try {
+              setRespondingRequests(prev => new Set(prev).add(request.id));
+              
+              const response = await send('put', '/friendship/respond', {
+                requestId: request.id,
+                approve: false
+              });
+              
+              console.log('Decline connection response:', response);
+              
+              if (response?.success || response?.id) {
+                // Remove the request from the list
+                setConnectionRequests(prevRequests =>
+                  prevRequests.filter(req => req.id !== request.id)
+                );
+                Alert.alert('Success', 'Connection request declined.');
+              } else {
+                Alert.alert('Error', 'Failed to decline connection request. Please try again.');
+              }
+            } catch (error) {
+              console.error('Error declining connection request:', error);
+              Alert.alert('Error', 'Failed to decline connection request. Please try again.');
+            } finally {
+              setRespondingRequests(prev => {
+                const newSet = new Set(prev);
+                newSet.delete(request.id);
+                return newSet;
+              });
+            }
           }
         }
       ]
@@ -341,47 +429,75 @@ const Networking: React.FC<NetworkingProps> = ({
     });
   };
 
-  const renderConnectionRequest = ({ item }: { item: any }) => (
-    <View style={[tw.bgWhite, tw.p4, tw.mB4, tw.roundedLg, tw.shadow, tw.mX4]}>
-      <View style={[tw.flexRow, tw.itemsCenter, tw.mB3]}>
-        <ImageWithFallback
-          source={{ uri: item.avatar }}
-          style={[tw.w12, tw.h12, tw.roundedFull, tw.mR3]}
-        />
-        <View style={[tw.flex1]}>
-          <Text style={[tw.textGray900, tw.fontBold, tw.textBase]}>{item.title}</Text>
-          <Text style={[tw.textGray600, tw.textSm]}>{item.message}</Text>
-          <Text style={[tw.textGray400, tw.textXs]}>{item.timestamp}</Text>
+  const renderConnectionRequest = ({ item }: { item: any }) => {
+    const senderName = `${item.sender.firstname} ${item.sender.lastname}`;
+    const senderPhoto = item.sender.gallery && item.sender.gallery.length > 0 
+      ? item.sender.gallery[0].mediaUrl 
+      : undefined;
+    const isResponding = respondingRequests.has(item.id);
+    
+    return (
+      <View style={[tw.bgWhite, tw.p4, tw.mB4, tw.roundedLg, tw.shadow, tw.mX4]}>
+        <View style={[tw.flexRow, tw.itemsCenter, tw.mB3]}>
+          {senderPhoto ? (
+            <ImageWithFallback
+              source={{ uri: senderPhoto }}
+              style={[tw.w12, tw.h12, tw.roundedFull, tw.mR3]}
+            />
+          ) : (
+            <View style={[tw.w12, tw.h12, tw.roundedFull, tw.mR3, tw.bgGray300, tw.justifyCenter, tw.itemsCenter]}>
+              <Text style={[tw.textGray700, tw.fontBold, tw.textSm]}>
+                {getUserInitials(item.sender.firstname, item.sender.lastname)}
+              </Text>
+            </View>
+          )}
+          <View style={[tw.flex1]}>
+            <Text style={[tw.textGray900, tw.fontBold, tw.textBase]}>{senderName}</Text>
+            <Text style={[tw.textGray600, tw.textSm]}>Wants to connect with you</Text>
+            <Text style={[tw.textGray400, tw.textXs]}>
+              {new Date(item.createdAt).toLocaleDateString()}
+            </Text>
+          </View>
+        </View>
+        
+        <View style={[tw.flexRow, tw.justifyEnd]}>
+          <TouchableOpacity
+            style={[
+              tw.bgRed500,
+              tw.roundedFull,
+              tw.pX4,
+              tw.pY2,
+              tw.mR2
+            ]}
+            onPress={() => handleDeclineConnection(item)}
+            disabled={isResponding}
+          >
+            {isResponding ? (
+              <ActivityIndicator size="small" color="white" />
+            ) : (
+              <Text style={[tw.textWhite, tw.fontMedium, tw.textSm]}>Decline</Text>
+            )}
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[
+              tw.bgGreen500,
+              tw.roundedFull,
+              tw.pX4,
+              tw.pY2
+            ]}
+            onPress={() => handleAcceptConnection(item)}
+            disabled={isResponding}
+          >
+            {isResponding ? (
+              <ActivityIndicator size="small" color="white" />
+            ) : (
+              <Text style={[tw.textWhite, tw.fontMedium, tw.textSm]}>Accept</Text>
+            )}
+          </TouchableOpacity>
         </View>
       </View>
-      
-      <View style={[tw.flexRow, tw.justifyEnd]}>
-        <TouchableOpacity
-          style={[
-            tw.bgRed500,
-            tw.roundedFull,
-            tw.pX4,
-            tw.pY2,
-            tw.mR2
-          ]}
-          onPress={() => handleDeclineConnection(item)}
-        >
-          <Text style={[tw.textWhite, tw.fontMedium, tw.textSm]}>Decline</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[
-            tw.bgGreen500,
-            tw.roundedFull,
-            tw.pX4,
-            tw.pY2
-          ]}
-          onPress={() => handleAcceptConnection(item)}
-        >
-          <Text style={[tw.textWhite, tw.fontMedium, tw.textSm]}>Accept</Text>
-        </TouchableOpacity>
-      </View>
-    </View>
-  );
+    );
+  };
 
   const renderPostCard = ({ item }: { item: Post }) => (
     <TouchableOpacity 
@@ -749,26 +865,56 @@ const Networking: React.FC<NetworkingProps> = ({
             }
           />
         )
-      ) : (
-        <FlatList
-          data={connectionRequests}
-          renderItem={renderConnectionRequest}
-          keyExtractor={(item) => item.id.toString()}
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={[{ paddingBottom: 120 }]}
-          ListEmptyComponent={
-            <View style={[tw.itemsCenter, tw.pT20]}>
-              <Ionicons name="checkmark-circle" size={48} color="#9ca3af" />
-              <Text style={[tw.textGray500, tw.textLg, tw.fontMedium, tw.mT4]}>
-                No pending requests
-              </Text>
-              <Text style={[tw.textGray400, tw.textSm, tw.mT2, tw.textCenter]}>
-                You're all caught up with connection requests!
-              </Text>
-            </View>
-          }
-        />
-      )}
+      ) : activeTab === 'requests' ? (
+        requestsLoading && connectionRequests.length === 0 ? (
+          <View style={[tw.flex1, tw.justifyCenter, tw.itemsCenter]}>
+            <ActivityIndicator size="large" color="#fb6c31" />
+            <Text style={[tw.textGray500, tw.textLg, tw.mT4]}>Loading requests...</Text>
+          </View>
+        ) : requestsError ? (
+          <View style={[tw.flex1, tw.justifyCenter, tw.itemsCenter, tw.p8]}>
+            <Ionicons name="cloud-offline-outline" size={64} color="#9ca3af" />
+            <Text style={[tw.textGray500, tw.textLg, tw.fontMedium, tw.mT4, tw.textCenter]}>
+              Unable to load requests
+            </Text>
+            <Text style={[tw.textGray400, tw.textBase, tw.mT2, tw.textCenter]}>
+              {requestsError}
+            </Text>
+            <TouchableOpacity
+              style={[tw.bgPink700, tw.roundedFull, tw.pX6, tw.pY3, tw.mT6]}
+              onPress={loadConnectionRequests}
+            >
+              <Text style={[tw.textWhite, tw.fontBold]}>Retry</Text>
+            </TouchableOpacity>
+          </View>
+        ) : connectionRequests.length === 0 ? (
+          <View style={[tw.flex1, tw.justifyCenter, tw.itemsCenter, tw.p8]}>
+            <Ionicons name="checkmark-circle" size={64} color="#9ca3af" />
+            <Text style={[tw.textGray500, tw.textLg, tw.fontMedium, tw.mT4, tw.textCenter]}>
+              No pending requests
+            </Text>
+            <Text style={[tw.textGray400, tw.textBase, tw.mT2, tw.textCenter]}>
+              You're all caught up with connection requests!
+            </Text>
+          </View>
+        ) : (
+          <FlatList
+            data={connectionRequests}
+            renderItem={renderConnectionRequest}
+            keyExtractor={(item) => item.id.toString()}
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={[{ paddingBottom: 120 }]}
+            refreshControl={
+              <RefreshControl
+                refreshing={requestsLoading}
+                onRefresh={loadConnectionRequests}
+                colors={["#fb6c31"]}
+                tintColor="#fb6c31"
+              />
+            }
+          />
+        )
+      ) : null}
 
       {/* Single Post View Modal */}
       {selectedPost && (

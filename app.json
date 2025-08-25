@@ -16,19 +16,19 @@
       "supportsTablet": true,
       "bundleIdentifier": "net.afroma.app",
       "buildNumber": "0",
-      "googleServicesFile": "./GoogleService-Info.plist"
+      "icon": "./assets/images/afroma_logo.png"
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
+        "foregroundImage": "./assets/images/afroma_logo.png",
+        "backgroundColor": "#1d1b2c"
       },
       "package": "net.afroma.app"
     },
     "web": {
       "bundler": "metro",
       "output": "static",
-      "favicon": "./assets/images/favicon.png"
+      "favicon": "./assets/images/afroma_logo.png"
     },
     "plugins": [
       "expo-router",

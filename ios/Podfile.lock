@@ -1561,6 +1561,8 @@ PODS:
     - React-Core
   - RNDateTimePicker (8.0.1):
     - React-Core
+  - RNFS (2.20.0):
+    - React-Core
   - RNGestureHandler (2.16.2):
     - DoubleConversion
     - glog
@@ -1762,6 +1764,7 @@ DEPENDENCIES:
   - "RNCAsyncStorage (from `../node_modules/@react-native-async-storage/async-storage`)"
   - "RNCPicker (from `../node_modules/@react-native-picker/picker`)"
   - "RNDateTimePicker (from `../node_modules/@react-native-community/datetimepicker`)"
+  - RNFS (from `../node_modules/react-native-fs`)
   - RNGestureHandler (from `../node_modules/react-native-gesture-handler`)
   - "RNGoogleSignin (from `../node_modules/@react-native-google-signin/google-signin`)"
   - RNReanimated (from `../node_modules/react-native-reanimated`)
@@ -1974,6 +1977,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/@react-native-picker/picker"
   RNDateTimePicker:
     :path: "../node_modules/@react-native-community/datetimepicker"
+  RNFS:
+    :path: "../node_modules/react-native-fs"
   RNGestureHandler:
     :path: "../node_modules/react-native-gesture-handler"
   RNGoogleSignin:
@@ -2090,6 +2095,7 @@ SPEC CHECKSUMS:
   RNCAsyncStorage: aa75595c1aefa18f868452091fa0c411a516ce11
   RNCPicker: 15ad063c72ecba748be9edea62a5bdce53090aa6
   RNDateTimePicker: dde7ca9005d716f3efa9a63004b441679bca9a41
+  RNFS: 89de7d7f4c0f6bafa05343c578f61118c8282ed8
   RNGestureHandler: 326e35460fb6c8c64a435d5d739bea90d7ed4e49
   RNGoogleSignin: 576a84dd0407b912e7a0adf07492de9feb79e5d9
   RNReanimated: def444e044c354f38bb0a5926a8583ba19d944c1

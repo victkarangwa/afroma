@@ -8,10 +8,10 @@ export const socialLoginConfig = {
     androidClientId: "YOUR_ANDROID_CLIENT_ID", // Add your Android client ID here
   },
   facebook: {
-    appId: "YOUR_FACEBOOK_APP_ID", // Replace with your Facebook App ID
-    clientToken: "YOUR_FACEBOOK_CLIENT_TOKEN", // Replace with your Facebook Client Token
+    appId: "1921081955393227", // Replace with your Facebook App ID
+    clientToken: "b3408f0f4a88fbf5eb88ca6469240b35", // Replace with your Facebook Client Token
     displayName: "Afroma",
-    scheme: "fbYOUR_FACEBOOK_APP_ID", // Replace with your Facebook App ID
+    scheme: "fb1921081955393227", // Replace with your Facebook App ID
   }
 };
 

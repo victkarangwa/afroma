@@ -42,10 +42,10 @@
       [
         "react-native-fbsdk-next",
         {
-          "appID": "YOUR_FACEBOOK_APP_ID",
-          "clientToken": "YOUR_FACEBOOK_CLIENT_TOKEN",
+          "appID": "1921081955393227",
+          "clientToken": "b3408f0f4a88fbf5eb88ca6469240b35",
           "displayName": "Afroma",
-          "scheme": "fbYOUR_FACEBOOK_APP_ID",
+          "scheme": "fb1921081955393227",
           "advertiserIDCollectionEnabled": false,
           "autoLogAppEventsEnabled": false,
           "isAutoInitEnabled": true,

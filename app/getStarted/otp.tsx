@@ -27,7 +27,7 @@ type FormData = {
 
 const OtpScreen: React.FC = () => {
   const router = useRouter();
-  const { control, handleSubmit, formState: { errors } } = useForm<FormData>({
+  const { control, handleSubmit, formState: { errors }, watch } = useForm<FormData>({
     defaultValues: { code: "" },
   });
   const { loading, send, error } = useApiRequest<ApiResponse>();
@@ -45,6 +45,17 @@ const OtpScreen: React.FC = () => {
     btnText: "Try Again",
     onDismiss: () => {},
   });
+
+  // Watch the OTP code field
+  const otpCode = watch("code");
+
+  // Auto-validate when OTP code reaches 6 digits
+  React.useEffect(() => {
+    if (otpCode && otpCode.length === 6 && !loading) {
+      // Automatically submit the form
+      handleSubmit(onSubmit)();
+    }
+  }, [otpCode]);
 
   const onSubmit = async (data: FormData) => {
     try {

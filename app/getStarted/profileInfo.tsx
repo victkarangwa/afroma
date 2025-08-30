@@ -106,10 +106,10 @@ const ProfileInfoScreen: React.FC = () => {
 
       // Validate date of birth (must be at least 18 years old)
       const age = moment().diff(moment(data.dateOfBirth), "years");
-      if (age < 18) {
+      if (age < 21) {
         setModalInfo({
           title: "Error",
-          description: "You must be at least 18 years old to register.",
+          description: "You must be at least 21 years old to register.",
           status: "error",
           btnText: "OK",
           onDismiss: () => setVisible(false),
@@ -418,67 +418,6 @@ const ProfileInfoScreen: React.FC = () => {
               Please select your date of birth
             </Text>
           )}
-        </View>
-
-        {/* Public Figure Selection */}
-        <View style={[tw.mB6]}>
-          <Text style={[tw.textPink700, tw.textLg, tw.fontBold, tw.mB3]}>
-            What type of account are you creating?
-          </Text>
-          <View style={[tw.flexRow]}>
-            <TouchableOpacity
-              style={[
-                tw.bgWhite,
-                tw.flex1,
-                tw.p4,
-                tw.roundedLg,
-                tw.mR2,
-                tw.border2,
-                !watch("publicFigure")
-                  ? tw.borderPink700
-                  : tw.borderGray300,
-              ]}
-              onPress={() => setValue("publicFigure", false)}
-            >
-              <Text
-                style={[
-                  !watch("publicFigure")
-                    ? tw.textPink700
-                    : tw.textGray700,
-                  tw.fontBold,
-                  tw.textCenter,
-                ]}
-              >
-                Regular User
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[
-                tw.bgWhite,
-                tw.flex1,
-                tw.p4,
-                tw.roundedLg,
-                tw.mL2,
-                tw.border2,
-                watch("publicFigure")
-                  ? tw.borderPink700
-                  : tw.borderGray300,
-              ]}
-              onPress={() => setValue("publicFigure", true)}
-            >
-              <Text
-                style={[
-                  watch("publicFigure")
-                    ? tw.textPink700
-                    : tw.textGray700,
-                  tw.fontBold,
-                  tw.textCenter,
-                ]}
-              >
-                Public Figure
-              </Text>
-            </TouchableOpacity>
-          </View>
         </View>
       </ScrollView>
 

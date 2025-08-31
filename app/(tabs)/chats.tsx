@@ -271,19 +271,6 @@ const ChatsScreen: React.FC = () => {
 
   return (
     <ScreenContainer showHeader={true} title="Messages">
-      {/* Header */}
-      <View style={[tw.bgWhite, tw.pX4, tw.pT4, tw.pB4, tw.shadow]}>
-        <View style={[tw.flexRow, tw.itemsCenter, tw.justifyBetween]}>
-          <Text style={[tw.textGray900, tw.fontBold, tw.textXl]}>Chats</Text>
-          <View style={[tw.flexRow, tw.itemsCenter]}>
-            <NotificationBadge
-              count={unreadNotificationsCount}
-              onPress={() => router.push('/notifications')}
-              size="medium"
-            />
-          </View>
-        </View>
-      </View>
 
       <View style={[tw.bgGray100, tw.hFull, tw.wFull, tw.flex, tw.itemsCenter]}>
         <ScrollView style={[tw.wFull]} contentContainerStyle={{ paddingBottom: 120 }}>

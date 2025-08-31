@@ -248,7 +248,7 @@ const ProfileScreen: React.FC = () => {
   return (
     <SafeAreaView style={[tw.flex1, tw.bgGray100]}>
       {/* Header */}
-      <View style={[tw.bgWhite, tw.pX4, tw.pT4, tw.pB4, tw.shadow]}>
+      {/* <View style={[tw.bgWhite, tw.pX4, tw.pT4, tw.pB4, tw.shadow]}>
         <View style={[tw.flexRow, tw.itemsCenter, tw.justifyBetween]}>
           <Text style={[tw.textGray900, tw.fontBold, tw.textXl]}>Profile</Text>
           <View style={[tw.flexRow, tw.itemsCenter]}>
@@ -265,7 +265,7 @@ const ProfileScreen: React.FC = () => {
             </TouchableOpacity>
           </View>
         </View>
-      </View>
+      </View> */}
 
       <ScrollView showsVerticalScrollIndicator={false}>
         {/* Header with Cover Photo */}
@@ -384,7 +384,7 @@ const ProfileScreen: React.FC = () => {
             ) : (
               <>
                 <Text style={[tw.textGray900, tw.text2xl, tw.fontBold]}>
-                  {"Tangishaka Loic"}
+                {profile?.firstname || profile?.name || "User"} {profile?.lastname || ""}
                 </Text>
                 <Text style={[tw.textGray600, tw.textBase, tw.mT1]}>
                   {profile?.city || profile?.location || "Location not set"}

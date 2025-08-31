@@ -1,19 +1,19 @@
 export const introText = [
   {
-    title: "Meaningful Matches",
-    description: "Get matched with people who share your values and goals",
+    title: "Connect Globally",
+    description: "Meet travelers and locals from around the world who share your passion for exploration",
     icon: "people-outline",
   },
   {
-    title: "Bond and Meet",
+    title: "Build Lasting Friendships",
     description:
-      "When you both feel a connection, make it official and start bonding",
+      "Create meaningful connections that go beyond borders and last a lifetime",
     icon: "heart-outline",
   },
   {
     title: "Safe and Secure",
     description:
-      "Your privacy and safety matter to us. We prioritize a respectful experience.",
+      "Your privacy and safety matter to us. We prioritize a respectful and trustworthy community.",
     icon: "lock-closed-outline",
   },
 ];

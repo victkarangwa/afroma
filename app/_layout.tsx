@@ -34,7 +34,7 @@ export default function RootLayout() {
     const fetchData = async () => {
       if (loaded) {
         try {
-          await SplashScreen.hideAsync();
+          // await SplashScreen.hideAsync();
           
           // Check for auth token
           const authToken = await LocalStorage.getItem("authToken");
@@ -112,10 +112,10 @@ export default function RootLayout() {
                 name="form/categoryProfile"
                 options={{ headerShown: false }}
               />
-              <Stack.Screen
+              {/* <Stack.Screen
                 name="getStarted/index"
                 options={{ headerShown: false }}
-              />
+              /> */}
               <Stack.Screen
                 name="getStarted/login"
                 options={{ headerShown: false }}

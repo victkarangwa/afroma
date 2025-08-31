@@ -15,7 +15,7 @@ const StarterScreen1: React.FC = () => {
 
   const handleNext = () => {
     if (activeIndex === 3) {
-      router.push("/getStarted");
+      router.push("/getStarted/accountType");
       return;
     }
     setActiveIndex(activeIndex + 1);
@@ -37,18 +37,18 @@ const StarterScreen1: React.FC = () => {
               introText[activeIndex - 1].icon as keyof typeof Ionicons.glyphMap
             }
             size={100}
-            style={[tw.textPurple500]}
+            style={[tw.textPink700]}
           />
           <TextComponent
-            style={[tw.fontExtrabold, tw.textWhite, tw.textCenter, tw.mT8]}
+            style={[tw.fontExtrabold, tw.textWhite, tw.textCenter, tw.mT8, tw.textPink700,]}
             variant="headlineLarge"
           >
-            {introText[activeIndex - 1].title}
+            {introText[activeIndex - 1].title}  
           </TextComponent>
           <TextComponent
             style={[
               tw.fontMedium,
-              tw.textRed200,
+              tw.textPink700,
               tw.textCenter,
               tw.textBase,
               tw.pY4,
@@ -110,7 +110,7 @@ const StarterScreen1: React.FC = () => {
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: "#1d1b2c",
+    // backgroundColor: "#1d1b2c",
   },
   text: {
     fontSize: 20,

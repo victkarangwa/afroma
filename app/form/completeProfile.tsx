@@ -1,11 +1,12 @@
-import React, { useState } from "react";
-import { View, Text, TouchableOpacity, Image, ScrollView, TextInput, KeyboardAvoidingView, Platform, Dimensions } from "react-native";
+import React, { useState, useEffect } from "react";
+import { View, Text, TouchableOpacity, Image, ScrollView, TextInput, KeyboardAvoidingView, Platform, Dimensions, BackHandler } from "react-native";
 import { tw } from "react-native-tailwindcss";
 import ButtonComponent from "@/components/Button";
 import { Chip, Divider, ProgressBar } from "react-native-paper";
 import { Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
-import { useRouter, useLocalSearchParams } from "expo-router";
+import { useRouter, useLocalSearchParams, useFocusEffect } from "expo-router";
+import { useNavigation } from "@react-navigation/native";
 import NavBar from "@/components/navigation/NavBar";
 import { GooglePlacesAutocomplete } from 'react-native-google-places-autocomplete';
 
@@ -48,6 +49,7 @@ const MAX_PHOTOS = 6;
 
 const CompleteProfileScreen: React.FC = () => {
   const router = useRouter();
+  const navigation = useNavigation();
   const params = useLocalSearchParams();
   const [photos, setPhotos] = useState<string[]>([]);
   const [height, setHeight] = useState<string>("");
@@ -92,6 +94,8 @@ const CompleteProfileScreen: React.FC = () => {
     if (step < totalSteps - 1) setStep(step + 1);
   };
   const handleBack = () => {
+    // Don't allow going back if user came from registration flow
+    if (params.fromRegistration === 'true') return;
     if (step > 0) setStep(step - 1);
   };
   const handleFinish = () => {
@@ -160,9 +164,57 @@ const CompleteProfileScreen: React.FC = () => {
     setArr(arr.includes(value) ? arr.filter((v) => v !== value) : [...arr, value]);
   };
 
+  // Prevent back navigation when user came from registration
+  useFocusEffect(
+    React.useCallback(() => {
+      const onBackPress = () => {
+        if (params.fromRegistration === 'true') {
+          // Prevent back navigation on Android
+          return true;
+        }
+        return false;
+      };
+
+      // Handle Android back button
+      const subscription = BackHandler.addEventListener('hardwareBackPress', onBackPress);
+
+      return () => subscription?.remove();
+    }, [params.fromRegistration])
+  );
+
+  // Additional iOS back gesture prevention
+  useEffect(() => {
+    if (params.fromRegistration === 'true') {
+      // Disable iOS back gesture for this screen
+      navigation.setOptions({
+        gestureEnabled: false,
+      });
+
+      // For iOS, we need to prevent the back gesture by intercepting navigation
+      const unsubscribe = navigation.addListener('beforeRemove', (e) => {
+        if (params.fromRegistration === 'true') {
+          // Prevent the default action
+          e.preventDefault();
+        }
+      });
+
+      return () => {
+        unsubscribe();
+        // Re-enable gestures when component unmounts
+        navigation.setOptions({
+          gestureEnabled: true,
+        });
+      };
+    }
+  }, [params.fromRegistration, navigation]);
+
   return (
     <>
-      <NavBar title="Complete Profile" showBack onBack={step === 0 ? undefined : handleBack} />
+      <NavBar 
+        title="Complete Profile" 
+        showBack={params.fromRegistration !== 'true'} 
+        onBack={step === 0 ? undefined : handleBack} 
+      />
       <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} style={{ flex: 1 }}>
         <ScrollView
           style={[tw.bgPink100, { flex: 1 }]}
@@ -282,7 +334,6 @@ const CompleteProfileScreen: React.FC = () => {
                   }}
                   enablePoweredByContainer={false}
                   fetchDetails={true}
-                  returnKeyType={'search'}
                   minLength={2}
                   nearbyPlacesAPI="GooglePlacesSearch"
                   debounce={300}
@@ -400,14 +451,14 @@ const CompleteProfileScreen: React.FC = () => {
           <View style={[tw.flexRow, tw.justifyBetween, tw.itemsCenter]}>
             <TouchableOpacity
               onPress={handleBack}
-              disabled={step === 0}
+              disabled={step === 0 || params.fromRegistration === 'true'}
               style={[
                 tw.justifyCenter,
                 tw.itemsCenter,
                 tw.roundedFull,
                 tw.border2,
                 tw.borderPink700,
-                { backgroundColor: '#fff', width: 48, height: 48, opacity: step === 0 ? 0.5 : 1 }
+                { backgroundColor: '#fff', width: 48, height: 48, opacity: (step === 0 || params.fromRegistration === 'true') ? 0.5 : 1 }
               ]}
             >
               <Ionicons name="chevron-back-outline" size={28} color="#fb6c31" />

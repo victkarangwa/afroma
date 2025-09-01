@@ -103,7 +103,7 @@ const PaymentScreen = () => {
         btnText: "Continue Swiping",
         onDismiss: () => {
           setPaymentResult(null);
-          router.push({ pathname: "/(tabs)" });
+          router.replace({ pathname: "/(tabs)" });
         },
       });
     }

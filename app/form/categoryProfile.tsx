@@ -140,7 +140,7 @@ const CategoryProfileScreen: React.FC = () => {
   };
 
   const handleFinish = () => {
-    router.push("/(tabs)");
+    router.replace("/(tabs)");
   };
 
   const renderRelationshipStep = () => {

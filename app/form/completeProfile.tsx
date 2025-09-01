@@ -120,7 +120,7 @@ const CompleteProfileScreen: React.FC = () => {
     // If user came from the new registration flow, go to main app
     // Otherwise continue to category profile
     if (params.fromRegistration === 'true') {
-      router.push("/(tabs)");
+      router.replace("/(tabs)");
     } else {
       router.push(`/form/categoryProfile?purpose=${purpose}`);
     }

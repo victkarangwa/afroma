@@ -1,9 +1,10 @@
 import React, { useState, useMemo, useEffect } from "react";
-import { View, Text, TextInput, ScrollView, Image, TouchableOpacity, FlatList, Dimensions, PanResponder, Animated, Modal, RefreshControl } from "react-native";
+import { View, Text, TextInput, ScrollView, Image, TouchableOpacity, FlatList, Dimensions, PanResponder, Animated, Modal, RefreshControl, BackHandler } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { tw } from "react-native-tailwindcss";
 import { useRouter, useFocusEffect } from "expo-router";
+import { useNavigation } from "@react-navigation/native";
 import LocalStorage from "@/utils/storage";
 import localStore from "@/utils/localValues";
 import Networking from "@/components/Networking";
@@ -32,6 +33,7 @@ const { width: screenWidth, height: screenHeight } = Dimensions.get("window");
 
 const HomeScreen: React.FC = () => {
   const router = useRouter();
+  const navigation = useNavigation();
   const [activeTab, setActiveTab] = useState(0);
   const [searchQuery, setSearchQuery] = useState("");
   const [datingProfiles, setDatingProfiles] = useState<DatingMatch[]>([]);
@@ -143,6 +145,43 @@ const HomeScreen: React.FC = () => {
       })();
     }, [apiDatingMatches, loadUserLikedPosts])
   );
+
+  // Prevent back navigation to profile completion screens
+  useFocusEffect(
+    React.useCallback(() => {
+      const onBackPress = () => {
+        // Prevent back navigation from home screen to profile completion
+        return true;
+      };
+
+      // Handle Android back button
+      const subscription = BackHandler.addEventListener('hardwareBackPress', onBackPress);
+
+      return () => subscription?.remove();
+    }, [])
+  );
+
+  // Additional iOS back gesture prevention for home screen
+  useEffect(() => {
+    // Disable iOS back gesture for home screen
+    navigation.setOptions({
+      gestureEnabled: false,
+    });
+
+    // Prevent navigation back to profile completion screens
+    const unsubscribe = navigation.addListener('beforeRemove', (e) => {
+      // Prevent any back navigation from home screen
+      e.preventDefault();
+    });
+
+    return () => {
+      unsubscribe();
+      // Re-enable gestures when component unmounts (though this shouldn't happen for home screen)
+      navigation.setOptions({
+        gestureEnabled: true,
+      });
+    };
+  }, [navigation]);
 
   const formatNumber = (num: number) => {
     if (num >= 1000) {

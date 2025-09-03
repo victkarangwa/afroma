@@ -58,7 +58,7 @@ const ProfileScreen: React.FC<ProfileScreenProps> = () => {
   const [profile, setProfile] = useState<any>({});
 
   const getMyProfile = async () => {
-    const result = await send("get", "/bonded-user-service/users/me");
+    const result = await send("get", "/users/me");
 
     setProfile(result);
   };
@@ -70,8 +70,8 @@ const ProfileScreen: React.FC<ProfileScreenProps> = () => {
   const uploadProfilePicture = async (data: any) => {
     const result = await send(
       "post",
-      "/bonded-user-service/media/upload",
-      data
+      "/media/upload",
+      {...data, fileRefType: 'PROFILE', featured: true, mediaType: 'PHOTO'}
     );
 
     if (result?.errors) {

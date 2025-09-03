@@ -57,7 +57,7 @@ const ProfileScreen: React.FC = () => {
   const geProfileFields = async () => {
     const result = await send(
       "get",
-      "/bonded-user-service/settings/profile-questions"
+      "/settings/profile-questions"
     );
 
     if (result?.errors) {
@@ -67,7 +67,7 @@ const ProfileScreen: React.FC = () => {
   };
 
   const getMyBasicProfile = async () => {
-    const result = await send("get", "/bonded-user-service/users/me");
+    const result = await send("get", "/users/me");
 
     if (result?.errors) {
       return;
@@ -79,7 +79,7 @@ const ProfileScreen: React.FC = () => {
     setLoadingProfile(true);
     const result = await send(
       "get",
-      "/bonded-user-service/user-profiling/answers"
+      "/user-profiling/answers"
     );
 
     if (result?.errors) {
@@ -111,7 +111,7 @@ const ProfileScreen: React.FC = () => {
       data = profileAnswers;
       result = await send(
         "post",
-        "/bonded-user-service/user-profiling/save/answers",
+        "/user-profiling/save/answers",
         data
       );
     } else {
@@ -119,7 +119,7 @@ const ProfileScreen: React.FC = () => {
         ...existingProfile,
         ...newState,
       };
-      result = await send("put", "/bonded-user-service/users/profile", data);
+      result = await send("put", "/users/profile", data);
     }
     if (result?.errors) {
       return setVisible(true);

@@ -233,7 +233,7 @@ const ProfileInfoScreen: React.FC = () => {
   };
 
   // Check if this is a dating/relationship profile
-  const isDatingProfile = params.profileType === "RELATIONSHIP";
+  const isDatingProfile = params.profileType === "DATING";
 
   // Get location permission
   const getLocation = async () => {

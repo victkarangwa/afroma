@@ -22,16 +22,16 @@ const mapApiProfileTypeToLocal = (apiType?: string): 'travel' | 'networking' | '
   const upper = apiType.toUpperCase();
   if (upper === 'TRAVEL') return 'travel';
   if (upper === 'NETWORKING') return 'networking';
-  if (upper === 'RELATIONSHIP' || upper === 'DATING') return 'dating';
+  if (upper === 'DATING') return 'dating';
   return null;
 };
 
 // Choose a preferred type from an array of API types
 const pickPreferredProfileType = (apiTypes?: string[] | null): 'travel' | 'networking' | 'dating' | null => {
   if (!apiTypes || apiTypes.length === 0) return null;
-  // Preference order: RELATIONSHIP/DATING > NETWORKING > TRAVEL
+  // Preference order: DATING > NETWORKING > TRAVEL
   const upper = apiTypes.map(t => (t || '').toUpperCase());
-  if (upper.includes('RELATIONSHIP') || upper.includes('DATING')) return 'dating';
+  if (upper.includes('DATING')) return 'dating';
   if (upper.includes('NETWORKING')) return 'networking';
   if (upper.includes('TRAVEL')) return 'travel';
   return mapApiProfileTypeToLocal(apiTypes[0]);

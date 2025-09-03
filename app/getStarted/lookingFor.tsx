@@ -47,7 +47,7 @@ const LookingForScreen: React.FC = () => {
     if (selected.length > 0) {
       // Map the purpose to profileTypes
       const purposeToProfileType = {
-        "relationship": "RELATIONSHIP",
+        "relationship": "DATING",
         "networking": "NETWORKING", 
         "travel": "TRAVEL"
       };

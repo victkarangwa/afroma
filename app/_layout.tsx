@@ -39,9 +39,13 @@ export default function RootLayout() {
           // Check for auth token
           const authToken = await LocalStorage.getItem("authToken");
           const tokenExpiresAt = await LocalStorage.getItem("tokenExpiresAt");
+
+          console.log("authToken", authToken);
+          console.log("tokenExpiresAt", tokenExpiresAt);
           
           // Check if token exists and is not expired
           if (authToken && tokenExpiresAt && typeof tokenExpiresAt === 'string') {
+            console.log("authToken and tokenExpiresAt found");
             const expirationDate = new Date(tokenExpiresAt);
             const currentDate = new Date();
             

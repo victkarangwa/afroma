@@ -97,7 +97,7 @@ const SinglePostView: React.FC<SinglePostViewProps> = ({
     }
   }, [visible, post?.id]);
 
-  console.log('SinglePostView props:', { visible, post: post?.id, profileType });
+  // console.log('SinglePostView props:', { visible, post: post?.id, profileType });
 
   if (!post) {
     console.log('No post provided to SinglePostView');

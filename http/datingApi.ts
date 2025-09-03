@@ -14,7 +14,7 @@ export const datingApi = {
       });
       return response.data;
     } catch (error: any) {
-      console.error('Error fetching dating matches:', error);
+      console.error('Error fetching dating matches:', error.status);
       return null;
     }
   },

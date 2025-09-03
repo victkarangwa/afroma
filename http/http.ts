@@ -53,18 +53,24 @@ http.interceptors.response.use(
 
     // Handle authentication errors
     if (error.response?.status === 401) {
+      console.log(error.response?.status );
       console.log('Unauthorized request, clearing auth data');
       
       try {
         // Clear authentication data
         await clearAuthData();
         
-        // You could also redirect to login here if needed
-        // For now, we'll just clear the data and let the app handle it
-        console.log('Auth data cleared due to 401 error');
+        // Note: Router redirection is handled in ApiContext to avoid circular dependencies
+        // console.log('Auth data cleared due to 401 error');
       } catch (clearError) {
-        console.error('Error clearing auth data:', clearError);
+        // console.error('Error clearing auth data:', clearError);
       }
+    } else if (error.response?.status === 403) {
+      console.log('Forbidden request - access denied');
+    } else if (error.response?.status === 404) {
+      console.log('Resource not found');
+    } else if (error.response?.status >= 500) {
+      console.log('Server error occurred');
     }
 
     return Promise.reject(error.response)

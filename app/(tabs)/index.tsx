@@ -26,6 +26,7 @@ import DatingCardSkeleton from "@/components/Skeleton/DatingCardSkeleton";
 import DatingMatchSkeleton from "@/components/Skeleton/DatingMatchSkeleton";
 import DatingCard from "@/components/DatingCard";
 import useApiRequest from "@/hooks/useApiRequest";
+import { checkAuthStatus } from "@/utils/auth";
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get("window");
 
@@ -145,6 +146,51 @@ const HomeScreen: React.FC = () => {
       })();
     }, [apiDatingMatches, loadUserLikedPosts])
   );
+
+  // Handle 401 errors by checking if user is still authenticated
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const isAuthenticated = await checkAuthStatus();
+        
+        if (!isAuthenticated && (postsError || datingError)) {
+          // User is not authenticated and there are errors, likely due to 401
+          console.log('User not authenticated, redirecting to login...');
+          router.push('/getStarted/login');
+        }
+      } catch (error) {
+        console.error('Error checking auth status:', error);
+      }
+    };
+
+    if (postsError || datingError) {
+      checkAuth();
+    }
+  }, [postsError, datingError, router]);
+
+  // Prevent infinite loading states by adding a timeout
+  useEffect(() => {
+    let timeoutId: NodeJS.Timeout;
+    
+    if (postsLoading || datingLoading || networkingPostsLoading) {
+      // Set a timeout to prevent infinite loading (10 seconds)
+      timeoutId = setTimeout(() => {
+        console.log('Loading timeout reached, checking auth status...');
+        checkAuthStatus().then(isAuthenticated => {
+          if (!isAuthenticated) {
+            console.log('User not authenticated after timeout, redirecting to login...');
+            router.push('/getStarted/login');
+          }
+        });
+      }, 10000); // 10 seconds
+    }
+
+    return () => {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+    };
+  }, [postsLoading, datingLoading, networkingPostsLoading, router]);
 
   // Prevent back navigation to profile completion screens
   useFocusEffect(
@@ -559,8 +605,8 @@ const HomeScreen: React.FC = () => {
   const renderDatingInterface = () => {
     const visibleProfiles = datingProfiles.slice(currentProfileIndex, currentProfileIndex + 2);
     
-    // Show skeleton while loading
-    if (datingLoading) {
+    // Show skeleton while loading (but not if there's an error)
+    if (datingLoading && !datingError) {
       return (
         <View style={[tw.flex1, tw.relative, { paddingBottom: 120 }]}>
           <View style={[tw.flex1, tw.justifyCenter, tw.pT4]}>
@@ -568,6 +614,27 @@ const HomeScreen: React.FC = () => {
               <DatingMatchSkeleton key={index} />
             ))}
           </View>
+        </View>
+      );
+    }
+
+    // Show error state if there's an error
+    if (datingError) {
+      return (
+        <View style={[tw.flex1, tw.justifyCenter, tw.itemsCenter, tw.p8]}>
+          <Ionicons name="alert-circle-outline" size={80} color="#ef4444" />
+          <Text style={[tw.textRed500, tw.textXl, tw.fontBold, tw.mT4, tw.textCenter]}>
+            Failed to load matches
+          </Text>
+          <Text style={[tw.textGray500, tw.textBase, tw.mT2, tw.textCenter]}>
+            {datingError}
+          </Text>
+          <TouchableOpacity
+            style={[tw.bgRed500, tw.roundedFull, tw.pX6, tw.pY3, tw.mT6]}
+            onPress={refreshDating}
+          >
+            <Text style={[tw.textWhite, tw.fontBold]}>Try Again</Text>
+          </TouchableOpacity>
         </View>
       );
     }
@@ -803,8 +870,9 @@ const HomeScreen: React.FC = () => {
       profileType
     });
 
-    // Show skeleton while loading
-    if (postsLoading || (profileType === 'networking' && networkingPostsLoading)) {
+    // Show skeleton while loading (but not if there are errors)
+    if ((postsLoading || (profileType === 'networking' && networkingPostsLoading)) && 
+        !postsError && !networkingPostsError) {
       return (
         <View style={[tw.bgWhite, tw.roundedLg, tw.mX4, tw.shadow, { zIndex: 1000, position: 'absolute', top: 80, left: 0, right: 0 }]}>
           <View style={[tw.p4, tw.borderB, tw.borderGray200]}>
@@ -815,6 +883,35 @@ const HomeScreen: React.FC = () => {
               <SearchResultSkeleton key={index} />
             ))}
           </ScrollView>
+        </View>
+      );
+    }
+
+    // Show error state if there are errors
+    if (postsError || networkingPostsError) {
+      return (
+        <View style={[tw.bgWhite, tw.roundedLg, tw.mX4, tw.p6, tw.shadow, { zIndex: 1000, position: 'absolute', top: 80, left: 0, right: 0 }]}>
+          <View style={[tw.itemsCenter, tw.pY4]}>
+            <Ionicons name="alert-circle-outline" size={48} color="#ef4444" />
+            <Text style={[tw.textRed500, tw.textLg, tw.fontMedium, tw.mT2, tw.textCenter]}>
+              Failed to load search results
+            </Text>
+            <Text style={[tw.textGray500, tw.textSm, tw.mT1, tw.textCenter]}>
+              {postsError || networkingPostsError}
+            </Text>
+            <TouchableOpacity 
+              style={[tw.bgRed500, tw.pX4, tw.pY2, tw.roundedLg, tw.mT4]}
+              onPress={() => {
+                if (profileType === 'networking') {
+                  networkingRefresh();
+                } else {
+                  refresh();
+                }
+              }}
+            >
+              <Text style={[tw.textWhite, tw.fontMedium]}>Try Again</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       );
     }
@@ -1134,11 +1231,27 @@ const HomeScreen: React.FC = () => {
         <Networking 
           filteredProfiles={filteredContent.networkingProfiles}
         />
-      ) : postsLoading && filteredContent.posts.length === 0 ? (
+      ) : postsLoading && filteredContent.posts.length === 0 && !postsError ? (
         <View style={[tw.flex1]}>
           {[1, 2, 3].map((index) => (
             <PostSkeleton key={index} />
           ))}
+        </View>
+      ) : postsError ? (
+        <View style={[tw.flex1, tw.justifyCenter, tw.itemsCenter, tw.pX4]}>
+          <Ionicons name="alert-circle-outline" size={48} color="#ef4444" />
+          <Text style={[tw.textRed500, tw.textLg, tw.fontMedium, tw.mT2, tw.textCenter]}>
+            Failed to load posts
+          </Text>
+          <Text style={[tw.textGray500, tw.textSm, tw.mT1, tw.textCenter]}>
+            {postsError}
+          </Text>
+          <TouchableOpacity 
+            style={[tw.bgRed500, tw.pX4, tw.pY2, tw.roundedLg, tw.mT4]}
+            onPress={refresh}
+          >
+            <Text style={[tw.textWhite, tw.fontMedium]}>Try Again</Text>
+          </TouchableOpacity>
         </View>
       ) : (
         <FlatList

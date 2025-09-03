@@ -55,13 +55,13 @@
     <key>FacebookAdvertiserIDCollectionEnabled</key>
     <false/>
     <key>FacebookAppID</key>
-    <string>YOUR_FACEBOOK_APP_ID</string>
+    <string>1921081955393227</string>
     <key>FacebookAutoInitEnabled</key>
     <true/>
     <key>FacebookAutoLogAppEventsEnabled</key>
     <false/>
     <key>FacebookClientToken</key>
-    <string>YOUR_FACEBOOK_CLIENT_TOKEN</string>
+    <string>b3408f0f4a88fbf5eb88ca6469240b35</string>
     <key>FacebookDisplayName</key>
     <string>Afroma</string>
     <key>LSApplicationQueriesSchemes</key>

@@ -11,8 +11,8 @@ export const postApi = {
     try {
       const response = await http.post<PostListResponse>('/post/list', data);
       return response.data;
-    } catch (error) {
-      console.error('Error fetching post list:', error);
+    } catch (error: any) {
+      console.error('Error fetching post list:', error.status);
       return null;
     }
   },

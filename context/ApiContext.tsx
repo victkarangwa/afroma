@@ -50,9 +50,23 @@ export const ApiProvider = ({ children }: ApiProviderProps) => {
       const message =
         err?.data?.message || "Something went wrong. Please try again.";
       let errors = "";
-      if  (status === 401 && !path.includes("login")) {
+      if (status === 401 && !path.includes("login")) {
+        // Clear user data and redirect to login for 401 errors
         removeUserData();
-        // router.replace({ pathname: "/getStarted/login" });
+        router.replace("/getStarted/login");
+        return null;
+      } else if (status === 403) {
+        // Handle forbidden access
+        setError("Access denied. You don't have permission to perform this action.");
+        errors = "Access denied. You don't have permission to perform this action.";
+      } else if (status === 404) {
+        // Handle not found
+        setError("The requested resource was not found.");
+        errors = "The requested resource was not found.";
+      } else if (status >= 500) {
+        // Handle server errors
+        setError("Server error. Please try again later.");
+        errors = "Server error. Please try again later.";
       } else {
         setError(message);
         errors = message;

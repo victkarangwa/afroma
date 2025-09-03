@@ -94,7 +94,9 @@ const ProfileScreen: React.FC = () => {
       if (result?.errors) {
         console.error("Error fetching user profile:", result.errors);
         setProfileError(result.errors);
-        handleLogout();
+        // Don't call handleLogout here as it will show confirmation dialog
+        // Instead, directly logout and redirect to login
+        await performLogout();
         return;
       }
       console.log("User profile data:", result);
@@ -102,7 +104,9 @@ const ProfileScreen: React.FC = () => {
     } catch (error) {
       console.error("Error fetching user profile:", error);
       setProfileError("Failed to load profile");
-      handleLogout();
+      // Don't call handleLogout here as it will show confirmation dialog
+      // Instead, directly logout and redirect to login
+      await performLogout();
     } finally {
       setIsLoadingProfile(false);
     }
@@ -113,6 +117,38 @@ const ProfileScreen: React.FC = () => {
       getMyBasicProfile();
     }, [])
   );
+
+  // Direct logout function for 401 errors (no confirmation dialog)
+  const performLogout = async () => {
+    try {
+      console.log("Performing automatic logout due to 401 error...");
+      
+      // Show a brief message to the user
+      Alert.alert(
+        "Session Expired",
+        "Your session has expired. Please log in again.",
+        [
+          {
+            text: "OK",
+            onPress: async () => {
+              // Clear authentication data
+              await clearAuthData();
+              
+              // Clear any other user data
+              removeUserData();
+              
+                             // Navigate to login screen
+               router.push("/getStarted/login");
+            }
+          }
+        ]
+      );
+    } catch (error) {
+      console.error("Error during automatic logout:", error);
+              // Even if there's an error, try to redirect to login
+        router.push("/getStarted/login");
+    }
+  };
 
   const handleLogout = async () => {
     try {
@@ -136,8 +172,8 @@ const ProfileScreen: React.FC = () => {
                 // Clear any other user data
                 removeUserData();
                 
-                // Navigate to login screen
-                router.replace("/getStarted/login");
+                                 // Navigate to login screen
+                 router.push("/getStarted/login");
               } catch (error) {
                 console.error("Error during logout:", error);
                 Alert.alert("Error", "Failed to logout. Please try again.");

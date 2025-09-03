@@ -73,8 +73,11 @@ const LoginScreen: React.FC = () => {
 
   const { loading, send, error } = useApiRequest<ApiResponse>();
 
+  const [isLoading, setIsLoading] = React.useState(false);
+
   const handleLogin = async (credentials: FormData) => {
     try {
+      setIsLoading(true);
       // Clear any existing user data
       removeUserData();
       
@@ -168,11 +171,14 @@ const LoginScreen: React.FC = () => {
         onDismiss: () => setVisible(false),
       });
       setVisible(true);
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const handleSocialLogin = async (provider: 'google' | 'facebook', token: string) => {
     try {
+      setIsLoading(true);
       // Clear any existing user data
       removeUserData();
       
@@ -265,6 +271,8 @@ const LoginScreen: React.FC = () => {
         onDismiss: () => setVisible(false),
       });
       setVisible(true);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -425,8 +433,8 @@ const LoginScreen: React.FC = () => {
           onPress={handleSubmit(handleLogin)}
           style={[tw.bgPink700, tw.mT4]}
           labelStyle={[tw.textWhite]}
-          loading={loading}
-          disabled={loading}
+          loading={isLoading}
+          disabled={isLoading}
         >
           Login
         </Button>

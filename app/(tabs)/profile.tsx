@@ -22,6 +22,7 @@ import { clearAuthData } from "@/utils/auth";
 import localStore from "@/utils/localValues";
 import NotificationBadge from "@/components/NotificationBadge";
 import { MOCK_NOTIFICATIONS } from "@/components/NotificationCenter";
+import LinearGradient from 'react-native-linear-gradient';
 
 // Patch type for localStore to include profileType
 type LocalStoreType = typeof localStore & { profileType: string };
@@ -76,6 +77,54 @@ const ProfileScreen: React.FC = () => {
     }
     return age;
   };
+
+  // Get featured image from gallery
+  const getFeaturedImage = () => {
+    if (profile?.gallery && profile.gallery.length > 0) {
+      const featured = profile.gallery.find((img: any) => img.featured);
+      return featured ? featured.thumbnailUrl : profile.gallery[0].thumbnailUrl;
+    }
+    return null;
+  };
+
+  // Get profile display name
+  const getDisplayName = () => {
+    if (profile?.firstname && profile?.lastname) {
+      return `${profile.firstname} ${profile.lastname}`;
+    } else if (profile?.firstname) {
+      return profile.firstname;
+    } else if (profile?.username) {
+      return profile.username;
+    }
+    return "User";
+  };
+
+  // Get profile location
+  const getProfileLocation = () => {
+    if (profile?.city) {
+      return profile.city;
+    }
+    if (profile?.latitude && profile?.longitude && profile.latitude !== 0 && profile.longitude !== 0) {
+      return `${profile.latitude.toFixed(2)}, ${profile.longitude.toFixed(2)}`;
+    }
+    return "Location not set";
+  };
+
+  // Get profile bio
+  const getProfileBio = () => {
+    if (profile?.bio) {
+      return profile.bio;
+    }
+    
+    const parts = [];
+    if (profile?.gender) parts.push(profile.gender);
+    if (profile?.dateOfBirth) parts.push(`${calculateAge(profile.dateOfBirth)} years old`);
+    if (profile?.profileType) parts.push(profile.profileType);
+    
+    return parts.length > 0 ? parts.join(" • ") : "Complete your profile to get started";
+  };
+
+
 
   // On mount, read profileType from local storage
   useEffect(() => {
@@ -304,52 +353,59 @@ const ProfileScreen: React.FC = () => {
       </View> */}
 
       <ScrollView showsVerticalScrollIndicator={false}>
-        {/* Header with Cover Photo */}
+        {/* Header with Gradient Background instead of Cover Photo */}
         <View style={[tw.relative]}>
-          {/* Cover Photo */}
-          <TouchableOpacity>
-            <Image
-              source={{ uri: "https://picsum.photos/400/250?random=cover" }}
-              style={[tw.wFull, { height: 200 }]}
-              resizeMode="cover"
-            />
-          </TouchableOpacity>
-          
-          {/* Settings Icon */}
-          <TouchableOpacity
-            style={[tw.absolute, tw.top0, tw.right0, tw.m4, tw.bgBlack, tw.opacity50, tw.roundedFull, tw.p2]}
-            onPress={() => router.push("/settings")}
+          {/* Gradient Background */}
+          <LinearGradient
+            colors={['#fb6c31', '#ff8a65', '#ffab91']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={[tw.wFull, { height: 200 }]}
           >
-            <Ionicons name="settings" size={20} color="white" />
-          </TouchableOpacity>
-
-          {/* Profile Picture positioned at bottom center of cover photo */}
-          <TouchableOpacity
-            onPress={pickImage}
-            style={[tw.absolute, { bottom: -50, left: '50%', marginLeft: -50 }]}
-          >
-            <View style={[tw.relative]}>
-              <Image
-                source={{
-                  uri: profile?.profilePicture || 
-                       profile?.gallery?.find((img: any) => img.featured)?.thumbnailUrl || 
-                       "https://randomuser.me/api/portraits/women/5.jpg"
-                }}
-                style={[tw.w24, tw.h24, tw.roundedFull, tw.border4, tw.borderWhite]}
-              />
-              {isUploading && (
-                <View style={[tw.absolute, tw.inset0, tw.justifyCenter, tw.itemsCenter, tw.bgBlack, tw.opacity50, tw.roundedFull]}>
-                  <Ionicons name="camera" size={16} color="white" />
-                </View>
-              )}
-              {/* Profile Type Tag */}
-              <View style={[tw.absolute, { bottom: -12, left: '50%', transform: [{ translateX: -30 }] }, tw.bgGray900, tw.pX3, tw.pY1, tw.roundedFull, tw.itemsCenter, tw.justifyCenter, { minWidth: 60, zIndex: 2 }]}> 
-                <Text style={[tw.textWhite, tw.textXs, tw.fontBold, { textAlign: 'center' }]}> 
-                  {profile?.profileType || profileType === 'travel' && 'Travel' || profileType === 'networking' && 'Networking' || profileType === 'dating' && 'Dating'}
-                </Text>
-              </View>
+            {/* Decorative Elements */}
+            <View style={[tw.absolute, { top: 16, right: 16, opacity: 0.2 }]}>
+              <Ionicons name="heart" size={40} color="white" />
             </View>
-          </TouchableOpacity>
+            <View style={[tw.absolute, { top: 48, left: 32, opacity: 0.2 }]}>
+              <Ionicons name="star" size={24} color="white" />
+            </View>
+            <View style={[tw.absolute, { top: 60, right: 20, opacity: 0.2 }]}>
+              <Ionicons name="sparkles" size={32} color="white" />
+            </View>
+            
+            {/* Settings Icon */}
+            <TouchableOpacity
+              style={[tw.absolute, { top: 16, right: 16, backgroundColor: 'rgba(0,0,0,0.3)', borderRadius: 20, padding: 8 }]}
+              onPress={() => router.push("/settings")}
+            >
+              <Ionicons name="settings" size={20} color="white" />
+            </TouchableOpacity>
+
+            {/* Profile Picture positioned at bottom center of gradient */}
+            <TouchableOpacity
+              onPress={pickImage}
+              style={[tw.absolute, { bottom: -50, left: '50%', marginLeft: -50 }]}
+            >
+              <View style={[tw.relative]}>
+                <Image
+                  src={getFeaturedImage()}
+                  source={require("../../assets/images/default_avatar.jpg")}
+                  style={[tw.w24, tw.h24, tw.roundedFull, tw.border4, tw.borderWhite]}
+                />
+                {isUploading && (
+                  <View style={[tw.absolute, tw.inset0, tw.justifyCenter, tw.itemsCenter, tw.bgBlack, tw.opacity50, tw.roundedFull]}>
+                    <Ionicons name="camera" size={16} color="white" />
+                  </View>
+                )}
+                {/* Profile Type Tag */}
+                {/* <View style={[tw.absolute, { bottom: -12, left: '50%', transform: [{ translateX: -30 }] }, tw.bgGray900, tw.pX3, tw.pY1, tw.roundedFull, tw.itemsCenter, tw.justifyCenter, { minWidth: 60, zIndex: 2 }]}> 
+                  <Text style={[tw.textWhite, tw.textXs, tw.fontBold, { textAlign: 'center' }]}> 
+                    {profile?.profileType || (profileType === 'travel' ? 'Travel' : profileType === 'networking' ? 'Networking' : 'Dating')}
+                  </Text>
+                </View> */}
+              </View>
+            </TouchableOpacity>
+          </LinearGradient>
         </View>
 
         {/* Profile Section */}
@@ -420,23 +476,17 @@ const ProfileScreen: React.FC = () => {
             ) : (
               <>
                 <Text style={[tw.textGray900, tw.text2xl, tw.fontBold]}>
-                {profile?.firstname || profile?.name || "User"} {profile?.lastname || ""}
+                  {getDisplayName()}
                 </Text>
-                <Text style={[tw.textGray600, tw.textBase, tw.mT1]}>
-                  {profile?.city || profile?.location || "Location not set"}
-                  {profile?.latitude && profile?.longitude && profile.latitude !== 0 && profile.longitude !== 0 ? 
-                    ` (${profile.latitude.toFixed(2)}, ${profile.longitude.toFixed(2)})` : ""}
-                </Text>
+                {/* <Text style={[tw.textGray600, tw.textBase, tw.mT1]}>
+                  {getProfileLocation()}
+                </Text> */}
                 <Text style={[tw.textGray700, tw.textBase, tw.mT2, tw.textCenter]}>
-                  {profile?.bio || profile?.description || 
-                    `${profile?.gender || ""}${profile?.dateOfBirth ? ` • ${calculateAge(profile.dateOfBirth)} years old` : ""}${profile?.profileType ? ` • ${profile.profileType}` : ""}`
-                  }
+                  {getProfileBio()}
                 </Text>
               </>
             )}
           </View>
-
-
 
           {/* Additional Profile Details */}
           {!isLoadingProfile && !profileError && profile && (
@@ -470,6 +520,43 @@ const ProfileScreen: React.FC = () => {
                   <Text style={[tw.textGray900, tw.textBase, tw.fontBold]}>{profile.profileTypes.join(", ")}</Text>
                 </View>
               )}
+              {profile.verified && (
+                <View style={[tw.flexRow, tw.justifyBetween, tw.mB2]}>
+                  <Text style={[tw.textGray600, tw.textBase]}>Status:</Text>
+                  <View style={[tw.flexRow, tw.itemsCenter]}>
+                    <Ionicons name="checkmark-circle" size={16} color="#10b981" style={[tw.mR1]} />
+                    <Text style={[tw.textGreen600, tw.textBase, tw.fontBold]}>Verified</Text>
+                  </View>
+                </View>
+              )}
+              {profile.status && (
+                <View style={[tw.flexRow, tw.justifyBetween, tw.mB2]}>
+                  <Text style={[tw.textGray600, tw.textBase]}>Account Status:</Text>
+                  <Text style={[tw.textGray900, tw.textBase, tw.fontBold]}>{profile.status}</Text>
+                </View>
+              )}
+            </View>
+          )}
+
+          {/* Gallery Section */}
+          {!isLoadingProfile && !profileError && profile?.gallery && profile.gallery.length > 0 && (
+            <View style={[tw.bgWhite, tw.roundedLg, tw.p4, tw.mB4, tw.shadow]}>
+              <Text style={[tw.textPink700, tw.textLg, tw.fontBold, tw.mB3]}>Photos</Text>
+              <View style={[tw.flexRow, tw.flexWrap]}>
+                {profile.gallery.slice(0, 6).map((image: any, index: number) => (
+                  <View key={image.id} style={[tw.relative, tw.mR2, tw.mB2]}>
+                    <Image 
+                      source={{ uri: image.thumbnailUrl }} 
+                      style={[tw.w20, tw.h20, tw.rounded, tw.border, tw.borderGray200]} 
+                    />
+                    {image.featured && (
+                      <View style={[tw.absolute, { top: 4, right: 4 }, tw.bgPink700, tw.roundedFull, tw.p1]}>
+                        <Ionicons name="star" size={12} color="white" />
+                      </View>
+                    )}
+                  </View>
+                ))}
+              </View>
             </View>
           )}
 

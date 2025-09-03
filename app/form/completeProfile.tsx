@@ -489,4 +489,4 @@ const CompleteProfileScreen: React.FC = () => {
   );
 };
 
-export default CompleteProfileScreen; 
+export default CompleteProfileScreen;

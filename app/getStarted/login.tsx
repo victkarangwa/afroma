@@ -204,7 +204,7 @@ const LoginScreen: React.FC = () => {
           setVisible(true);
           return;
         }
-        if (!result.newAccount) {
+        if (!result?.newAccount) {
           LocalStorage.setItem(
             localStore.token,
             result?.tokenResponse?.otpToken
@@ -370,6 +370,14 @@ const LoginScreen: React.FC = () => {
         {errors.password && (
           <Text style={[tw.textRed500, tw.mB2]}>{errors.password.message}</Text>
         )}
+        
+        {/* Forgot Password Link */}
+        <View style={[tw.flex, tw.flexRow, tw.justifyEnd, tw.mB2]}>
+          <TouchableOpacity onPress={() => router.push('/getStarted/forgetPassword')}>
+            <Text style={[{ color: '#fb6c31' }, tw.fontBold, tw.textSm]}>Forgot Password?</Text>
+          </TouchableOpacity>
+        </View>
+        
         {/* Login Button */}
         <Button
           mode="contained"

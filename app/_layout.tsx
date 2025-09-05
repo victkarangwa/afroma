@@ -227,6 +227,18 @@ export default function RootLayout() {
                   headerTintColor: "#eca899",
                 }}
               />
+              <Stack.Screen
+                name="getStarted/forgetPassword"
+                options={{ headerShown: false }}
+              />
+              <Stack.Screen
+                name="getStarted/verifyResetOtp"
+                options={{ headerShown: false }}
+              />
+              <Stack.Screen
+                name="getStarted/resetPassword"
+                options={{ headerShown: false }}
+              />
               <Stack.Screen name="+not-found" />
             </Stack>
           </PaperProvider>

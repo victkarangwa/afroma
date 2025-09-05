@@ -25,7 +25,8 @@
       },
       "ios": {
         "image": "latest",
-        "resourceClass": "m-medium"
+        "resourceClass": "m-medium",
+        "autoIncrement": true
       }
     }
   },

@@ -8,12 +8,12 @@ import {
 
 // export default function App() {
 
-if (Platform.OS === "android") {
+// if (Platform.OS === "android") {
   GoogleSignin.configure({
     webClientId: "264350061976-qe2m1m1gc5cs8a0mh1hhq3i64j8s1n5i.apps.googleusercontent.com",
     offlineAccess: true,
   });
-}
+// }
 export async function onGoogleButtonPress() {
   try {
     // Check if your device supports Google Play

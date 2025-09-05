@@ -389,11 +389,11 @@ const LoginScreen: React.FC = () => {
         </View>
         <View style={[tw.flex, tw.flexRow, tw.justifyCenter, tw.itemsCenter, tw.mT4]}>
           <TouchableOpacity style={[tw.bgWhite, tw.roundedFull, tw.p3, primaryShadow, tw.mX2]}
-          //  onPress={handleFacebookLogin}
-          onPress={() =>
-            onGoogleButtonPress().then((res) => {
-              if (res) console.log("=========", res);
-            })}
+           onPress={handleFacebookLogin}
+          // onPress={() =>
+          //   onGoogleButtonPress().then((res) => {
+          //     if (res) console.log("=========", res);
+          //   })}
            >
             <FontAwesome name="facebook" size={24} color="#1877F3" />
           </TouchableOpacity>

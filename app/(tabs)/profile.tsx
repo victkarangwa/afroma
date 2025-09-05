@@ -129,7 +129,8 @@ const ProfileScreen: React.FC = () => {
   // On mount, read profileType from local storage
   useEffect(() => {
     (async () => {
-      const storedType = await LocalStorage.getItem<'travel' | 'networking' | 'dating'>(localStoreTyped.profileType);
+      const storedType = await LocalStorage.getItem<'travel' | 'networking' | 'dating'>(localStore.profileType);
+      console.log('Profile screen - Retrieved profileType from storage:', storedType); // Debug log
       if (storedType) setProfileType(storedType);
     })();
   }, []);
@@ -302,7 +303,7 @@ const ProfileScreen: React.FC = () => {
   const handleProfileSwitch = async (type: 'travel' | 'networking' | 'dating') => {
     setProfileType(type);
     setModalVisible(false);
-    await LocalStorage.setItem(localStoreTyped.profileType, type);
+    await LocalStorage.setItem(localStore.profileType, type);
     let profileTypeParam = 'main';
     if (type === 'dating') profileTypeParam = 'dating';
     else if (type === 'networking') profileTypeParam = 'networking';

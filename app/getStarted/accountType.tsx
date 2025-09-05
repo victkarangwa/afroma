@@ -227,20 +227,7 @@ const AccountTypeScreen: React.FC = () => {
         >
           Continue
         </Button>
-        {/* Social Login */}
-        <View style={[tw.flex, tw.flexRow, tw.justifyCenter, tw.itemsCenter, tw.mT8]}>
-          <View style={[tw.flex1, tw.hPx, tw.bgGray300, tw.mR2]} />
-          <Text style={[tw.textGray500, tw.textSm]}>or sign up with</Text>
-          <View style={[tw.flex1, tw.hPx, tw.bgGray300, tw.mL2]} />
-        </View>
-        <View style={[tw.flex, tw.flexRow, tw.justifyCenter, tw.itemsCenter, tw.mT4]}>
-          <TouchableOpacity style={[tw.bgWhite, tw.roundedFull, tw.p3, primaryShadow, tw.mX2]} onPress={() => {/* TODO: Add Facebook login */}}>
-            <FontAwesome name="facebook" size={24} color="#1877F3" />
-          </TouchableOpacity>
-          <TouchableOpacity style={[tw.bgWhite, tw.roundedFull, tw.p3, primaryShadow, tw.mX2]} onPress={() => {/* TODO: Add Google login */}}>
-            <FontAwesome name="google" size={24} color="#EA4335" />
-          </TouchableOpacity>
-        </View>
+
         {/* Already have an account? */}
         <View style={[tw.flex, tw.flexRow, tw.justifyCenter, tw.itemsCenter, tw.mT8]}>
           <Text style={[tw.textGray700]}>Already have an account? </Text>

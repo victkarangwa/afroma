@@ -28,6 +28,27 @@ import DatingCard from "@/components/DatingCard";
 import useApiRequest from "@/hooks/useApiRequest";
 import { checkAuthStatus } from "@/utils/auth";
 
+// Map API profileType to local value used in app
+const mapApiProfileTypeToLocal = (apiType?: string): 'travel' | 'networking' | 'dating' | null => {
+  if (!apiType) return null;
+  const upper = apiType.toUpperCase();
+  if (upper === 'TRAVEL') return 'travel';
+  if (upper === 'NETWORKING') return 'networking';
+  if (upper === 'DATING') return 'dating';
+  return null;
+};
+
+// Choose a preferred type from an array of API types
+const pickPreferredProfileType = (apiTypes?: string[] | null): 'travel' | 'networking' | 'dating' | null => {
+  if (!apiTypes || apiTypes.length === 0) return null;
+  // Preference order: DATING > NETWORKING > TRAVEL
+  const upper = apiTypes.map(t => (t || '').toUpperCase());
+  if (upper.includes('DATING')) return 'dating';
+  if (upper.includes('NETWORKING')) return 'networking';
+  if (upper.includes('TRAVEL')) return 'travel';
+  return mapApiProfileTypeToLocal(apiTypes[0]);
+};
+
 const { width: screenWidth, height: screenHeight } = Dimensions.get("window");
 
 
@@ -120,11 +141,56 @@ const HomeScreen: React.FC = () => {
       (async () => {
         console.log('Home screen focused'); // Debug log
         const storedType = await LocalStorage.getItem<'travel' | 'networking' | 'dating'>(localStore.profileType);
-        if (storedType) setProfileType(storedType);
-        setShowDating(storedType === 'dating');
+        console.log('Retrieved profileType from storage:', storedType); // Debug log
+        if (storedType) {
+          setProfileType(storedType);
+          console.log('Set profileType state to:', storedType); // Debug log
+        } else {
+          // If no profile type is stored, try to fetch user profile to determine it
+          console.log('No profile type stored, attempting to fetch user profile...');
+          try {
+            const me: any = await send("get", "/users/me");
+            if (me) {
+              const apiProfileType: string | undefined = me.profileType;
+              const apiProfileTypes: string[] | undefined = me.profileTypes;
+              
+              // Use the same logic as login screen
+              let localProfileType = mapApiProfileTypeToLocal(apiProfileType);
+              if (!localProfileType) {
+                localProfileType = pickPreferredProfileType(apiProfileTypes);
+              }
+              
+              // If still no profile type found, check if user has dating-related fields
+              if (!localProfileType) {
+                if (me.interestedIn || me.gender) {
+                  console.log("User has dating fields, defaulting to dating profile type");
+                  localProfileType = 'dating';
+                } else {
+                  console.log("No profile type indicators found, defaulting to travel");
+                  localProfileType = 'travel';
+                }
+              }
+              
+              if (localProfileType) {
+                await LocalStorage.setItem(localStore.profileType, localProfileType);
+                setProfileType(localProfileType);
+                console.log('Set profileType state to (from API):', localProfileType);
+              }
+            }
+          } catch (error) {
+            console.warn('Failed to fetch user profile for profile type:', error);
+            // Default to travel if we can't determine the profile type
+            setProfileType('travel');
+            console.log('Defaulted to travel profile type');
+          }
+        }
+        // Get the final profile type (either from storage or determined from API)
+        const finalProfileType = storedType || profileType;
+        setShowDating(finalProfileType === 'dating');
+        console.log('Set showDating to:', finalProfileType === 'dating'); // Debug log
         
         // Update dating profiles with API data
-        if (storedType === 'dating' && apiDatingMatches.length > 0) {
+        if (finalProfileType === 'dating' && apiDatingMatches.length > 0) {
           setDatingProfiles(apiDatingMatches);
         }
         

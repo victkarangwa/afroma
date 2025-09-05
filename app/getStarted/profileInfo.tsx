@@ -27,6 +27,7 @@ const ProfileInfoScreen: React.FC = () => {
   const [showDatePicker, setShowDatePicker] = React.useState(false);
   const { loading, send, error } = useApiRequest<ApiResponse>();
   const [visible, setVisible] = React.useState(false);
+  const [isLoading, setIsLoading] = React.useState(false);
   const [modalInfo, setModalInfo] = React.useState<{
     title: string;
     description: string;
@@ -63,6 +64,7 @@ const ProfileInfoScreen: React.FC = () => {
     : "-";
 
   const onSubmit = async (data: FormData) => {
+    setIsLoading(true);
     try {
       // Debug: Log all params to see what's being passed
       console.log("All params:", params);
@@ -229,6 +231,8 @@ const ProfileInfoScreen: React.FC = () => {
         onDismiss: () => setVisible(false),
       });
       setVisible(true);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -427,15 +431,15 @@ const ProfileInfoScreen: React.FC = () => {
           onPress={handleSubmit(onSubmit)}
           style={[tw.bgPink700, tw.roundedFull]}
           labelStyle={[tw.textWhite, tw.fontBold]}
-          loading={loading}
+          loading={isLoading}
           disabled={
-            loading ||
+            isLoading ||
             !watch("gender") ||
             (isDatingProfile && !watch("interestedIn")) ||
             !dateOfBirth
           }
         >
-          {loading ? "Creating Account..." : "Create Account"}
+          {isLoading ? "Creating Account..." : "Create Account"}
         </Button>
       </View>
     </View>

@@ -123,14 +123,32 @@ const LoginScreen: React.FC = () => {
         // Fetch user's profile to determine profileType and persist it
         try {
           const me: any = await send("get", "/users/me");
+          console.log("User profile data:", me); // Debug log
           if (me) {
             const apiProfileType: string | undefined = me.profileType;
             const apiProfileTypes: string[] | undefined = me.profileTypes;
+            
+            console.log("API profileType:", apiProfileType); // Debug log
+            console.log("API profileTypes array:", apiProfileTypes); // Debug log
 
             // Determine the profile type to use
             let localProfileType = mapApiProfileTypeToLocal(apiProfileType);
+            console.log("Mapped profileType from single value:", localProfileType); // Debug log
+            
             if (!localProfileType) {
               localProfileType = pickPreferredProfileType(apiProfileTypes);
+              console.log("Mapped profileType from array:", localProfileType); // Debug log
+            }
+
+            // If still no profile type found, check if user has dating-related fields
+            if (!localProfileType) {
+              if (me.interestedIn || me.gender) {
+                console.log("User has dating fields, defaulting to dating profile type");
+                localProfileType = 'dating';
+              } else {
+                console.log("No profile type indicators found, defaulting to travel");
+                localProfileType = 'travel';
+              }
             }
 
             if (localProfileType) {

@@ -178,101 +178,44 @@ const LoginScreen: React.FC = () => {
 
   const handleSocialLogin = async (provider: 'google' | 'facebook', token: string) => {
     try {
-      setIsLoading(true);
-      // Clear any existing user data
-      removeUserData();
-      
-      console.log(`Attempting ${provider} login`);
-      
-      const result = await send(
-        "post",
-        `/auth/${provider}/login`,
-        {
-          token: token,
-          provider: provider
-        },
-        {
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
-      );
-
-      console.log(`${provider} login result:`, result);
-
-      if (result?.errors) {
-        console.error(`${provider} login error:`, result.errors);
-        setModalInfo({
-          title: `${provider.charAt(0).toUpperCase() + provider.slice(1)} Login Failed`,
-          description: result.errors || `Failed to login with ${provider}. Please try again.`,
-          status: "error",
-          btnText: "OK",
-          onDismiss: () => setVisible(false),
-        });
-        setVisible(true);
-        return;
-      }
-
-      // Check if login was successful
-      if (result && result.code === "00" && result.token) {
-        // Store the authentication token
-        await saveAuthData(result.token, result.expiresAt);
-        
-        console.log(`${provider} login successful, token stored:`, result.token);
-
-        // Fetch user's profile to determine profileType and persist it
-        try {
-          const me: any = await send("get", "/users/me");
-          if (me) {
-            const apiProfileType: string | undefined = me.profileType;
-            const apiProfileTypes: string[] | undefined = me.profileTypes;
-
-            // Determine the profile type to use
-            let localProfileType = mapApiProfileTypeToLocal(apiProfileType);
-            if (!localProfileType) {
-              localProfileType = pickPreferredProfileType(apiProfileTypes);
-            }
-
-            if (localProfileType) {
-              await LocalStorage.setItem(localStore.profileType, localProfileType);
-              console.log("Saved profileType to storage (social):", localProfileType);
-            } else {
-              console.log("No profileType found on user (social); leaving unset");
-            }
+      if (token) {
+        const result = await send(
+          "get",
+          `/socialmedia/auth/${provider}`,
+          {
+            headers: {
+              accessToken: token,
+              platform: Platform.OS,
+            },
           }
-        } catch (profileErr) {
-          console.warn(`Failed to fetch /users/me after ${provider} login:`, profileErr);
+        );
+
+        console.log("result----->", result);
+
+        if (result?.errors) {
+          setModalInfo({
+            title: "Error",
+            description:
+              result?.errors || "An error occurred. Please try again.",
+            status: "error",
+            btnText: "Try Again",
+            onDismiss: () => setVisible(false),
+          });
+          setVisible(true);
+          return;
         }
-        
-        // Navigate to home screen
-        router.replace("/(tabs)");
-      } else if (result && result.otpToken) {
-        // If OTP is required, store the OTP token and navigate to OTP screen
-        await LocalStorage.setItem(localStore.token, result.otpToken);
-        router.push({ pathname: "/getStarted/otp" });
-      } else {
-        // Handle unexpected response
-        setModalInfo({
-          title: `${provider.charAt(0).toUpperCase() + provider.slice(1)} Login Failed`,
-          description: `Unexpected response from server. Please try again.`,
-          status: "error",
-          btnText: "OK",
-          onDismiss: () => setVisible(false),
-        });
-        setVisible(true);
+        if (!result.newAccount) {
+          LocalStorage.setItem(
+            localStore.token,
+            result?.tokenResponse?.otpToken
+          );
+          router.push({ pathname: "/getStarted/otp" });
+        } else {
+          router.push({ pathname: "/getStarted/accountType" });
+        }
       }
     } catch (error) {
-      console.error(`${provider} login error:`, error);
-      setModalInfo({
-        title: `${provider.charAt(0).toUpperCase() + provider.slice(1)} Login Failed`,
-        description: `An error occurred during ${provider} login. Please try again.`,
-        status: "error",
-        btnText: "OK",
-        onDismiss: () => setVisible(false),
-      });
-      setVisible(true);
-    } finally {
-      setIsLoading(false);
+      console.log("error", error, token);
     }
   };
 
@@ -445,7 +388,13 @@ const LoginScreen: React.FC = () => {
           <View style={[tw.flex1, tw.hPx, tw.bgGray300, tw.mL2]} />
         </View>
         <View style={[tw.flex, tw.flexRow, tw.justifyCenter, tw.itemsCenter, tw.mT4]}>
-          <TouchableOpacity style={[tw.bgWhite, tw.roundedFull, tw.p3, primaryShadow, tw.mX2]} onPress={handleFacebookLogin}>
+          <TouchableOpacity style={[tw.bgWhite, tw.roundedFull, tw.p3, primaryShadow, tw.mX2]}
+          //  onPress={handleFacebookLogin}
+          onPress={() =>
+            onGoogleButtonPress().then((res) => {
+              if (res) console.log("=========", res);
+            })}
+           >
             <FontAwesome name="facebook" size={24} color="#1877F3" />
           </TouchableOpacity>
           <TouchableOpacity style={[tw.bgWhite, tw.roundedFull, tw.p3, primaryShadow, tw.mX2]} onPress={handleGoogleLogin}>

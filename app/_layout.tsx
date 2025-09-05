@@ -69,11 +69,11 @@ export default function RootLayout() {
           }
           
           console.log("No valid token found, navigating to registration");
-          router.replace({ pathname: "/getStarted/accountType" });
+          router.replace({ pathname: "/starters" });
         } catch (error) {
           console.error("Initialization Error:", error);
           // On error, navigate to registration
-          router.replace({ pathname: "/getStarted/accountType" });
+          router.replace({ pathname: "/starters" });
         }
       }
     };

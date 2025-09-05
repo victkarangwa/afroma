@@ -1,0 +1,70 @@
+{
+  "project_info": {
+    "project_number": "264350061976",
+    "project_id": "afroma-250",
+    "storage_bucket": "afroma-250.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:264350061976:android:87d8b9d4a5a6483ddf07ed",
+        "android_client_info": {
+          "package_name": "net.afroma.app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "264350061976-bhsin765o23p54k0t1jle64v2u58g8o9.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "net.afroma.app",
+            "certificate_hash": "cd7fe008c09290eee3e6b91163a6f918c6365575"
+          }
+        },
+        {
+          "client_id": "264350061976-ctmqj3rbdudiltmp3s4u273r9shgejfv.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "net.afroma.app",
+            "certificate_hash": "5e8f16062ea3cd2c4a0d547876baa6f38cabf625"
+          }
+        },
+        {
+          "client_id": "264350061976-vg2ud9s6hl22iv4h05rrsm69uv2lhv29.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "net.afroma.app",
+            "certificate_hash": "d23c710bac0efa9a684e7a1878f6c7703e9cf8dd"
+          }
+        },
+        {
+          "client_id": "264350061976-qe2m1m1gc5cs8a0mh1hhq3i64j8s1n5i.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBzg2t-tDs70okRKJwhzhkXEKzhtAV9T8Y"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "264350061976-qe2m1m1gc5cs8a0mh1hhq3i64j8s1n5i.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "264350061976-tsqp24rnknu5915rb7spu7gh13mce25m.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "net.afroma.app"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

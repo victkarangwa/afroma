@@ -1191,13 +1191,67 @@ const HomeScreen: React.FC = () => {
       {/* Top Navigation with Logo and Search */}
       <View style={[tw.pX4, tw.pT2, tw.pB4]}>
         <View style={[tw.flexRow, tw.itemsCenter, tw.justifyBetween]}>
-          {/* Logo */}
-          <View style={[tw.mR3]}>
+          {/* Logo and Profile Type Indicator */}
+          <View style={[tw.flexRow, tw.itemsCenter, tw.mR3]}>
             <Image
               source={require("../../assets/images/afroma_logo.png")}
               style={[tw.w8, tw.h8]}
               resizeMode="contain"
             />
+            {/* Profile Type Badge */}
+            {profileType && (
+              <TouchableOpacity 
+                style={[
+                  tw.mL2, 
+                  tw.pX2, 
+                  tw.pY1, 
+                  tw.roundedFull,
+                  tw.flexRow,
+                  tw.itemsCenter,
+                  profileType === 'dating' ? tw.bgPink100 : 
+                  profileType === 'networking' ? tw.bgBlue100 : 
+                  tw.bgGreen100
+                ]}
+                onPress={() => router.push('/profile')}
+                activeOpacity={0.7}
+              >
+                <Ionicons 
+                  name={
+                    profileType === 'dating' ? 'heart' : 
+                    profileType === 'networking' ? 'people' : 
+                    'airplane'
+                  } 
+                  size={12} 
+                  color={
+                    profileType === 'dating' ? '#ec4899' : 
+                    profileType === 'networking' ? '#3b82f6' : 
+                    '#10b981'
+                  } 
+                />
+                {/* <Text style={[
+                  tw.mL1, 
+                  tw.textXs, 
+                  tw.fontMedium,
+                  profileType === 'dating' ? tw.textPink700 : 
+                  profileType === 'networking' ? tw.textBlue700 : 
+                  tw.textGreen700
+                ]}>
+                  {profileType === 'dating' ? 'Dating' : 
+                   profileType === 'networking' ? 'Networking' : 
+                   'Travel'}
+                </Text> */}
+                <Ionicons 
+                  name="chevron-down" 
+                  size={10} 
+                  color={
+                    profileType === 'dating' ? '#ec4899' : 
+                    profileType === 'networking' ? '#3b82f6' : 
+                    '#10b981'
+                  } 
+                  style={[tw.mL1]}
+                />
+              </TouchableOpacity>
+            )}
           </View>
           {/* Search Bar */}
           <View style={[
@@ -1230,13 +1284,13 @@ const HomeScreen: React.FC = () => {
             </TouchableOpacity>
           </View>
           {/* Notification Button */}
-          <View style={[tw.mL3]}>
+          {/* <View style={[tw.mL3]}>
             <NotificationBadge
               count={unreadNotificationsCount}
               onPress={() => router.push('/notifications')}
               size="medium"
             />
-          </View>
+          </View> */}
         </View>
         
         {/* Search Results */}

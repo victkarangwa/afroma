@@ -388,6 +388,9 @@
 					"$(inherited)",
 					"-ObjC",
 					"-lc++",
+					"-Wl,-U,_isKeyDown",
+					"-Wl,-U,_modifiedinput",
+					"-Wl,-U,_modifierFlags",
 				);
 				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_DEBUG";
 				PRODUCT_BUNDLE_IDENTIFIER = net.afroma.app;
@@ -415,6 +418,9 @@
 					"$(inherited)",
 					"-ObjC",
 					"-lc++",
+					"-Wl,-U,_isKeyDown",
+					"-Wl,-U,_modifiedinput",
+					"-Wl,-U,_modifierFlags",
 				);
 				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_RELEASE";
 				PRODUCT_BUNDLE_IDENTIFIER = net.afroma.app;

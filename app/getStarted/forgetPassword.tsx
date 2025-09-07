@@ -24,6 +24,7 @@ const ForgetPasswordScreen: React.FC = () => {
   });
 
   const [visible, setVisible] = React.useState(false);
+  const [isLoading, setIsLoading] = React.useState(false);
   const [modalInfo, setModalInfo] = React.useState<{
     title: string;
     description: string;
@@ -38,11 +39,11 @@ const ForgetPasswordScreen: React.FC = () => {
     onDismiss: () => {},
   });
 
-  const { forgetPassword, loading } = usePasswordReset();
+  const { forgetPassword } = usePasswordReset();
 
   const handleForgetPassword = async (data: FormData) => {
     console.log("Sending forget password request for:", data.email);
-    
+    setIsLoading(true);
     const result = await forgetPassword({ email: data.email });
 
     console.log("Forget password result:", result);
@@ -88,6 +89,7 @@ const ForgetPasswordScreen: React.FC = () => {
       });
       setVisible(true);
     }
+    setIsLoading(false);
   };
 
   const primaryShadow = {
@@ -169,8 +171,8 @@ const ForgetPasswordScreen: React.FC = () => {
           onPress={handleSubmit(handleForgetPassword)}
           style={[tw.bgPink700, tw.mT4]}
           labelStyle={[tw.textWhite]}
-          loading={loading}
-          disabled={loading}
+          loading={isLoading}
+          disabled={isLoading}
         >
           Send Reset Code
         </Button>

@@ -90,7 +90,7 @@ const DatingCard: React.FC<DatingCardProps> = ({ profile, onSwipe, isTopCard }) 
       }
       return profile.mediaList[0].mediaUrl;
     }
-    return 'https://randomuser.me/api/portraits/men/1.jpg'; // Default image
+    return null; // No default image - will use local fallback
   };
 
   // Format distance
@@ -131,12 +131,19 @@ const DatingCard: React.FC<DatingCardProps> = ({ profile, onSwipe, isTopCard }) 
       ]}
       {...panResponder.panHandlers}
     >
-      {/* Profile Image */}
-      <Image
-        source={{ uri: getProfileImage() }}
-        style={[tw.flex1, tw.wFull]}
-        resizeMode="cover"
-      />
+      {/* Profile Image Container */}
+      <View style={[tw.flex1, tw.wFull, getProfileImage() ? {} : tw.bgGray100]}>
+        <Image
+          source={getProfileImage() ? { uri: getProfileImage() } : require('../../assets/images/default_avatar.jpg')}
+          style={[
+            tw.flex1, 
+            tw.wFull,
+            getProfileImage() ? {} : { width: '60%', height: '60%', alignSelf: 'center' }
+          ]}
+          resizeMode={getProfileImage() ? "cover" : "contain"}
+          blurRadius={getProfileImage() ? 0 : 2}
+        />
+      </View>
       
       {/* Gradient Overlay */}
       <View style={[

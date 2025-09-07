@@ -1154,11 +1154,11 @@ const HomeScreen: React.FC = () => {
             >
               <View style={[tw.flexRow, tw.itemsCenter]}>
                 <ImageWithFallback 
-                  source={{ 
-                    uri: profile.mediaList && profile.mediaList.length > 0 
-                      ? profile.mediaList[0].mediaUrl 
-                      : 'https://randomuser.me/api/portraits/men/1.jpg' 
-                  }} 
+                  source={profile.mediaList && profile.mediaList.length > 0 
+                    ? { uri: profile.mediaList[0].mediaUrl }
+                    : null
+                  } 
+                  fallbackSource={require('../../assets/images/default_avatar.jpg')}
                   style={[tw.w10, tw.h10, tw.roundedFull, tw.mR3]} 
                 />
                 <View style={[tw.flex1]}>

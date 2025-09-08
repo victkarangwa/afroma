@@ -9,7 +9,7 @@ import { FontAwesome } from '@expo/vector-icons';
 import Modal from "@/components/Modal";
 import useApiRequest from "@/hooks/useApiRequest";
 import { ApiResponse } from "@/types";
-import { removeUserData } from "@/utils";
+import { removeUserData, encodeBase64 } from "@/utils";
 import localStore from "@/utils/localValues";
 import LocalStorage from "@/utils/storage";
 import moment from "moment";
@@ -82,7 +82,7 @@ const LoginScreen: React.FC = () => {
       removeUserData();
       
       // Create basic auth header
-      const basicAuth = btoa(`${credentials.username}:${credentials.password}`);
+      const basicAuth = encodeBase64(`${credentials.username}:${credentials.password}`);
       
       console.log("Attempting login with:", credentials.username);
       

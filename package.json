@@ -57,6 +57,7 @@
     "react-dom": "18.2.0",
     "react-hook-form": "^7.53.2",
     "react-native": "0.74.5",
+    "react-native-base64": "^0.2.1",
     "react-native-calendar-picker": "^8.0.5",
     "react-native-circular-progress-indicator": "^4.4.2",
     "react-native-date-picker": "^5.0.8",

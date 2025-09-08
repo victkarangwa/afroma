@@ -3,9 +3,9 @@
 
 export const socialLoginConfig = {
   google: {
-    webClientId: "104521571553-70cj474frto1ascll6mfukhilpveqdvp.apps.googleusercontent.com", // Already configured in SocialLogin component
-    iosClientId: "YOUR_IOS_CLIENT_ID", // Add your iOS client ID here
-    androidClientId: "YOUR_ANDROID_CLIENT_ID", // Add your Android client ID here
+    webClientId: "264350061976-qe2m1m1gc5cs8a0mh1hhq3i64j8s1n5i.apps.googleusercontent.com",
+    iosClientId: "264350061976-tsqp24rnknu5915rb7spu7gh13mce25m.apps.googleusercontent.com",
+    androidClientId: "264350061976-vg2ud9s6hl22iv4h05rrsm69uv2lhv29.apps.googleusercontent.com",
   },
   facebook: {
     appId: "1921081955393227", // Replace with your Facebook App ID

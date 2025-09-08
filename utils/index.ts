@@ -1,4 +1,7 @@
 import RNFS from "react-native-fs";
+import { Platform } from "react-native";
+// @ts-ignore - react-native-base64 doesn't have type definitions
+import base64 from "react-native-base64";
 
 import localStore from "./localValues";
 import LocalStorage from "./storage";
@@ -307,7 +310,7 @@ export const generateChatId = (userId1: number, userId2: number) => {
   return [userId1, userId2].sort().join("_");
 };
 
-export const convertSecondsToTime = (timestamp) => {
+export const convertSecondsToTime = (timestamp: any) => {
   // Convert Firebase Timestamp to JavaScript Date
   const date = timestamp?.toDate();
 
@@ -319,4 +322,26 @@ export const convertToMilliseconds = (timestamp: any) => {
   const milliseconds =
     timestamp.seconds * 1000 + Math.floor(timestamp.nanoseconds / 1000000);
   return milliseconds;
+};
+
+// Base64 encoding utility for React Native compatibility
+export const encodeBase64 = (str: string): string => {
+  // Use btoa for web
+  if (typeof btoa !== 'undefined') {
+    return btoa(str);
+  }
+  
+  // For React Native, use react-native-base64 which is consistent across platforms
+  return base64.encode(str);
+};
+
+// Base64 decoding utility for React Native compatibility
+export const decodeBase64 = (str: string): string => {
+  // Use atob for web
+  if (typeof atob !== 'undefined') {
+    return atob(str);
+  }
+  
+  // For React Native, use react-native-base64 which is consistent across platforms
+  return base64.decode(str);
 };

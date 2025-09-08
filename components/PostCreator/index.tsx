@@ -17,6 +17,9 @@ import * as ImagePicker from "expo-image-picker";
 import { useRouter } from "expo-router";
 import { useCreatePost } from "@/hooks/useCreatePost";
 import { useMediaUpload } from "@/hooks/useMediaUpload";
+import { GooglePlacesAutocomplete } from 'react-native-google-places-autocomplete';
+
+const GOOGLE_MAPS_API_KEY = "AIzaSyBYRk6B2lK6YxM1MNzgvc9nXr6GsCw5CEo";
 
 interface PostCreatorProps {
   profileType: 'travel' | 'networking' | 'dating' | null;
@@ -234,20 +237,92 @@ const PostCreator: React.FC<PostCreatorProps> = ({ profileType, onPostCreated })
               autoFocus
             />
 
-            {/* Location Input */}
-            <View style={[tw.flexRow, tw.itemsCenter, tw.mB4]}>
-              <Ionicons name="location-outline" size={20} color="#6b7280" />
-              <TextInput
-                style={[
-                  tw.flex1,
-                  tw.textBase,
-                  tw.textGray700,
-                  tw.mL2,
-                ]}
+            {/* Location Input with Google Places */}
+            <View style={[tw.mB4]}>
+              <View style={[tw.flexRow, tw.itemsCenter, tw.mB2]}>
+                <Ionicons name="location-outline" size={20} color="#6b7280" />
+                <Text style={[tw.textGray700, tw.fontMedium, tw.mL2]}>
+                  Location
+                </Text>
+              </View>
+              <GooglePlacesAutocomplete
                 placeholder={config.locationPlaceholder}
-                placeholderTextColor="#9ca3af"
-                value={location}
-                onChangeText={setLocation}
+                onPress={(data, details = null) => {
+                  console.log("Selected location:", data);
+                  setLocation(data.description);
+                }}
+                query={{
+                  key: GOOGLE_MAPS_API_KEY,
+                  language: 'en',
+                  types: 'establishment|geocode',
+                }}
+                styles={{
+                  container: {
+                    flex: 0,
+                    zIndex: 1,
+                  },
+                  textInputContainer: {
+                    backgroundColor: 'transparent',
+                    borderTopWidth: 0,
+                    borderBottomWidth: 0,
+                    paddingHorizontal: 0,
+                  },
+                  textInput: {
+                    backgroundColor: '#f9fafb',
+                    borderRadius: 8,
+                    borderWidth: 1,
+                    borderColor: '#d1d5db',
+                    paddingHorizontal: 12,
+                    paddingVertical: 12,
+                    fontSize: 16,
+                    color: '#374151',
+                  },
+                  predefinedPlacesDescription: {
+                    color: '#1faadb',
+                  },
+                  listView: {
+                    backgroundColor: 'white',
+                    borderRadius: 8,
+                    marginTop: 4,
+                    elevation: 3,
+                    shadowColor: '#000',
+                    shadowOffset: { width: 0, height: 2 },
+                    shadowOpacity: 0.1,
+                    shadowRadius: 4,
+                  },
+                  row: {
+                    backgroundColor: 'white',
+                    padding: 12,
+                    borderBottomWidth: 1,
+                    borderBottomColor: '#f3f4f6',
+                  },
+                  description: {
+                    color: '#374151',
+                    fontSize: 14,
+                  },
+                }}
+                enablePoweredByContainer={false}
+                fetchDetails={true}
+                debounce={300}
+                minLength={2}
+                renderLeftButton={() => (
+                  <View style={[tw.justifyCenter, tw.itemsCenter, tw.mL3]}>
+                    <Ionicons name="search" size={20} color="#6b7280" />
+                  </View>
+                )}
+                renderRightButton={() => {
+                  if (location) {
+                    return (
+                      <TouchableOpacity
+                        style={[tw.justifyCenter, tw.itemsCenter, tw.mR3]}
+                        onPress={() => setLocation('')}
+                      >
+                        <Ionicons name="close-circle" size={20} color="#6b7280" />
+                      </TouchableOpacity>
+                    );
+                  }
+                  return null;
+                }}
               />
             </View>
 

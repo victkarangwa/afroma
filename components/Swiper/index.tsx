@@ -217,7 +217,7 @@ const SwiperComponent = ({
                     "http://203.161.50.115:5001",
                     "https://uat-user-api.bondedapp.io"
                   )}
-                source={require("@/assets/images/logo.jpeg")}
+                source={require("@/assets/images/afroma_logo.png")}
                 style={[tw.wAuto, tw.roundedLg, tw.m4, { height: "100%" }]}
                 blurRadius={20}
               />

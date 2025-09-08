@@ -157,7 +157,6 @@ const ChatsScreen: React.FC = () => {
       localStore.userId
     );
     const me: any = await send("get", "/users/me");
-    console.log("--(me.id)--->", me.id);
 
     router.push({
       pathname: "/chats/room",

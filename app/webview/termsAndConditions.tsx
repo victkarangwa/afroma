@@ -14,7 +14,7 @@ const WebViewScreen: React.FC<WebViewScreenProps> = () => {
     <View style={styles.container}>
       {loading && <Spinner />}
       <WebView
-        source={{ uri: "https://app.getterms.io/view/okmBu/tos/en-us" }}
+        source={{ uri: "https://app.termly.io/policy-viewer/policy.html?policyUUID=a7e9779b-8064-4c17-b0b9-e268c200f6e8" }}
         onLoadStart={() => setLoading(true)}
         onLoadEnd={() => setLoading(false)}
       />

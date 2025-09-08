@@ -37,7 +37,6 @@ const ChatScreen = () => {
   const router = useRouter();
   const { user, currentUserId } = useLocalSearchParams();
 
-  console.log("---currentUserId-->", currentUserId);
 
   // Support both dating and networking/travel: if user is a stringified object, parse it; else, use dummy data
   let userData: any = { firstName: '', avatar: '', online: false };

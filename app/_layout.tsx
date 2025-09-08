@@ -84,9 +84,9 @@ export default function RootLayout() {
   const theme = {
     ...DefaultTheme,
     colors: {
-      primary: "#eca899",
-      outline: "#eca899",
-      link: "#eca899",
+      primary: "#fb6c31",
+      outline: "#fb6c31",
+      link: "#fb6c31",
     },
   };
 
@@ -135,7 +135,7 @@ export default function RootLayout() {
                   headerTitle: "Edit Profile",
                   headerTitleAlign: "center",
                   headerBackTitle: "Back",
-                  headerTintColor: "#eca899",
+                  headerTintColor: "#fb6c31",
                 }}
               />
               <Stack.Screen
@@ -158,8 +158,8 @@ export default function RootLayout() {
                 options={{
                   headerTitle: "Upgrade Account",
                   headerTitleAlign: "center",
-                  // headerStyle: { backgroundColor: "#eca899" },
-                  headerTintColor: "#eca899",
+                  // headerStyle: { backgroundColor: "#fb6c31" },
+                  headerTintColor: "#fb6c31",
                   headerBackTitle: "Back",
                 }}
               />
@@ -224,7 +224,7 @@ export default function RootLayout() {
                   headerTitle: "Settings",
                   headerTitleAlign: "center",
                   headerBackTitle: "Back",
-                  headerTintColor: "#eca899",
+                  headerTintColor: "#fb6c31",
                 }}
               />
               <Stack.Screen

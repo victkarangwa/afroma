@@ -17,18 +17,18 @@ const SettingsScreen = () => {
         router.navigate("/webview/privacyPolicy");
       },
     },
-    {
-      title: "FAQs",
-      onPress: () => {
-        router.navigate("/faq");
-      },
-    },
-    {
-      title: "Payments",
-      onPress: () => {
-        router.navigate("/payment");
-      },
-    },
+    // {
+    //   title: "FAQs",
+    //   onPress: () => {
+    //     router.navigate("/faq");
+    //   },
+    // },
+    // {
+    //   title: "Payments",
+    //   onPress: () => {
+    //     router.navigate("/payment");
+    //   },
+    // },
   ];
 
   return (

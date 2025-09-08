@@ -43,7 +43,7 @@ const SpecificForumScreen: React.FC = () => {
   const [loadingPost, setLoadingPost] = useState(true);
 
   const getMyBasicProfile = async () => {
-    const result = await send("get", "/bonded-user-service/users/me");
+    const result = await send("get", "/users/me");
 
     if (result?.errors) {
       return;

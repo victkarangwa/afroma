@@ -157,7 +157,7 @@ const ForumScreen: React.FC = () => {
                       ]}
                     >
                       <Image
-                        src={thread?.created_by?.photo.replace(
+                        src={thread?.created_by?.photo?.replace(
                           // Replace the URL with the correct one if needed !!this will be removed on production
                           "http://203.161.50.115:5001",
                           "https://uat-user-api.bondedapp.io"

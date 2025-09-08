@@ -43,7 +43,7 @@ const PaymentScreen = () => {
   const { initPaymentSheet, presentPaymentSheet } = useStripe();
 
   const getProducts = async () => {
-    const result = await send("get", "/bonded-user-service/products/list");
+    const result = await send("get", "/products/list");
     setProducts(result);
     // console.log("===", result);
     setSelectedProduct(result[0]);
@@ -56,7 +56,7 @@ const PaymentScreen = () => {
   const checkout = async () => {
     const result = await send(
       "post",
-      "/bonded-user-service/payments/create-payment-intent",
+      "/payments/create-payment-intent",
       {
         productId: selectedPlan?.id,
         description: selectedPlan?.description,

@@ -33,13 +33,17 @@ import { MOCK_NOTIFICATIONS } from "@/components/NotificationCenter";
 
 const ChatsScreen: React.FC = () => {
   const router = useRouter();
-  const [profileType, setProfileType] = useState<'travel' | 'networking' | 'dating' | null>(null);
+  const [profileType, setProfileType] = useState<
+    "travel" | "networking" | "dating" | null
+  >(null);
 
   // On mount and on focus, read profileType from local storage
   useFocusEffect(
     React.useCallback(() => {
       (async () => {
-        const storedType = await LocalStorage.getItem<'travel' | 'networking' | 'dating'>(localStore.profileType);
+        const storedType = await LocalStorage.getItem<
+          "travel" | "networking" | "dating"
+        >(localStore.profileType);
         if (storedType) setProfileType(storedType);
       })();
     }, [])
@@ -56,6 +60,7 @@ const ChatsScreen: React.FC = () => {
   >([]);
   const [userId, setUserId] = useState<number | null>(null);
   const [chattedUsers, setChattedUsers] = useState([]);
+  const [approvedFriends, setApprovedFriends] = useState<any[]>([]);
 
   const getUserId = async () => {
     const userId: number | null = await LocalStorage.getItem(localStore.userId);
@@ -69,13 +74,14 @@ const ChatsScreen: React.FC = () => {
   useEffect(() => {
     const fetchChats = async () => {
       try {
-        const userId: number | null = await LocalStorage.getItem(localStore.userId);
+        const userId: number | null = await LocalStorage.getItem(
+          localStore.userId
+        );
         // Fetch chats where the user is a participant
         const chatsQuery = query(
           collection(db, "chats"),
           where("participants", "array-contains", userId?.toString())
         );
-
 
         // console.log("-----", userId)
 
@@ -118,7 +124,7 @@ const ChatsScreen: React.FC = () => {
 
   const getMatchSuggestions = async () => {
     try {
-      const response = await send("post", "/bonded-user-service/matches/list", {
+      const response = await send("post", "/matches/list", {
         pageSize: 100,
       });
       const data = response;
@@ -128,70 +134,40 @@ const ChatsScreen: React.FC = () => {
     }
   };
 
+  const getApprovedFriends = async () => {
+    try {
+      const response = await send("get", "/friendship/approved");
+      setApprovedFriends(Array.isArray(response) ? response : []);
+    } catch (error) {
+      console.error("Error fetching approved friends:", error);
+    }
+  };
+
   useEffect(() => {
     // Fetch user data
     getMatchSuggestions();
-  }, []);
+    // Fetch approved friends for networking/travel profiles
+    if (profileType === "networking" || profileType === "travel") {
+      getApprovedFriends();
+    }
+  }, [profileType]);
 
   const openChatRoom = async (user: any) => {
     const currentUserId: number | null = await LocalStorage.getItem(
       localStore.userId
     );
+    const me: any = await send("get", "/users/me");
+    console.log("--(me.id)--->", me.id);
 
     router.push({
       pathname: "/chats/room",
-      params: { user: JSON.stringify(user), currentUserId },
+      params: { user: JSON.stringify(user), currentUserId: me.id },
     });
   };
 
-  const onMenuPress = (menu: any) => {
-    setActiveMenu(menu);
-  };
-
-  const menu = ["Messages"];
-
-  // Dummy data for normal chat screen
-  const ACTIVITIES = [
-    { id: 1, name: "Cooper", avatar: "https://randomuser.me/api/portraits/men/32.jpg", online: true },
-    { id: 2, name: "Leslie", avatar: "https://randomuser.me/api/portraits/women/44.jpg", online: true },
-    { id: 3, name: "Robert", avatar: "https://randomuser.me/api/portraits/men/45.jpg", online: true },
-    { id: 4, name: "Theresa", avatar: "https://randomuser.me/api/portraits/women/46.jpg", online: true },
-    { id: 5, name: "Jenny", avatar: "https://randomuser.me/api/portraits/women/47.jpg", online: false },
-  ];
-  const NORMAL_CHATS = [
-    {
-      id: 1,
-      name: "Robert",
-      avatar: "https://randomuser.me/api/portraits/men/45.jpg",
-      lastMessage: "Hello bro... how are u.. and what u are doing tomorrow??",
-      time: "12:32 PM",
-      unread: 2,
-      online: true,
-    },
-    {
-      id: 2,
-      name: "Theresa",
-      avatar: "https://randomuser.me/api/portraits/women/46.jpg",
-      lastMessage: "Yeah... i'm not going to school due to fever.. so we can do this on friday.",
-      time: "11:13 PM",
-      unread: 1,
-      online: true,
-    },
-    {
-      id: 3,
-      name: "Leslie",
-      avatar: "https://randomuser.me/api/portraits/women/44.jpg",
-      lastMessage: "what a funny moive it is... i'm dying of laughing... 😍😍😍",
-      time: "Oct 25",
-      unread: 0,
-      online: true,
-    },
-  ];
-
-  const unreadNotificationsCount = MOCK_NOTIFICATIONS.filter(n => !n.isRead).length;
 
   // Redesigned chat screen for networking/travel
-  if (profileType === 'networking' || profileType === 'travel') {
+  if (profileType === "networking" || profileType === "travel") {
     return (
       <ScreenContainer showHeader={true} title="Chats">
         {/* Header */}
@@ -210,59 +186,144 @@ const ChatsScreen: React.FC = () => {
 
         <View style={[tw.bgGray100, tw.hFull, tw.wFull]}>
           {/* Activities */}
-          <View style={[tw.mT4, tw.mB2, tw.pX4]}>
-            <Text style={[tw.textGray900, tw.textXl, tw.fontBold, tw.mB2]}>Activities</Text>
+          {/* <View style={[tw.mT4, tw.mB2, tw.pX4]}>
+            <Text style={[tw.textGray900, tw.textXl, tw.fontBold, tw.mB2]}>
+              Activities
+            </Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-              {ACTIVITIES.map((user) => (
-                <View key={user.id} style={[tw.itemsCenter, tw.mR4]}> 
-                  <View style={{ position: 'relative' }}>
-                    <Image
-                      source={{ uri: user.avatar }}
-                      style={[tw.w16, tw.h16, tw.roundedFull, { borderWidth: 3, borderColor: user.online ? '#fb6c31' : '#e5e7eb' }]}
-                    />
-                    {/* {user.online && (
-                      <View style={{ position: 'absolute', bottom: 2, right: 2, width: 14, height: 14, backgroundColor: '#22c55e', borderRadius: 7, borderWidth: 2, borderColor: '#fff' }} />
-                    )} */}
-                  </View>
-                  <Text style={[tw.textGray800, tw.textSm, tw.mT1]} numberOfLines={1}>{user.name}</Text>
-                </View>
-              ))}
-            </ScrollView>
-          </View>
-          {/* Messages */}
-          <View style={[tw.flex1, tw.pX4, tw.mT2]}> 
-            <Text style={[tw.textGray900, tw.textXl, tw.fontBold, tw.mB2]}>Messages</Text>
-            {NORMAL_CHATS.map(chat => (
-              <TouchableOpacity
-                key={chat.id}
-                style={[tw.bgWhite, tw.roundedLg, tw.flexRow, tw.itemsCenter, tw.p4, tw.mB1, tw.shadow]}
-                onPress={() => {
-                  router.push({
-                    pathname: '/chats/room',
-                    params: { user: JSON.stringify(chat) },
-                  });
-                }}
-              >
-                <View style={{ position: 'relative' }}>
-                  <Image
-                    source={{ uri: chat.avatar }}
-                    style={[tw.w16, tw.h16, tw.roundedFull]}
-                  />
-                </View>
-                <View style={[tw.flex1, tw.mL4]}> 
-                  <Text style={[tw.textGray900, tw.fontBold, tw.textBase]}>{chat.name}</Text>
-                  <Text style={[tw.textGray600, tw.textSm, tw.mT1]} numberOfLines={1}>{chat.lastMessage}</Text>
-                </View>
-                <View style={[tw.itemsEnd, tw.mL2]}> 
-                  <Text style={[tw.textGray400, tw.textXs, tw.mB1]}>{chat.time}</Text>
-                  {chat.unread > 0 && (
-                    <View style={{ backgroundColor: '#fb6c31', borderRadius: 10, minWidth: 20, height: 20, justifyContent: 'center', alignItems: 'center', alignSelf: 'flex-end' }}>
-                      <Text style={[tw.textWhite, tw.textSm, { fontWeight: 'bold' }]}>{chat.unread}</Text>
+              {approvedFriends.length > 0 ? (
+                approvedFriends.slice(0, 5).map((friend) => (
+                  <View key={friend.id} style={[tw.itemsCenter, tw.mR4]}>
+                    <View style={{ position: "relative" }}>
+                      <Image
+                        source={
+                          friend.gallery?.find((media: any) => media.featured)
+                            ?.thumbnailUrl || friend.gallery?.[0]?.thumbnailUrl
+                            ? {
+                                uri:
+                                  friend.gallery?.find(
+                                    (media: any) => media.featured
+                                  )?.thumbnailUrl ||
+                                  friend.gallery?.[0]?.thumbnailUrl,
+                              }
+                            : require("../../assets/images/default_avatar.jpg")
+                        }
+                        style={[
+                          tw.w16,
+                          tw.h16,
+                          tw.roundedFull,
+                          {
+                            borderWidth: 3,
+                            borderColor:
+                              friend.status === "ACTIVE"
+                                ? "#fb6c31"
+                                : "#e5e7eb",
+                          },
+                        ]}
+                      />
                     </View>
-                  )}
+                    <Text
+                      style={[tw.textGray800, tw.textSm, tw.mT1]}
+                      numberOfLines={1}
+                    >
+                      {friend.firstname} {friend.lastname}
+                    </Text>
+                  </View>
+                ))
+              ) : (
+                <View style={[tw.itemsCenter, tw.justifyCenter, tw.pY4]}>
+                  <Text style={[tw.textGray500, tw.textCenter]}>
+                    No friends available
+                  </Text>
                 </View>
-              </TouchableOpacity>
-            ))}
+              )}
+            </ScrollView>
+          </View> */}
+          {/* Messages */}
+          <View style={[tw.flex1, tw.pX4, tw.mT2]}>
+            <Text style={[tw.textGray900, tw.textXl, tw.fontBold, tw.mB2]}>
+              Messages
+            </Text>
+            {approvedFriends.length > 0 ? (
+              approvedFriends.map((friend) => (
+                <TouchableOpacity
+                  key={friend.id}
+                  style={[
+                    tw.bgWhite,
+                    tw.roundedLg,
+                    tw.flexRow,
+                    tw.itemsCenter,
+                    tw.p4,
+                    tw.mB1,
+                    tw.shadow,
+                  ]}
+                  onPress={() => {
+                    // router.push({
+                    //   pathname: "/chats/room",
+                    //   params: { user: JSON.stringify(friend) },
+                    // });
+                    openChatRoom(friend);
+                  }}
+                >
+                  <View style={{ position: "relative" }}>
+                    <Image
+                      // src={
+                      //   friend.gallery?.find((media: any) => media.featured)
+                      //     ?.thumbnailUrl || friend.gallery?.[0]?.thumbnailUrl
+                      // }
+                      source={require("../../assets/images/default_avatar.jpg")}
+                      style={[tw.w16, tw.h16, tw.roundedFull]}
+                    />
+                  </View>
+                  <View style={[tw.flex1, tw.mL4]}>
+                    <Text style={[tw.textGray900, tw.fontBold, tw.textBase]}>
+                      {friend.firstname} {friend.lastname}
+                    </Text>
+                    <Text
+                      style={[tw.textGray600, tw.textSm, tw.mT1]}
+                      numberOfLines={1}
+                    >
+                      {friend.bio || "Start a conversation..."}
+                    </Text>
+                  </View>
+                  <View style={[tw.itemsEnd, tw.mL2]}>
+                    <Text style={[tw.textGray400, tw.textXs, tw.mB1]}>
+                      {friend.lastOnline
+                        ? new Date(friend.lastOnline).toLocaleDateString()
+                        : ""}
+                    </Text>
+                    {friend.status === "ACTIVE" && (
+                      <View
+                        style={{
+                          width: 8,
+                          height: 8,
+                          backgroundColor: "#22c55e",
+                          borderRadius: 4,
+                          alignSelf: "flex-end",
+                        }}
+                      />
+                    )}
+                  </View>
+                </TouchableOpacity>
+              ))
+            ) : (
+              <View
+                style={[
+                  tw.bgWhite,
+                  tw.roundedLg,
+                  tw.p4,
+                  tw.itemsCenter,
+                  tw.justifyCenter,
+                ]}
+              >
+                <Text style={[tw.textGray500, tw.textCenter, tw.mB2]}>
+                  No friends available
+                </Text>
+                <Text style={[tw.textGray400, tw.textSm, tw.textCenter]}>
+                  Connect with people to start chatting
+                </Text>
+              </View>
+            )}
           </View>
         </View>
       </ScreenContainer>
@@ -271,9 +332,11 @@ const ChatsScreen: React.FC = () => {
 
   return (
     <ScreenContainer showHeader={true} title="Messages">
-
       <View style={[tw.bgGray100, tw.hFull, tw.wFull, tw.flex, tw.itemsCenter]}>
-        <ScrollView style={[tw.wFull]} contentContainerStyle={{ paddingBottom: 120 }}>
+        <ScrollView
+          style={[tw.wFull]}
+          contentContainerStyle={{ paddingBottom: 120 }}
+        >
           <TextComponent style={[tw.textGray600, tw.m2, tw.fontBold]}>
             New Matches
           </TextComponent>

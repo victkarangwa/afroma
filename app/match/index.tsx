@@ -21,7 +21,7 @@ const MatchScreen = () => {
   const [currentUserId, setCurrentUserId] = useState(null);
   const { loading, send } = useApiRequest<ApiResponse>();
   const getMyProfile = async () => {
-    const result = await send("get", "/bonded-user-service/users/me");
+    const result = await send("get", "/users/me");
     setCurrentUserId(result?.id);
     const myPhoto = result?.gallery?.find((media: any) => media.featured);
     setMyPhoto(myPhoto);

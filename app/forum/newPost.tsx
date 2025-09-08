@@ -38,15 +38,15 @@ const NewPostScreen: React.FC = () => {
   ];
 
   const getMyBasicProfile = async () => {
-    const result = await send("get", "/bonded-user-service/users/me");
+    const result = await send("get", "/users/me");
 
     if (result?.errors) {
       return;
     }
-
+// console.log("result", result);
     setUser({
       name: result?.firstname + " " + result?.lastname,
-      photo: result?.gallery?.find((pic: any) => pic.featured)?.thumbnailUrl,
+      photo: result?.gallery?.find((pic: any) => pic.featured)?.thumbnailUrl || "",
     });
   };
 
@@ -59,6 +59,8 @@ const NewPostScreen: React.FC = () => {
       setPosting(true);
       // Reference to the threads collection
       const threadRef = collection(db, "threads");
+
+      console.log("user", user);
 
       // Add a new thread document
       const threadDoc = await addDoc(threadRef, {
@@ -106,7 +108,7 @@ const NewPostScreen: React.FC = () => {
       <ModalComponent
         onDismiss={() => {
           setPostSuccess(false);
-          router.push("/forum");
+          router.push("/(tabs)/forums");
         }}
         visible={postSuccess}
         status="success"

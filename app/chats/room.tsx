@@ -37,6 +37,8 @@ const ChatScreen = () => {
   const router = useRouter();
   const { user, currentUserId } = useLocalSearchParams();
 
+  console.log("---currentUserId-->", currentUserId);
+
   // Support both dating and networking/travel: if user is a stringified object, parse it; else, use dummy data
   let userData: any = { firstName: '', avatar: '', online: false };
   try {
@@ -113,6 +115,7 @@ const ChatScreen = () => {
           setChatId(newChatRef.id);
         }
       } catch (error) {
+        console.log("----->", senderId, receiverId);
         console.log("---ERROR--->", error);
       }
     };
@@ -241,9 +244,9 @@ const ChatScreen = () => {
           style={[tw.h12, tw.w12, tw.roundedFull]}
         />
         <TextComponent
-          style={[tw.textXl, tw.textCenter, tw.textWhite, tw.mX6, tw.pY4]}
+          style={[tw.textBase, tw.textCenter, tw.textGray600, tw.mX6, tw.pY4]}
         >
-          {userData.firstName} {userData.middleName}
+          {userData.firstname} {userData.lastname}
         </TextComponent>
       </View>
       <View style={[tw.bgWhite, tw.roundedTLg]}></View>

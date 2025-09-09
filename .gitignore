@@ -60,5 +60,10 @@ yarn-error.*
 # typescript
 *.tsbuildinfo
 
+# Android build artifacts
+android/app/build/
+android/build/
+android/.gradle/
+
 expo-env.d.ts
 # @end expo-cli

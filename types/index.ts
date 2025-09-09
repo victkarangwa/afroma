@@ -210,3 +210,28 @@ export interface DatingMatch {
 export interface DatingMatchesResponse {
   list: DatingMatch[];
 }
+
+// Profile Questions API Types
+export interface ProfileQuestionOption {
+  id: number;
+  optionText: string;
+  weight: number;
+}
+
+export interface ProfileQuestion {
+  id: number;
+  question: string;
+  fieldType: 'singleSelect' | 'multiSelect' | 'text' | 'date';
+  maxSize: number;
+  weight: number;
+  options: ProfileQuestionOption[];
+}
+
+export interface ProfileQuestionGroup {
+  id: number;
+  title: string;
+  profileType: string;
+  questions: ProfileQuestion[];
+}
+
+export interface ProfileQuestionsResponse extends Array<ProfileQuestionGroup> {}

@@ -1,10 +1,8 @@
-import Input from "@/components/input";
 import ModalComponent from "@/components/Modal";
-import BottomModal from "@/components/Modal/BottomSheet";
 import TextComponent from "@/components/Text";
-import { genders, profileTabs } from "@/constants";
+import { profileTabs } from "@/constants";
 import useApiRequest from "@/hooks/useApiRequest";
-import { ApiResponse } from "@/types";
+import { ApiResponse, ProfileQuestionsResponse, ProfileQuestion } from "@/types";
 import {
   getCustomPlaceholder,
   separateTextWithSpace,
@@ -14,9 +12,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
-  Platform,
   ScrollView,
-  Text,
   TouchableOpacity,
   View,
 } from "react-native";
@@ -25,11 +21,7 @@ import { Button, Checkbox, RadioButton } from "react-native-paper";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { tw } from "react-native-tailwindcss";
 import PictureForm from "./pictures";
-import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
-import DateTimePicker from "@react-native-community/datetimepicker";
-import moment from "moment";
 import Spinner from "@/components/Spinner";
-import DropDownPicker from "react-native-dropdown-picker";
 import { debounce } from "lodash";
 
 const ProfileScreen: React.FC = () => {
@@ -38,21 +30,97 @@ const ProfileScreen: React.FC = () => {
 
   const { loading, send, error } = useApiRequest<ApiResponse>();
 
-  const [profileFields, setProfileFields] = useState<any>([]);
-  const [openBottomSheet, setOpenBottomSheet] = useState(
-    false || params.edit === "bio"
-  );
-  const [selectedField, setSelectedField] = useState<any>(null);
+  const [profileFields, setProfileFields] = useState<ProfileQuestionsResponse>([]);
   const [userInput, setUserInput] = useState<any>({});
   const [visible, setVisible] = React.useState(false);
   const [profile, setProfile] = useState<any>({});
   const [profileAnswers, setProfileAnswers] = useState<any>({});
   const [updatedProfile, setUpdatedProfile] = useState<any>(null);
-  const [date, setDate] = useState(new Date());
-  const [showDatePicker, setShowDatePicker] = useState(false);
   const [loadingProfile, setLoadingProfile] = useState(false);
-  const [openSlect, setOpenSect] = useState(false);
   const [currentStep, setCurrentStep] = useState(Number(params.step ?? 0));
+
+  // Helper function to get display text for answers
+  const getAnswerDisplayText = (questionId: number, userAnswers: any) => {
+    const answer = userAnswers[questionId];
+    if (!answer) return "Not answered";
+    
+    if (Array.isArray(answer)) {
+      // For multiSelect, find the option texts
+      const currentQuestion = profileFields
+        .flatMap(group => group.questions)
+        .find(q => q.id === questionId);
+      
+      if (currentQuestion) {
+        return answer
+          .map(optionId => 
+            currentQuestion.options.find(opt => opt.id === optionId)?.optionText
+          )
+          .filter(Boolean)
+          .join(", ");
+      }
+    } else {
+      // For singleSelect, find the option text
+      const currentQuestion = profileFields
+        .flatMap(group => group.questions)
+        .find(q => q.id === questionId);
+      
+      if (currentQuestion) {
+        const option = currentQuestion.options.find(opt => opt.id === answer);
+        return option?.optionText || "Not answered";
+      }
+    }
+    
+    return "Not answered";
+  };
+
+  // Function to handle form submission
+  const handleSubmitAnswers = () => {
+    console.log("User Input Data:", userInput);
+    
+    // Transform the data for API submission
+    const transformedAnswers = Object.keys(userInput).map(questionId => {
+      const question = profileFields
+        .flatMap(group => group.questions)
+        .find(q => q.id === parseInt(questionId));
+      
+      if (!question) return null;
+      
+      const answer = userInput[questionId];
+      let answers = [];
+      
+      if (Array.isArray(answer)) {
+        // Multi-select answers
+        answers = answer.map(optionId => {
+          const option = question.options.find(opt => opt.id === optionId);
+          return {
+            id: optionId,
+            text: option?.optionText || "",
+            weight: option?.weight || 0
+          };
+        });
+      } else {
+        // Single-select answer
+        const option = question.options.find(opt => opt.id === answer);
+        answers = [{
+          id: answer,
+          text: option?.optionText || "",
+          weight: option?.weight || 0
+        }];
+      }
+      
+      return {
+        id: parseInt(questionId),
+        question: question.question,
+        fieldType: question.fieldType,
+        answers: answers
+      };
+    }).filter(Boolean);
+    
+    console.log("Transformed Answers for API:", transformedAnswers);
+    
+    // Here you can add the actual API call
+    // await send("post", "/user-profiling/save/answers", transformedAnswers);
+  };
 
   const geProfileFields = async () => {
     const result = await send(
@@ -63,7 +131,7 @@ const ProfileScreen: React.FC = () => {
     if (result?.errors) {
       return;
     }
-    setProfileFields(result);
+    setProfileFields((result as unknown as ProfileQuestionsResponse) || []);
   };
 
   const getMyBasicProfile = async () => {
@@ -95,172 +163,34 @@ const ProfileScreen: React.FC = () => {
     getMyProfileAnswers();
   }, [updatedProfile]);
 
-  const debouncedUpdateProfile = debounce(async (newState) => {
-    const existingProfile = profileTabs[0].content.reduce(
-      (acc: any, field: string) => {
-        acc[field] = profile[field];
-        return acc;
-      },
-      {}
-    );
-
-    let data;
-    let result;
-    if (Number(params.tab) === 1) {
-      const profileAnswers = transformToProfileAnswer(newState);
-      data = profileAnswers;
-      result = await send(
-        "post",
-        "/user-profiling/save/answers",
-        data
-      );
-    } else {
-      data = {
-        ...existingProfile,
-        ...newState,
-      };
-      result = await send("put", "/users/profile", data);
-    }
-    if (result?.errors) {
-      return setVisible(true);
-    }
-    setUpdatedProfile(result);
-    setUserInput({});
-    setOpenBottomSheet(false);
-  }, 1000);
-
-  const getFieldType = (field: any, type?: string, defaultValue?: string) => {
-    const { id, fieldType, options } = field;
-    switch (fieldType ?? type) {
-      case "multiSelect":
-        return options.map((opt: any, index: number) => (
-          <View key={index} style={[tw.mYPx]}>
-            <Checkbox.Item
-              status={userInput[id]?.includes(opt.id) ? "checked" : "unchecked"}
-              label={opt.optionText}
-              onPress={() => {
-                const currentValues = userInput[id] || [];
-                const updatedValues = currentValues.includes(opt.id)
-                  ? currentValues.filter((item: string) => item !== opt.id)
-                  : [...currentValues, opt.id];
-
-                setUserInput((prevState) => {
-                  const newState = { ...prevState, [id]: updatedValues };
-                  // debouncedUpdateProfile(newState);
-                  return newState;
-                });
-              }}
-            />
-          </View>
-        ));
-
-      case "singleSelect":
-        return (
-          <RadioButton.Group
-            value={userInput[id]}
-            onValueChange={(newValue) => {
-              setUserInput((prevState) => {
-                const newState = { ...prevState, [id]: newValue };
-                debouncedUpdateProfile(newState);
-                return newState;
-              });
-            }}
-          >
-            {options.map((opt: any, index: number) => (
-              <View
-                key={index}
-                style={[tw.rounded, tw.p2, tw.bgGray200, tw.mT2]}
-              >
-                <RadioButton.Item label={opt.optionText} value={opt.id} />
-              </View>
-            ))}
-          </RadioButton.Group>
-        );
-      case "date":
-        return (
-          <Input
-            label="Select Date"
-            textColor="black"
-            containerStyles={[tw.borderGray700]}
-            value={moment(date).format("YYYY-MM-DD")}
-            onPress={() => setShowDatePicker(true)}
-            onChange={() => setShowDatePicker(true)}
-            theme={{
-              colors: {
-                primary: "black",
-                placeholder: "gray",
-                onSurfaceVariant: "gray",
-              },
-            }}
-          />
-        );
-      case "select":
-        return (
-          <View
-            style={[tw.flex, tw.flexRow, tw.justifyBetween, tw.itemsCenter]}
-          >
-            <DropDownPicker
-              // onValueChange={(value) => {
-              //   setUserInput({ ...userInput, [id]: value });
-              // }}
-              searchTextInputStyle={[tw.bgRed400]}
-              open={openSlect}
-              value={userInput[id]}
-              setOpen={setOpenSect}
-              setValue={(value) => null}
-              items={options.map((opt: any) => ({
-                label: opt.optionText,
-                value: opt.optionText,
-              }))}
-              onSelectItem={(item) => {
-                setUserInput({ ...userInput, [id]: item.value });
-              }}
-              placeholder={`Select ${id}`}
-              // placeholder={{ label: "Select Gender", value: null }}
-            />
-          </View>
-        );
-      default:
-        return (
-          <Input
-            label={separateTextWithSpace(
-              Number(params.tab) === 1 ? field.fieldName : field
-            )}
-            placeholder={
-              getCustomPlaceholder(
-                Number(params.tab) === 1 ? field.fieldName : field
-              ).placeholder
+  // Initialize user input with existing answers
+  useEffect(() => {
+    if (profileAnswers && profileAnswers.length > 0) {
+      const initialAnswers: any = {};
+      profileAnswers.forEach((answer: any) => {
+        if (answer.answers && answer.answers.length > 0) {
+          // Convert answer objects to option IDs
+          const question = profileFields
+            .flatMap(group => group.questions)
+            .find(q => q.id === answer.id);
+          
+          if (question) {
+            const optionIds = answer.answers.map((ans: any) => {
+              const option = question.options.find(opt => opt.optionText === ans.text);
+              return option?.id;
+            }).filter(Boolean);
+            
+            if (optionIds.length > 0) {
+              initialAnswers[answer.id] = question.fieldType === 'multiSelect' ? optionIds : optionIds[0];
             }
-            textColor="black"
-            containerStyles={[tw.borderGray700]}
-            defaultValue={defaultValue}
-            onChangeText={(text) => {
-              setUserInput({
-                ...userInput,
-                [Number(params.tab) === 1 ? field.fieldName : field]: text,
-              });
-            }}
-            theme={{
-              colors: {
-                primary: "black",
-                placeholder: "gray",
-                onSurfaceVariant: "gray",
-              },
-            }}
-          />
-        );
+          }
+        }
+      });
+      setUserInput(initialAnswers);
     }
-  };
+  }, [profileAnswers, profileFields]);
 
-  const onDateChange = (event, selectedDate) => {
-    const currentDate = selectedDate || date;
-    setShowDatePicker(Platform.OS === "ios"); // Keep picker open for iOS
-    setDate(currentDate);
-    setUserInput({
-      ...userInput,
-      dateOfBirth: moment(currentDate).format("YYYY-MM-DD"),
-    });
-  };
+
 
   const handleContinue = async (action: string) => {
     if (action === "next") {
@@ -276,17 +206,6 @@ const ProfileScreen: React.FC = () => {
 
   return (
     <SafeAreaView style={[tw.bgGray100, tw.hFull]}>
-      {/* <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-        <Button onPress={() => setShowDatePicker(true)}>Pick a Date</Button> */}
-      {showDatePicker && (
-        <DateTimePicker
-          value={date}
-          mode="date"
-          display="default"
-          onChange={onDateChange}
-        />
-      )}
-      {/* </View> */}
       <ModalComponent
         title="Error"
         description={error ?? "An error occurred. Please try again."}
@@ -301,7 +220,7 @@ const ProfileScreen: React.FC = () => {
             ? profileFields[currentStep]?.title
             : "Personal Info"}
         </TextComponent>
-        {Number(params.tab) === 1 && (
+        {Number(params.tab) === 1 && profileFields.length > 0 && (
           <View style={[tw.flex, tw.flexRow, tw.justifyAround, tw.itemsCenter]}>
             <TouchableOpacity
               onPress={() => handleContinue("back")}
@@ -373,230 +292,98 @@ const ProfileScreen: React.FC = () => {
           <Spinner />
         ) : (
           <ScrollView style={[tw.mX4]}>
-            {Number(params.tab) === 1 ? (
-              // profileFields.map((group: any, index: number) => {
-              //   return (
+            {/* {Number(params.tab) === 1 ? ( */}
+
               <View style={[tw.mY3]}>
-                {/* <Text style={[tw.fontBold, tw.textBase, tw.pY2]}>
-                  {profileFields[currentStep]?.title}
-                </Text> */}
                 <View>
-                  {profileFields[currentStep]?.questions.map(
-                    (qn: any, index: number) => {
-                      // const label = field.fieldName.replace(/\_/g, " ");
+                  {profileFields[currentStep]?.questions?.map(
+                    (question: ProfileQuestion, index: number) => {
                       return (
-                        <TouchableOpacity
-                          key={index}
-                          style={[tw.mYPx]}
-                          onPress={() => {
-                            setSelectedField(qn);
-                            setOpenBottomSheet(true);
-                          }}
-                        >
-                          <View
-                            style={[
-                              tw.bgWhite,
-                              tw.pX3,
-                              tw.pX2,
-                              tw.rounded,
-                              tw.flex,
-                              tw.flexRow,
-                              tw.justifyBetween,
-                            ]}
+                        <View key={index} style={[tw.mY3, tw.bgWhite, tw.p4, tw.rounded]}>
+                          <TextComponent
+                            style={[tw.textBase, tw.fontBold, tw.mB3, tw.textBlack]}
                           >
-                            <View style={[tw.p3, tw.w3_4]}>
-                              <TextComponent
-                                style={[tw.textSm, tw.mY1, tw.capitalize]}
-                              >
-                                {qn.question}
-                              </TextComponent>
-                              <TextComponent style={[tw.textXs, tw.fontBold]}>
-                                {profileAnswers
-                                  .find((answer: any) => answer.id === qn.id)
-                                  ?.answers.map((answer: any) => answer.text)
-                                  .join(", ") ??
-                                  getCustomPlaceholder(qn.question).placeholder}
-                              </TextComponent>
-                              {/* <TextComponent style={[tw.textSm, tw.mY2]}>
-                                {profile?.otherDetails?.find(
-                                  (det) => det.fieldName === field.fieldName
-                                )?.selectedValues ??
-                                  getCustomPlaceholder(field.fieldName)
-                                    .placeholder}
-                              </TextComponent> */}
-                            </View>
-                            <View
-                              style={[
-                                tw.flex,
-                                tw.itemsCenter,
-                                tw.justifyCenter,
-                              ]}
+                            {question.question}
+                          </TextComponent>
+                          
+                          {question.fieldType === 'singleSelect' && (
+                            <RadioButton.Group
+                              value={userInput[question.id]}
+                              onValueChange={(newValue) => {
+                                setUserInput((prevState: any) => ({
+                                  ...prevState,
+                                  [question.id]: newValue
+                                }));
+                              }}
                             >
-                              <Ionicons
-                                name="chevron-forward-outline"
-                                size={24}
-                                color="gray"
-                              />
+                              {question.options.map((option: any, optIndex: number) => (
+                                <View
+                                  key={optIndex}
+                                  style={[tw.rounded, tw.p2, tw.bgGray100, tw.mB2]}
+                                >
+                                  <RadioButton.Item 
+                                    label={option.optionText} 
+                                    value={option.id}
+                                    labelStyle={[tw.textSm]}
+                                  />
+                                </View>
+                              ))}
+                            </RadioButton.Group>
+                          )}
+
+                          {question.fieldType === 'multiSelect' && (
+                            <View>
+                              {question.options.map((option: any, optIndex: number) => (
+                                <View key={optIndex} style={[tw.mB2]}>
+                                  <Checkbox.Item
+                                    status={userInput[question.id]?.includes(option.id) ? "checked" : "unchecked"}
+                                    label={option.optionText}
+                                    labelStyle={[tw.textSm]}
+                                    onPress={() => {
+                                      const currentValues = userInput[question.id] || [];
+                                      const updatedValues = currentValues.includes(option.id)
+                                        ? currentValues.filter((item: number) => item !== option.id)
+                                        : [...currentValues, option.id];
+
+                                      setUserInput((prevState: any) => ({
+                                        ...prevState,
+                                        [question.id]: updatedValues
+                                      }));
+                                    }}
+                                  />
+                                </View>
+                              ))}
                             </View>
-                          </View>
-                        </TouchableOpacity>
+                          )}
+                        </View>
                       );
                     }
                   )}
+                  
+                  {/* Submit Button */}
+                  <View style={[tw.mT6, tw.mB4]}>
+                    <Button
+                      mode="contained"
+                      onPress={handleSubmitAnswers}
+                      style={[tw.pY2]}
+                      buttonColor="#38364a"
+                    >
+                      Save Answers
+                    </Button>
+                  </View>
                 </View>
               </View>
-            ) : (
-              //   );
-              // })
-              <View style={[tw.flex]}>
+            {/* ) : ( */}
+              {/* <View style={[tw.flex]}>
                 <PictureForm profile={profile} />
-                {(profileTabs[0].content as string[]).map(
-                  (field: string, index: number) => {
-                    return (
-                      <TouchableOpacity
-                        key={index}
-                        style={[tw.mY1]}
-                        onPress={() => {
-                          setSelectedField(field);
-                          setOpenBottomSheet(true);
-                        }}
-                      >
-                        <View
-                          style={[
-                            tw.bgWhite,
-                            tw.pX3,
-                            tw.pX2,
-                            tw.rounded,
-                            tw.flex,
-                            tw.flexRow,
-                            tw.justifyBetween,
-                          ]}
-                        >
-                          <View>
-                            <TextComponent
-                              style={[
-                                tw.textBase,
-                                tw.fontBold,
-                                tw.mY1,
-                                tw.capitalize,
-                              ]}
-                            >
-                              {separateTextWithSpace(field)}
-                            </TextComponent>
-                            <TextComponent style={[tw.mY2]}>
-                              {field === "dateOfBirth"
-                                ? profile[field]?.split("T")[0]
-                                : profile[field] ??
-                                  getCustomPlaceholder(field).placeholder}
-                            </TextComponent>
-                          </View>
-                          <View
-                            style={[tw.flex, tw.itemsCenter, tw.justifyCenter]}
-                          >
-                            <Ionicons
-                              name="chevron-forward-outline"
-                              size={24}
-                              color="gray"
-                            />
-                          </View>
-                        </View>
-                      </TouchableOpacity>
-                    );
-                  }
-                )}
+                <View style={[tw.mT4, tw.p4]}>
+                  <TextComponent style={[tw.textCenter, tw.textGray600]}>
+                    Personal information editing is not available in this view.
+                  </TextComponent>
+                </View>
               </View>
-            )}
+            )} */}
           </ScrollView>
-        )}
-        {openBottomSheet && (
-          <BottomModal>
-            <View style={[tw.flex, tw.flexRow, tw.justifyEnd]}>
-              <Button
-                icon={() => <Ionicons name="close" size={24} />}
-                onPress={() => {
-                  setOpenBottomSheet(false);
-                  setUserInput({});
-                }}
-                children={undefined}
-              />
-              <View style={[tw.mY4]}></View>
-            </View>
-            <Button
-              onPress={() => debouncedUpdateProfile(userInput)}
-              loading={loading}
-              icon={() => (
-                <Ionicons name="save" style={[tw.textPink700]} size={16} />
-              )}
-            >
-              Save Changes
-            </Button>
-            <View>
-              <TextComponent style={[tw.textXl, tw.fontBold, tw.textCenter]}>
-                {
-                  // getCustomPlaceholder(
-                  //   Number(params.tab) === 1
-                  //     ? selectedField.fieldName
-                  //     : selectedField
-                  // ).title
-                  selectedField?.question
-                }
-              </TextComponent>
-              <TextComponent
-                style={[tw.textSm, tw.textCenter, tw.textGray700, tw.mY2]}
-              >
-                {
-                  getCustomPlaceholder(
-                    Number(params.tab) === 1
-                      ? selectedField?.question
-                      : selectedField
-                  ).description
-                }
-              </TextComponent>
-            </View>
-            <KeyboardAwareScrollView>
-              {Number(params.tab) === 1 ? (
-                <ScrollView
-                  contentContainerStyle={{ flexGrow: 1 }}
-                  style={[tw.pB8, { height: "70%" }]}
-                >
-                  {getFieldType(selectedField)}
-                </ScrollView>
-              ) : (
-                (params.edit === "bio"
-                  ? (profileTabs[0].content?.slice(4, 5) as string[]) // bio
-                  : (profileTabs[0].content as string[])
-                ).map((field: string, index: number) => (
-                  <View key={index}>
-                    {getFieldType(
-                      field === "gender"
-                        ? {
-                            id: "gender",
-                            options: genders,
-                          }
-                        : field,
-                      field === "dateOfBirth"
-                        ? "date"
-                        : field === "gender"
-                        ? "select"
-                        : "text",
-                      field === "dateOfBirth"
-                        ? profile[field]?.split("T")[0]
-                        : profile[field]
-                    )}
-                  </View>
-                ))
-              )}
-            </KeyboardAwareScrollView>
-            {/* <View style={[tw.mY4]}>
-              <Button
-                mode="outlined"
-                onPress={() => debouncedUpdateProfile(userInput)}
-                loading={loading}
-              >
-                Apply Changes
-              </Button>
-            </View> */}
-          </BottomModal>
         )}
       </GestureHandlerRootView>
     </SafeAreaView>

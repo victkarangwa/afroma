@@ -424,7 +424,7 @@ const ProfileScreen: React.FC = () => {
             {/* Edit Profile Icon */}
             <TouchableOpacity
               style={[tw.bgPink700, tw.roundedFull, tw.p3, tw.mR4, { shadowColor: '#fb6c31', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.18, shadowRadius: 6, elevation: 3 }]}
-              onPress={() => router.push("/form/profile")}
+              onPress={() => router.push("/profile-questions")}
               accessibilityLabel="Edit Profile"
             >
               <Ionicons name="create-outline" size={24} color="#fff" />
@@ -497,7 +497,7 @@ const ProfileScreen: React.FC = () => {
                 <Text style={[tw.textGray600, tw.textBase]}>Gender:</Text>
                 <Text style={[tw.textGray900, tw.textBase, tw.fontBold]}>{profile.gender || "Not specified"}</Text>
               </View>
-              {profile.interestedIn && (
+              {profile.interestedIn && profile.profileType === 'dating' && (
                 <View style={[tw.flexRow, tw.justifyBetween, tw.mB2]}>
                   <Text style={[tw.textGray600, tw.textBase]}>Interested In:</Text>
                   <Text style={[tw.textGray900, tw.textBase, tw.fontBold]}>{profile.interestedIn}</Text>

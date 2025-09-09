@@ -239,6 +239,10 @@ export default function RootLayout() {
                 name="getStarted/resetPassword"
                 options={{ headerShown: false }}
               />
+              <Stack.Screen
+                name="profile-questions"
+                options={{ headerShown: false }}
+              />
               <Stack.Screen name="+not-found" />
             </Stack>
           </PaperProvider>

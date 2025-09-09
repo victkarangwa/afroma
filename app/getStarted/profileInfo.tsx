@@ -262,13 +262,13 @@ const ProfileInfoScreen: React.FC = () => {
   const GENDER_OPTIONS = [
     { label: "Male", value: "Male" },
     { label: "Female", value: "Female" },
-    { label: "Non-binary", value: "NonBinary" },
+    // { label: "Non-binary", value: "NonBinary" },
   ];
 
   const INTERESTED_IN_OPTIONS = [
     { label: "Male", value: "Male" },
     { label: "Female", value: "Female" },
-    { label: "Non-binary", value: "NonBinary" },
+    // { label: "Non-binary", value: "NonBinary" },
   ];
 
   return (

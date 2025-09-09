@@ -153,7 +153,7 @@ export const profileTabs = [
 export const genders = [
   { id: 1, optionText: "Male" },
   { id: 2, optionText: "Female" },
-  { id: 3, optionText: "NonBinary" },
+  // { id: 3, optionText: "NonBinary" },
 ];
 
 export const profileRegistrationFields = [
@@ -175,7 +175,7 @@ export const profileRegistrationFields = [
     options: [
       { id: 1, optionText: "Male", value: "Male" },
       { id: 2, optionText: "Female", value: "Female" },
-      { id: 3, optionText: "Non-binary", value: "NonBinary" },
+      // { id: 3, optionText: "Non-binary", value: "NonBinary" },
     ],
   },
   {
@@ -186,7 +186,7 @@ export const profileRegistrationFields = [
     options: [
       { id: 1, optionText: "Male", value: "Male" },
       { id: 2, optionText: "Female", value: "Female" },
-      { id: 3, optionText: "Non-binary", value: "NonBinary" },
+      // { id: 3, optionText: "Non-binary", value: "NonBinary" },
     ],
   },
   {

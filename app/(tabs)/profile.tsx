@@ -384,7 +384,7 @@ const ProfileScreen: React.FC = () => {
 
             {/* Profile Picture positioned at bottom center of gradient */}
             <TouchableOpacity
-              onPress={pickImage}
+              onPress={() => router.push("/basic-profile")}
               style={[tw.absolute, { bottom: -50, left: '50%', marginLeft: -50 }]}
             >
               <View style={[tw.relative]}>
@@ -393,11 +393,10 @@ const ProfileScreen: React.FC = () => {
                   source={require("../../assets/images/default_avatar.jpg")}
                   style={[tw.w24, tw.h24, tw.roundedFull, tw.border4, tw.borderWhite]}
                 />
-                {isUploading && (
-                  <View style={[tw.absolute, tw.inset0, tw.justifyCenter, tw.itemsCenter, tw.bgBlack, tw.opacity50, tw.roundedFull]}>
-                    <Ionicons name="camera" size={16} color="white" />
-                  </View>
-                )}
+                {/* Camera overlay to indicate clickable */}
+                <View style={[tw.absolute, { bottom: 2, right: 2 }, tw.bgPink700, tw.roundedFull, tw.p1, tw.border2, tw.borderWhite]}>
+                  <Ionicons name="camera" size={12} color="white" />
+                </View>
                 {/* Profile Type Tag */}
                 {/* <View style={[tw.absolute, { bottom: -12, left: '50%', transform: [{ translateX: -30 }] }, tw.bgGray900, tw.pX3, tw.pY1, tw.roundedFull, tw.itemsCenter, tw.justifyCenter, { minWidth: 60, zIndex: 2 }]}> 
                   <Text style={[tw.textWhite, tw.textXs, tw.fontBold, { textAlign: 'center' }]}> 
@@ -421,13 +420,13 @@ const ProfileScreen: React.FC = () => {
             >
               <Ionicons name="swap-horizontal" size={24} color="#fff" />
             </TouchableOpacity>
-            {/* Edit Profile Icon */}
+            {/* Profile Questions Icon */}
             <TouchableOpacity
               style={[tw.bgPink700, tw.roundedFull, tw.p3, tw.mR4, { shadowColor: '#fb6c31', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.18, shadowRadius: 6, elevation: 3 }]}
               onPress={() => router.push("/profile-questions")}
-              accessibilityLabel="Edit Profile"
+              accessibilityLabel="Profile Questions"
             >
-              <Ionicons name="create-outline" size={24} color="#fff" />
+              <Ionicons name="help-circle-outline" size={24} color="#fff" />
             </TouchableOpacity>
           </View>
 
@@ -475,7 +474,10 @@ const ProfileScreen: React.FC = () => {
                 </TouchableOpacity>
               </View>
             ) : (
-              <>
+              <TouchableOpacity
+                onPress={() => router.push("/basic-profile")}
+                style={[tw.itemsCenter]}
+              >
                 <Text style={[tw.textGray900, tw.text2xl, tw.fontBold]}>
                   {getDisplayName()}
                 </Text>
@@ -485,14 +487,23 @@ const ProfileScreen: React.FC = () => {
                 <Text style={[tw.textGray700, tw.textBase, tw.mT2, tw.textCenter]}>
                   {getProfileBio()}
                 </Text>
-              </>
+                <Text style={[tw.textPink700, tw.textSm, tw.mT2, tw.fontMedium]}>
+                  Tap to edit profile
+                </Text>
+              </TouchableOpacity>
             )}
           </View>
 
           {/* Additional Profile Details */}
           {!isLoadingProfile && !profileError && profile && (
-            <View style={[tw.bgWhite, tw.roundedLg, tw.p4, tw.mB4, tw.shadow]}>
-              <Text style={[tw.textPink700, tw.textLg, tw.fontBold, tw.mB3]}>Profile Details</Text>
+            <TouchableOpacity 
+              style={[tw.bgWhite, tw.roundedLg, tw.p4, tw.mB4, tw.shadow]}
+              onPress={() => router.push("/basic-profile")}
+            >
+              <View style={[tw.flexRow, tw.justifyBetween, tw.itemsCenter, tw.mB3]}>
+                <Text style={[tw.textPink700, tw.textLg, tw.fontBold]}>Profile Details</Text>
+                <Ionicons name="chevron-forward" size={20} color="#fb6c31" />
+              </View>
               <View style={[tw.flexRow, tw.justifyBetween, tw.mB2]}>
                 <Text style={[tw.textGray600, tw.textBase]}>Gender:</Text>
                 <Text style={[tw.textGray900, tw.textBase, tw.fontBold]}>{profile.gender || "Not specified"}</Text>
@@ -536,13 +547,19 @@ const ProfileScreen: React.FC = () => {
                   <Text style={[tw.textGray900, tw.textBase, tw.fontBold]}>{profile.status}</Text>
                 </View>
               )}
-            </View>
+            </TouchableOpacity>
           )}
 
           {/* Gallery Section */}
           {!isLoadingProfile && !profileError && profile?.gallery && profile.gallery.length > 0 && (
-            <View style={[tw.bgWhite, tw.roundedLg, tw.p4, tw.mB4, tw.shadow]}>
-              <Text style={[tw.textPink700, tw.textLg, tw.fontBold, tw.mB3]}>Photos</Text>
+            <TouchableOpacity 
+              style={[tw.bgWhite, tw.roundedLg, tw.p4, tw.mB4, tw.shadow]}
+              onPress={() => router.push("/basic-profile")}
+            >
+              <View style={[tw.flexRow, tw.justifyBetween, tw.itemsCenter, tw.mB3]}>
+                <Text style={[tw.textPink700, tw.textLg, tw.fontBold]}>Photos</Text>
+                <Ionicons name="chevron-forward" size={20} color="#fb6c31" />
+              </View>
               <View style={[tw.flexRow, tw.flexWrap]}>
                 {profile.gallery.slice(0, 6).map((image: any, index: number) => (
                   <View key={image.id} style={[tw.relative, tw.mR2, tw.mB2]}>
@@ -558,7 +575,7 @@ const ProfileScreen: React.FC = () => {
                   </View>
                 ))}
               </View>
-            </View>
+            </TouchableOpacity>
           )}
 
           {/* Logout Button */}

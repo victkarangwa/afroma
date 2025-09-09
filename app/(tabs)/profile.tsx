@@ -385,7 +385,7 @@ const ProfileScreen: React.FC = () => {
             {/* Profile Picture positioned at bottom center of gradient */}
             <TouchableOpacity
               onPress={() => router.push("/basic-profile")}
-              style={[tw.absolute, { bottom: -50, left: '50%', marginLeft: -50 }]}
+              style={[tw.absolute, { bottom: 0, left: '50%', marginLeft: -50, zIndex: 999 }]}
             >
               <View style={[tw.relative]}>
                 <Image
@@ -394,9 +394,9 @@ const ProfileScreen: React.FC = () => {
                   style={[tw.w24, tw.h24, tw.roundedFull, tw.border4, tw.borderWhite]}
                 />
                 {/* Camera overlay to indicate clickable */}
-                <View style={[tw.absolute, { bottom: 2, right: 2 }, tw.bgPink700, tw.roundedFull, tw.p1, tw.border2, tw.borderWhite]}>
+                {/* <View style={[tw.absolute, { bottom: 2, right: 2 }, tw.bgPink700, tw.roundedFull, tw.p1, tw.border2, tw.borderWhite]}>
                   <Ionicons name="camera" size={12} color="white" />
-                </View>
+                </View> */}
                 {/* Profile Type Tag */}
                 {/* <View style={[tw.absolute, { bottom: -12, left: '50%', transform: [{ translateX: -30 }] }, tw.bgGray900, tw.pX3, tw.pY1, tw.roundedFull, tw.itemsCenter, tw.justifyCenter, { minWidth: 60, zIndex: 2 }]}> 
                   <Text style={[tw.textWhite, tw.textXs, tw.fontBold, { textAlign: 'center' }]}> 

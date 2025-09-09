@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from "react";
-import { View, Text, TextInput, ScrollView, Image, TouchableOpacity, FlatList, Dimensions, PanResponder, Animated, Modal, RefreshControl, BackHandler } from "react-native";
+import { View, Text, TextInput, ScrollView, Image, TouchableOpacity, FlatList, Dimensions, PanResponder, Animated, Modal, RefreshControl, BackHandler, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { tw } from "react-native-tailwindcss";
@@ -76,6 +76,7 @@ const HomeScreen: React.FC = () => {
   const [likedPosts, setLikedPosts] = useState<Set<number>>(new Set());
   const [likingPosts, setLikingPosts] = useState<Set<number>>(new Set());
   const [optimisticLikeCounts, setOptimisticLikeCounts] = useState<Map<number, number>>(new Map());
+  const [swipingProfile, setSwipingProfile] = useState<number | null>(null);
 
   const { loading, send } = useApiRequest<ApiResponse>();
 
@@ -381,7 +382,13 @@ const HomeScreen: React.FC = () => {
     const currentProfile = datingProfiles[currentProfileIndex];
     if (!currentProfile) return;
     
+    // Prevent multiple swipes on the same profile
+    if (swipingProfile === currentProfile.id) return;
+    
     console.log(`Swiped ${direction} on ${currentProfile?.firstName} ${currentProfile?.middleName}`);
+    
+    // Set loading state
+    setSwipingProfile(currentProfile.id);
     
     // Move to next profile immediately for better UX (optimistic update)
     const nextIndex = currentProfileIndex + 1;
@@ -391,16 +398,22 @@ const HomeScreen: React.FC = () => {
       // Map direction to swipe type
       const swipeType = direction === 'left' ? 'dislike' : direction === 'right' ? 'like' : 'bookmark';
       
+      console.log('=== SWIPE API CALL ===');
+      console.log('Profile ID:', currentProfile.id);
+      console.log('Swipe Type:', swipeType);
+      console.log('Direction:', direction);
+      
       // Make API call for swipe in the background
       const result = await send('post', '/matches/swipes', {
           swipedId: currentProfile.id,
           swipeType: swipeType,
       });
 
-      console.log("====RESULT====>", result);
+      console.log("=== SWIPE API RESULT ===", result);
       
       // Handle match or payment requirements if needed
       if (result?.paymentRequired) {
+        console.log('Payment required for this swipe');
         // Revert the profile index if payment is required
         setCurrentProfileIndex(currentProfileIndex);
         router.push({
@@ -411,19 +424,35 @@ const HomeScreen: React.FC = () => {
       }
 
       if (result?.matched) {
+        console.log('Match found!', result);
         router.push({
           pathname: "/match",
           params: { user: JSON.stringify(currentProfile) },
         });
+      } else {
+        console.log('No match, continuing to next profile');
       }
     } catch (error) {
-      console.error('Error making swipe:', error);
+      console.error('❌ Error making swipe:', error);
       // Revert the profile index on error
       setCurrentProfileIndex(currentProfileIndex);
+      
+      // Show error message to user
+      Alert.alert(
+        'Swipe Error',
+        'Failed to record your swipe. Please try again.',
+        [{ text: 'OK' }]
+      );
+    } finally {
+      // Clear loading state
+      setSwipingProfile(null);
     }
   };
 
   const handleActionButton = (action: 'dislike' | 'like' | 'bookmark') => {
+    const currentProfile = datingProfiles[currentProfileIndex];
+    if (!currentProfile || swipingProfile === currentProfile.id) return;
+    
     const direction = action === 'dislike' ? 'left' : action === 'like' ? 'right' : 'up';
     // Call handleSwipe immediately for instant feedback
     handleSwipe(direction);
@@ -744,26 +773,70 @@ const HomeScreen: React.FC = () => {
         </View>
 
         {/* Action Buttons */}
-        <View style={[ tw.bottom0, tw.left0, tw.right0, tw.flexRow, tw.justifyCenter, tw.itemsCenter, tw.pB4, tw.pT4, tw.bgGray100]}>
+        <View style={[tw.bottom0, tw.left0, tw.right0, tw.flexRow, tw.justifyCenter, tw.itemsCenter, tw.pB6, tw.pT4, { backgroundColor: 'rgba(255,255,255,0.95)' }]}>
           <TouchableOpacity
-            style={[tw.bgRed500, tw.roundedFull, tw.w16, tw.h16, tw.justifyCenter, tw.itemsCenter, tw.mR4, tw.shadow]}
+            style={[
+              tw.bgRed500, 
+              tw.roundedFull, 
+              tw.w16, 
+              tw.h16, 
+              tw.justifyCenter, 
+              tw.itemsCenter, 
+              tw.mR6, 
+              tw.shadowLg,
+              swipingProfile ? { opacity: 0.5 } : {}
+            ]}
             onPress={() => handleActionButton('dislike')}
+            disabled={!!swipingProfile}
           >
-            <Ionicons name="close" size={28} color="white" />
+            {swipingProfile ? (
+              <ActivityIndicator size="small" color="white" />
+            ) : (
+              <Ionicons name="close" size={32} color="white" />
+            )}
           </TouchableOpacity>
           
           <TouchableOpacity
-            style={[tw.bgGray900, tw.roundedFull, tw.w16, tw.h16, tw.justifyCenter, tw.itemsCenter, tw.mR4, tw.shadow]}
+            style={[
+              tw.bgBlue500, 
+              tw.roundedFull, 
+              tw.w16, 
+              tw.h16, 
+              tw.justifyCenter, 
+              tw.itemsCenter, 
+              tw.mR6, 
+              tw.shadowLg,
+              swipingProfile ? { opacity: 0.5 } : {}
+            ]}
             onPress={() => handleActionButton('bookmark')}
+            disabled={!!swipingProfile}
           >
-            <Ionicons name="bookmark" size={24} color="white" />
+            {swipingProfile ? (
+              <ActivityIndicator size="small" color="white" />
+            ) : (
+              <Ionicons name="star" size={28} color="white" />
+            )}
           </TouchableOpacity>
           
           <TouchableOpacity
-            style={[tw.bgGreen500, tw.roundedFull, tw.w16, tw.h16, tw.justifyCenter, tw.itemsCenter, tw.shadow]}
+            style={[
+              tw.bgGreen500, 
+              tw.roundedFull, 
+              tw.w16, 
+              tw.h16, 
+              tw.justifyCenter, 
+              tw.itemsCenter, 
+              tw.shadowLg,
+              swipingProfile ? { opacity: 0.5 } : {}
+            ]}
             onPress={() => handleActionButton('like')}
+            disabled={!!swipingProfile}
           >
-            <Ionicons name="heart" size={28} color="white" />
+            {swipingProfile ? (
+              <ActivityIndicator size="small" color="white" />
+            ) : (
+              <Ionicons name="heart" size={32} color="white" />
+            )}
           </TouchableOpacity>
         </View>
       </View>

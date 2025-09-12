@@ -1159,7 +1159,7 @@ const HomeScreen: React.FC = () => {
                   style={[tw.flexRow, tw.itemsCenter, tw.flex1]}
                   onPress={(e) => {
                     e.stopPropagation();
-                    console.log('Viewing profile:', post.user);
+                    
                     handleViewProfile(post.user.id);
                     setShowSearchResults(false);
                   }}

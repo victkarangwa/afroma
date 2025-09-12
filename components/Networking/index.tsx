@@ -62,6 +62,7 @@ const Networking: React.FC<NetworkingProps> = ({
   const { loading: apiLoading, send } = useApiRequest<ApiResponse>();
 
   const handleViewProfile = (userId: number) => {
+    console.log('Viewing profile=====>:', userId);
     setSelectedUserId(userId);
     setProfileModalVisible(true);
   };

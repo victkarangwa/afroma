@@ -202,7 +202,7 @@ const UserProfileView: React.FC<UserProfileViewProps> = ({
                 </View>
 
                 {/* Action Buttons */}
-                <View style={[tw.flexRow, tw.spaceX3]}>
+                {/* <View style={[tw.flexRow, tw.spaceX3]}>
                   <TouchableOpacity
                     style={[tw.flex1, tw.bgPink700, tw.roundedLg, tw.pY3, tw.flexRow, tw.itemsCenter, tw.justifyCenter]}
                     onPress={handleConnect}
@@ -220,7 +220,7 @@ const UserProfileView: React.FC<UserProfileViewProps> = ({
                     <Ionicons name="chatbubble" size={20} color="white" />
                     <Text style={[tw.textWhite, tw.fontMedium, tw.mL2]}>Message</Text>
                   </TouchableOpacity>
-                </View>
+                </View> */}
               </View>
 
               {/* Profile Details */}
@@ -232,12 +232,12 @@ const UserProfileView: React.FC<UserProfileViewProps> = ({
                   <Text style={[tw.textGray900, tw.textBase, tw.fontMedium]}>{profile.gender}</Text>
                 </View>
                 
-                {profile.interestedIn && (
+                {/* {profile.interestedIn && (
                   <View style={[tw.flexRow, tw.justifyBetween, tw.mB3]}>
                     <Text style={[tw.textGray600, tw.textBase]}>Interested In:</Text>
                     <Text style={[tw.textGray900, tw.textBase, tw.fontMedium]}>{profile.interestedIn}</Text>
                   </View>
-                )}
+                )} */}
                 
                 {profile.dateOfBirth && (
                   <View style={[tw.flexRow, tw.justifyBetween, tw.mB3]}>

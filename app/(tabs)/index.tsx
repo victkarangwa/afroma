@@ -10,6 +10,7 @@ import localStore from "@/utils/localValues";
 import Networking from "@/components/Networking";
 import SinglePostView, { GenericPost } from "@/components/SinglePostView";
 import ImageWithFallback from "@/components/ImageWithFallback";
+import UserProfileView from "@/components/UserProfileView";
 
 import NotificationBadge from "@/components/NotificationBadge";
 import { MOCK_NOTIFICATIONS } from "@/components/NotificationCenter";
@@ -77,6 +78,8 @@ const HomeScreen: React.FC = () => {
   const [likingPosts, setLikingPosts] = useState<Set<number>>(new Set());
   const [optimisticLikeCounts, setOptimisticLikeCounts] = useState<Map<number, number>>(new Map());
   const [swipingProfile, setSwipingProfile] = useState<number | null>(null);
+  const [selectedUserId, setSelectedUserId] = useState<number | null>(null);
+  const [profileModalVisible, setProfileModalVisible] = useState(false);
 
   const { loading, send } = useApiRequest<ApiResponse>();
 
@@ -458,6 +461,16 @@ const HomeScreen: React.FC = () => {
     handleSwipe(direction);
   };
 
+  const handleViewProfile = (userId: number) => {
+    setSelectedUserId(userId);
+    setProfileModalVisible(true);
+  };
+
+  const handleCloseProfile = () => {
+    setProfileModalVisible(false);
+    setSelectedUserId(null);
+  };
+
 
 
   const renderCaptionWithHashtags = (caption: string) => {
@@ -492,7 +505,8 @@ const HomeScreen: React.FC = () => {
           id: item.id,
           user: {
             name: `${item.user.firstname} ${item.user.lastname}`,
-            avatar: "" // Not used anymore, we use initials instead
+            avatar: "", // Not used anymore, we use initials instead
+            userId: item.user.id // Add userId for profile viewing
           },
           timestamp: getTimeAgo(item.createdAt),
           location: "", // API doesn't provide location
@@ -509,7 +523,11 @@ const HomeScreen: React.FC = () => {
     >
       {/* Header */}
       <View style={[tw.flexRow, tw.itemsCenter, tw.justifyBetween, tw.p4, tw.pB2]}>
-        <View style={[tw.flexRow, tw.itemsCenter]}>
+        <TouchableOpacity 
+          style={[tw.flexRow, tw.itemsCenter, tw.flex1]}
+          onPress={() => handleViewProfile(item.user.id)}
+          activeOpacity={0.7}
+        >
           <View style={[tw.w10, tw.h10, tw.roundedFull, tw.mR3, tw.bgGray300, tw.justifyCenter, tw.itemsCenter]}>
             <Text style={[tw.textGray700, tw.fontBold, tw.textSm]}>
               {getUserInitials(item.user.firstname, item.user.lastname)}
@@ -519,7 +537,7 @@ const HomeScreen: React.FC = () => {
             <Text style={[tw.textGray900, tw.fontBold, tw.textBase]}>{`${item.user.firstname} ${item.user.lastname}`}</Text>
             <Text style={[tw.textGray500, tw.textSm]}>{getTimeAgo(item.createdAt)}</Text>
           </View>
-        </View>
+        </TouchableOpacity>
         <TouchableOpacity onPress={() => toggleBookmark(item.id)}>
           <Ionicons
             name="bookmark-outline"
@@ -767,6 +785,7 @@ const HomeScreen: React.FC = () => {
               key={profile.id}
               profile={profile}
               onSwipe={handleSwipe}
+              onViewProfile={handleViewProfile}
               isTopCard={index === visibleProfiles.length - 1}
             />
           ))}
@@ -1112,12 +1131,14 @@ const HomeScreen: React.FC = () => {
               key={`post-${post.id}`}
               style={[tw.p4, tw.borderB, tw.borderGray100]}
               onPress={() => {
+                console.log('Viewing profile:', post.user);
                 // Convert API Post to GenericPost format
                 const genericPost: GenericPost = {
                   id: post.id,
                   user: {
                     name: `${post.user.firstname} ${post.user.lastname}`,
-                    avatar: "" // Not used anymore, we use initials instead
+                    avatar: "", // Not used anymore, we use initials instead
+                    userId: post.user.id // Add userId for profile viewing
                   },
                   timestamp: getTimeAgo(post.createdAt),
                   location: "",
@@ -1134,16 +1155,27 @@ const HomeScreen: React.FC = () => {
               }}
             >
               <View style={[tw.flexRow, tw.itemsCenter]}>
-                <View style={[tw.w10, tw.h10, tw.roundedFull, tw.mR3, tw.bgGray300, tw.justifyCenter, tw.itemsCenter]}>
-                  <Text style={[tw.textGray700, tw.fontBold, tw.textSm]}>
-                    {getUserInitials(post.user.firstname, post.user.lastname)}
-                  </Text>
-                </View>
-                <View style={[tw.flex1]}>
-                  <Text style={[tw.textGray900, tw.fontMedium]}>{`${post.user.firstname} ${post.user.lastname}`}</Text>
-                  <Text style={[tw.textGray500, tw.textSm]} numberOfLines={2}>{post.content}</Text>
-                  <Text style={[tw.textGray400, tw.textXs]}>{getTimeAgo(post.createdAt)}</Text>
-                </View>
+                <TouchableOpacity 
+                  style={[tw.flexRow, tw.itemsCenter, tw.flex1]}
+                  onPress={(e) => {
+                    e.stopPropagation();
+                    console.log('Viewing profile:', post.user);
+                    handleViewProfile(post.user.id);
+                    setShowSearchResults(false);
+                  }}
+                  activeOpacity={0.7}
+                >
+                  <View style={[tw.w10, tw.h10, tw.roundedFull, tw.mR3, tw.bgGray300, tw.justifyCenter, tw.itemsCenter]}>
+                    <Text style={[tw.textGray700, tw.fontBold, tw.textSm]}>
+                      {getUserInitials(post.user.firstname, post.user.lastname)}
+                    </Text>
+                  </View>
+                  <View style={[tw.flex1]}>
+                    <Text style={[tw.textGray900, tw.fontMedium]}>{`${post.user.firstname} ${post.user.lastname}`}</Text>
+                    <Text style={[tw.textGray500, tw.textSm]} numberOfLines={2}>{post.content}</Text>
+                    <Text style={[tw.textGray400, tw.textXs]}>{getTimeAgo(post.createdAt)}</Text>
+                  </View>
+                </TouchableOpacity>
                 <Ionicons name="chevron-forward" size={20} color="#9ca3af" />
               </View>
             </TouchableOpacity>
@@ -1160,7 +1192,8 @@ const HomeScreen: React.FC = () => {
                   id: post.id,
                   user: {
                     name: `${post.user.firstname} ${post.user.lastname}`,
-                    avatar: "" // Not used anymore, we use initials instead
+                    avatar: "", // Not used anymore, we use initials instead
+                    userId: post.user.id // Add userId for profile viewing
                   },
                   timestamp: getTimeAgo(post.createdAt),
                   location: "",
@@ -1177,16 +1210,26 @@ const HomeScreen: React.FC = () => {
               }}
             >
               <View style={[tw.flexRow, tw.itemsCenter]}>
-                <View style={[tw.w10, tw.h10, tw.roundedFull, tw.mR3, tw.bgGray300, tw.justifyCenter, tw.itemsCenter]}>
-                  <Text style={[tw.textGray700, tw.fontBold, tw.textSm]}>
-                    {getUserInitials(post.user.firstname, post.user.lastname)}
-                  </Text>
-                </View>
-                <View style={[tw.flex1]}>
-                  <Text style={[tw.textGray900, tw.fontMedium]}>{`${post.user.firstname} ${post.user.lastname}`}</Text>
-                  <Text style={[tw.textGray500, tw.textSm]} numberOfLines={2}>{post.content}</Text>
-                  <Text style={[tw.textGray400, tw.textXs]}>{getTimeAgo(post.createdAt)}</Text>
-                </View>
+                <TouchableOpacity 
+                  style={[tw.flexRow, tw.itemsCenter, tw.flex1]}
+                  onPress={(e) => {
+                    e.stopPropagation();
+                    handleViewProfile(post.user.id);
+                    setShowSearchResults(false);
+                  }}
+                  activeOpacity={0.7}
+                >
+                  <View style={[tw.w10, tw.h10, tw.roundedFull, tw.mR3, tw.bgGray300, tw.justifyCenter, tw.itemsCenter]}>
+                    <Text style={[tw.textGray700, tw.fontBold, tw.textSm]}>
+                      {getUserInitials(post.user.firstname, post.user.lastname)}
+                    </Text>
+                  </View>
+                  <View style={[tw.flex1]}>
+                    <Text style={[tw.textGray900, tw.fontMedium]}>{`${post.user.firstname} ${post.user.lastname}`}</Text>
+                    <Text style={[tw.textGray500, tw.textSm]} numberOfLines={2}>{post.content}</Text>
+                    <Text style={[tw.textGray400, tw.textXs]}>{getTimeAgo(post.createdAt)}</Text>
+                  </View>
+                </TouchableOpacity>
                 <Ionicons name="chevron-forward" size={20} color="#9ca3af" />
               </View>
             </TouchableOpacity>
@@ -1496,7 +1539,15 @@ const HomeScreen: React.FC = () => {
         onShare={(postId) => {
           console.log('Share post:', postId);
         }}
+        onViewProfile={handleViewProfile}
         profileType={profileType || 'travel'}
+      />
+
+      {/* User Profile View */}
+      <UserProfileView
+        visible={profileModalVisible}
+        onClose={handleCloseProfile}
+        userId={selectedUserId || 0}
       />
 
       {/* Floating Action Button */}

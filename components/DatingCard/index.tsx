@@ -9,10 +9,11 @@ const { width: screenWidth } = Dimensions.get('window');
 interface DatingCardProps {
   profile: DatingMatch;
   onSwipe: (direction: 'left' | 'right' | 'up') => void;
+  onViewProfile?: (userId: number) => void;
   isTopCard: boolean;
 }
 
-const DatingCard: React.FC<DatingCardProps> = ({ profile, onSwipe, isTopCard }) => {
+const DatingCard: React.FC<DatingCardProps> = ({ profile, onSwipe, onViewProfile, isTopCard }) => {
   const pan = useRef(new Animated.ValueXY()).current;
   const scale = useRef(new Animated.Value(1)).current;
   const rotate = useRef(new Animated.Value(0)).current;
@@ -204,12 +205,16 @@ const DatingCard: React.FC<DatingCardProps> = ({ profile, onSwipe, isTopCard }) 
       
       {/* Profile Info Card */}
       <View style={[tw.absolute, tw.bottom0, tw.left0, tw.right0, tw.p6]}>
-        <View style={[
-          tw.roundedL, 
-          tw.p4, 
-          tw.shadow,
-          { backgroundColor: 'rgba(251, 108, 49, 0.95)' }
-        ]}>
+        <TouchableOpacity 
+          style={[
+            tw.roundedL, 
+            tw.p4, 
+            tw.shadow,
+            { backgroundColor: 'rgba(251, 108, 49, 0.95)' }
+          ]}
+          onPress={() => onViewProfile?.(profile.id)}
+          activeOpacity={0.8}
+        >
           {/* Name and Age */}
           <View style={[tw.flexRow, tw.itemsCenter, tw.justifyBetween, tw.mB3]}>
             <View style={[tw.flex1]}>
@@ -249,7 +254,7 @@ const DatingCard: React.FC<DatingCardProps> = ({ profile, onSwipe, isTopCard }) 
               </Text>
             </View>
           </View>
-        </View>
+        </TouchableOpacity>
       </View>
       
       {/* Swipe Action Indicators */}

@@ -6,6 +6,7 @@ import { useRouter } from "expo-router";
 import NetworkingCard, { NetworkingProfile } from "../NetworkingCard";
 import SinglePostView, { GenericPost } from "../SinglePostView";
 import NetworkingProfileView from "../NetworkingProfileView";
+import UserProfileView from "../UserProfileView";
 import { MOCK_NOTIFICATIONS } from "../NotificationCenter";
 import { Post, ApiResponse } from "@/types";
 import { getTimeAgo } from "@/utils/timeAgo";
@@ -38,6 +39,8 @@ const Networking: React.FC<NetworkingProps> = ({
   const [likedPosts, setLikedPosts] = useState<Set<number>>(new Set());
   const [likingPosts, setLikingPosts] = useState<Set<number>>(new Set());
   const [optimisticLikeCounts, setOptimisticLikeCounts] = useState<Map<number, number>>(new Map());
+  const [selectedUserId, setSelectedUserId] = useState<number | null>(null);
+  const [profileModalVisible, setProfileModalVisible] = useState(false);
 
   // Use the posts hook for networking posts
   const {
@@ -57,6 +60,16 @@ const Networking: React.FC<NetworkingProps> = ({
 
   // Use the API request hook for like/unlike functionality
   const { loading: apiLoading, send } = useApiRequest<ApiResponse>();
+
+  const handleViewProfile = (userId: number) => {
+    setSelectedUserId(userId);
+    setProfileModalVisible(true);
+  };
+
+  const handleCloseProfile = () => {
+    setProfileModalVisible(false);
+    setSelectedUserId(null);
+  };
 
   // Load networking profiles from API
   const loadNetworkingProfiles = React.useCallback(async () => {
@@ -220,7 +233,7 @@ const Networking: React.FC<NetworkingProps> = ({
     }
   };
 
-  const handleViewProfile = (profile: any) => {
+  const handleViewNetworkingProfile = (profile: any) => {
     setSelectedProfile(profile);
     setProfileViewVisible(true);
   };
@@ -509,7 +522,8 @@ const Networking: React.FC<NetworkingProps> = ({
           id: item.id,
           user: {
             name: `${item.user.firstname} ${item.user.lastname}`,
-            avatar: "" // Not used anymore, we use initials instead
+            avatar: "", // Not used anymore, we use initials instead
+            userId: item.user.id // Add userId for profile viewing
           },
           timestamp: getTimeAgo(item.createdAt),
           location: "",
@@ -526,7 +540,11 @@ const Networking: React.FC<NetworkingProps> = ({
     >
       {/* Header */}
       <View style={[tw.flexRow, tw.itemsCenter, tw.justifyBetween, tw.p4, tw.pB2]}>
-        <View style={[tw.flexRow, tw.itemsCenter]}>
+        <TouchableOpacity 
+          style={[tw.flexRow, tw.itemsCenter, tw.flex1]}
+          onPress={() => handleViewProfile(item.user.id)}
+          activeOpacity={0.7}
+        >
           <View style={[tw.w10, tw.h10, tw.roundedFull, tw.mR3, tw.bgGray300, tw.justifyCenter, tw.itemsCenter]}>
             <Text style={[tw.textGray700, tw.fontBold, tw.textSm]}>
               {getUserInitials(item.user.firstname, item.user.lastname)}
@@ -538,7 +556,7 @@ const Networking: React.FC<NetworkingProps> = ({
             </Text>
             <Text style={[tw.textGray500, tw.textXs]}>{getTimeAgo(item.createdAt)}</Text>
           </View>
-        </View>
+        </TouchableOpacity>
         <TouchableOpacity 
           onPress={() => toggleBookmark(item.id)}
           disabled={likingPosts.has(item.id)}
@@ -848,7 +866,7 @@ const Networking: React.FC<NetworkingProps> = ({
                 }}
                 onConnect={handleConnect}
                 onMessage={handleMessage}
-                onViewProfile={handleViewProfile}
+                onViewProfile={handleViewNetworkingProfile}
                 isConnecting={connectingProfiles.has(item.id)}
               />
             )}
@@ -930,6 +948,7 @@ const Networking: React.FC<NetworkingProps> = ({
           onLike={handleLike}
           onComment={handleComment}
           onShare={handleShare}
+          onViewProfile={handleViewProfile}
           profileType="networking"
         />
       )}
@@ -947,6 +966,13 @@ const Networking: React.FC<NetworkingProps> = ({
           onMessage={handleProfileMessage}
         />
       )}
+
+      {/* User Profile View */}
+      <UserProfileView
+        visible={profileModalVisible}
+        onClose={handleCloseProfile}
+        userId={selectedUserId || 0}
+      />
     </View>
   );
 };

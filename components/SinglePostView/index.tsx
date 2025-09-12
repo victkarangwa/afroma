@@ -27,6 +27,7 @@ export interface GenericPost {
     name: string;
     avatar?: string; // Optional since we use initials instead
     headline?: string;
+    userId?: number; // Add userId for profile viewing
   };
   timestamp: string;
   location?: string;
@@ -47,6 +48,7 @@ interface SinglePostViewProps {
   onLike?: (postId: number) => void;
   onComment?: (postId: number) => void;
   onShare?: (postId: number) => void;
+  onViewProfile?: (userId: number) => void;
   profileType?: 'travel' | 'networking' | 'dating' | null;
 }
 
@@ -58,6 +60,7 @@ const SinglePostView: React.FC<SinglePostViewProps> = ({
   onLike,
   onComment,
   onShare,
+  onViewProfile,
   profileType,
 }) => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
@@ -226,7 +229,12 @@ const SinglePostView: React.FC<SinglePostViewProps> = ({
           {/* Post Content */}
           <View style={[tw.bgWhite, tw.flex1, tw.p4]}>
             {/* User Info */}
-            <View style={[tw.flexRow, tw.itemsCenter, tw.mB3]}>
+            <TouchableOpacity 
+              style={[tw.flexRow, tw.itemsCenter, tw.mB3]}
+              // onPress={() => post.user.userId && onViewProfile?.(post.user.userId)}
+              activeOpacity={0.7}
+              disabled={!post.user.userId}
+            >
               <View style={[tw.w12, tw.h12, tw.roundedFull, tw.mR3, tw.bgGray300, tw.justifyCenter, tw.itemsCenter]}>
                 <Text style={[tw.textGray700, tw.fontBold, tw.textSm]}>
                   {(() => {
@@ -245,7 +253,10 @@ const SinglePostView: React.FC<SinglePostViewProps> = ({
                 )}
                 <Text style={[tw.textGray500, tw.textSm]}>{post.timestamp}</Text>
               </View>
-            </View>
+              {post.user.userId && (
+                <Ionicons name="chevron-forward" size={16} color="#9ca3af" />
+              )}
+            </TouchableOpacity>
 
             {/* Full Caption */}
             {post.caption && (

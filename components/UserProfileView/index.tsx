@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { tw } from 'react-native-tailwindcss';
 import { useRouter } from 'expo-router';
 import ImageWithFallback from '@/components/ImageWithFallback';
+import PhotoViewer from '@/components/PhotoViewer';
 import { getUserInitials } from '@/utils/userInitials';
 import useApiRequest from '@/hooks/useApiRequest';
 import useCurrentUserProfile from '@/hooks/useCurrentUserProfile';
@@ -66,6 +67,8 @@ const UserProfileView: React.FC<UserProfileViewProps> = ({
   const [loadingProfile, setLoadingProfile] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showQuestionsModal, setShowQuestionsModal] = useState(false);
+  const [showPhotoViewer, setShowPhotoViewer] = useState(false);
+  const [selectedPhotoIndex, setSelectedPhotoIndex] = useState(0);
 
   // Calculate age from dateOfBirth
   const calculateAge = (dateOfBirth: string) => {
@@ -217,6 +220,11 @@ const UserProfileView: React.FC<UserProfileViewProps> = ({
   const handleViewPosts = () => {
     // TODO: Navigate to user's posts
     Alert.alert('Posts', 'View user posts feature coming soon!');
+  };
+
+  const handlePhotoPress = (photoIndex: number) => {
+    setSelectedPhotoIndex(photoIndex);
+    setShowPhotoViewer(true);
   };
 
   if (!visible) return null;
@@ -382,10 +390,7 @@ const UserProfileView: React.FC<UserProfileViewProps> = ({
                       <TouchableOpacity
                         key={item.id}
                         style={[tw.roundedLg, tw.overflowHidden, { width: '30%', aspectRatio: 1 }]}
-                        onPress={() => {
-                          // TODO: Open full screen image viewer
-                          Alert.alert('Photo', 'Full screen photo viewer coming soon!');
-                        }}
+                        onPress={() => handlePhotoPress(index)}
                       >
                         <ImageWithFallback
                           source={{ uri: item.thumbnailUrl }}
@@ -622,6 +627,16 @@ const UserProfileView: React.FC<UserProfileViewProps> = ({
           </ScrollView>
         </View>
       </Modal>
+
+      {/* Photo Viewer */}
+      {profile?.gallery && (
+        <PhotoViewer
+          visible={showPhotoViewer}
+          onClose={() => setShowPhotoViewer(false)}
+          photos={profile.gallery}
+          initialIndex={selectedPhotoIndex}
+        />
+      )}
     </Modal>
   );
 };

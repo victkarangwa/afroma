@@ -8,6 +8,7 @@ import {
   FlatList,
   Modal,
   Alert,
+  ActivityIndicator,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
@@ -63,6 +64,7 @@ const ProfileScreen: React.FC = () => {
   const [modalVisible, setModalVisible] = useState(false);
   const [isLoadingProfile, setIsLoadingProfile] = useState(true);
   const [profileError, setProfileError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   // Calculate age from dateOfBirth
   const calculateAge = (dateOfBirth: string) => {
@@ -301,13 +303,51 @@ const ProfileScreen: React.FC = () => {
 
   // Handle profile switch and navigate to Home
   const handleProfileSwitch = async (type: 'travel' | 'networking' | 'dating') => {
-    setProfileType(type);
-    setModalVisible(false);
-    await LocalStorage.setItem(localStore.profileType, type);
-    let profileTypeParam = 'main';
-    if (type === 'dating') profileTypeParam = 'dating';
-    else if (type === 'networking') profileTypeParam = 'networking';
-    router.replace({ pathname: '/(tabs)', params: { profileType: profileTypeParam } });
+    try {
+      // Show loading state
+      setIsLoading(true);
+      
+      // Map local profile type to API format
+      const apiProfileType = type.toUpperCase();
+      
+      // Update profile type on server
+      const result = await send('put', '/users/profile', {
+        profileType: apiProfileType
+      });
+      
+      if (result?.errors) {
+        console.error('Error updating profile type:', result.errors);
+        Alert.alert(
+          'Profile Update Failed',
+          'Failed to update your profile type. Please try again.',
+          [{ text: 'OK' }]
+        );
+        return;
+      }
+      
+      console.log('Profile type updated successfully:', result);
+      
+      // Update local state and storage
+      setProfileType(type);
+      setModalVisible(false);
+      await LocalStorage.setItem(localStore.profileType, type);
+      
+      // Navigate to home with new profile type
+      let profileTypeParam = 'main';
+      if (type === 'dating') profileTypeParam = 'dating';
+      else if (type === 'networking') profileTypeParam = 'networking';
+      router.replace({ pathname: '/(tabs)', params: { profileType: profileTypeParam } });
+      
+    } catch (error) {
+      console.error('Error switching profile type:', error);
+      Alert.alert(
+        'Profile Update Failed',
+        'Failed to update your profile type. Please check your connection and try again.',
+        [{ text: 'OK' }]
+      );
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   // Profile type descriptions
@@ -414,11 +454,23 @@ const ProfileScreen: React.FC = () => {
           <View style={[tw.flexRow, tw.justifyCenter, tw.itemsCenter, tw.mB6]}> 
             {/* Switch Profile Icon */}
             <TouchableOpacity
-              style={[tw.bgGray900, tw.roundedFull, tw.p3, tw.mR4, { shadowColor: '#fb6c31', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.18, shadowRadius: 6, elevation: 3 }]}
+              style={[
+                tw.bgGray900, 
+                tw.roundedFull, 
+                tw.p3, 
+                tw.mR4, 
+                { shadowColor: '#fb6c31', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.18, shadowRadius: 6, elevation: 3 },
+                isLoading ? { opacity: 0.6 } : {}
+              ]}
               onPress={() => setModalVisible(true)}
+              disabled={isLoading}
               accessibilityLabel="Switch Profile"
             >
-              <Ionicons name="swap-horizontal" size={24} color="#fff" />
+              {isLoading ? (
+                <ActivityIndicator size="small" color="#fff" />
+              ) : (
+                <Ionicons name="swap-horizontal" size={24} color="#fff" />
+              )}
             </TouchableOpacity>
             {/* Profile Questions Icon */}
             <TouchableOpacity
@@ -443,14 +495,35 @@ const ProfileScreen: React.FC = () => {
                 {profileOptions.map(option => (
                   <TouchableOpacity
                     key={option.key}
-                    style={[tw.pY4, tw.pX4, tw.rounded, tw.mB3, option.key === profileType ? tw.bgGray200 : tw.bgGray100]}
+                    style={[
+                      tw.pY4, 
+                      tw.pX4, 
+                      tw.rounded, 
+                      tw.mB3, 
+                      option.key === profileType ? tw.bgGray200 : tw.bgGray100,
+                      isLoading ? { opacity: 0.6 } : {}
+                    ]}
                     onPress={() => handleProfileSwitch(option.key as any)}
+                    disabled={isLoading}
                   >
-                    <Text style={[tw.textGray900, tw.fontBold, tw.textBase]}>{option.label}</Text>
-                    <Text style={[tw.textGray600, tw.textSm, tw.mT1]}>{option.description}</Text>
+                    <View style={[tw.flexRow, tw.itemsCenter, tw.justifyBetween]}>
+                      <View style={[tw.flex1]}>
+                        <Text style={[tw.textGray900, tw.fontBold, tw.textBase]}>{option.label}</Text>
+                        <Text style={[tw.textGray600, tw.textSm, tw.mT1]}>{option.description}</Text>
+                      </View>
+                      {isLoading && option.key === profileType && (
+                        <View style={[tw.mL2]}>
+                          <ActivityIndicator size="small" color="#fb6c31" />
+                        </View>
+                      )}
+                    </View>
                   </TouchableOpacity>
                 ))}
-                <TouchableOpacity style={[tw.itemsCenter, tw.mT2]} onPress={() => setModalVisible(false)}>
+                <TouchableOpacity 
+                  style={[tw.itemsCenter, tw.mT2, isLoading ? { opacity: 0.6 } : {}]} 
+                  onPress={() => setModalVisible(false)}
+                  disabled={isLoading}
+                >
                   <Text style={[tw.textPink700, tw.fontBold]}>Cancel</Text>
                 </TouchableOpacity>
               </View>

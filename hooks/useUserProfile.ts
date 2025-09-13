@@ -2,19 +2,42 @@ import { useState, useCallback } from 'react';
 import useApiRequest from './useApiRequest';
 import { ApiResponse } from '@/types';
 
+interface GalleryItem {
+  id: number;
+  thumbnailUrl: string;
+  mediaUrl: string;
+  fileName: string;
+  featured: boolean;
+  mediaType: string;
+}
+
+interface Answer {
+  id: number;
+  text: string;
+}
+
+interface ProfileAnswer {
+  id: number;
+  question: string;
+  answers: Answer[];
+}
+
 interface UserProfile {
   id: number;
   firstname: string;
   lastname: string;
   gender: string;
   interestedIn: string;
+  bio?: string;
   dateOfBirth: string;
+  gallery?: GalleryItem[];
   publicFigure: boolean;
   latitude: number;
   longitude: number;
   profileType: string;
   profileTypes: string[];
   hasPendingRequest: boolean;
+  answers?: ProfileAnswer[];
   friend: boolean;
 }
 

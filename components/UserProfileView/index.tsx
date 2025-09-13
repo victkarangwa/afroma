@@ -8,19 +8,42 @@ import { getUserInitials } from '@/utils/userInitials';
 import useApiRequest from '@/hooks/useApiRequest';
 import { ApiResponse } from '@/types';
 
+interface GalleryItem {
+  id: number;
+  thumbnailUrl: string;
+  mediaUrl: string;
+  fileName: string;
+  featured: boolean;
+  mediaType: string;
+}
+
+interface Answer {
+  id: number;
+  text: string;
+}
+
+interface ProfileAnswer {
+  id: number;
+  question: string;
+  answers: Answer[];
+}
+
 interface UserProfile {
   id: number;
   firstname: string;
   lastname: string;
   gender: string;
   interestedIn: string;
+  bio?: string;
   dateOfBirth: string;
+  gallery?: GalleryItem[];
   publicFigure: boolean;
   latitude: number;
   longitude: number;
   profileType: string;
   profileTypes: string[];
   hasPendingRequest: boolean;
+  answers?: ProfileAnswer[];
   friend: boolean;
 }
 
@@ -68,6 +91,18 @@ const UserProfileView: React.FC<UserProfileViewProps> = ({
     return `${profile.firstname} ${profile.lastname}`;
   };
 
+  // Get featured image from gallery
+  const getFeaturedImage = () => {
+    if (!profile?.gallery || profile.gallery.length === 0) return null;
+    const featured = profile.gallery.find(item => item.featured);
+    return featured ? featured.mediaUrl : profile.gallery[0].mediaUrl;
+  };
+
+  // Get profile image (featured or first gallery image)
+  const getProfileImage = () => {
+    return getFeaturedImage();
+  };
+
   // Get profile type display
   const getProfileTypeDisplay = () => {
     if (!profile) return '';
@@ -98,7 +133,7 @@ const UserProfileView: React.FC<UserProfileViewProps> = ({
       }
       
       if (result) {
-        setProfile(result);
+        setProfile(result as unknown as UserProfile);
       }
     } catch (err) {
       console.error('Error fetching user profile:', err);
@@ -185,10 +220,21 @@ const UserProfileView: React.FC<UserProfileViewProps> = ({
               {/* Profile Header */}
               <View style={[tw.bgWhite, tw.roundedLg, tw.p6, tw.mB4, tw.shadow]}>
                 <View style={[tw.flexRow, tw.itemsCenter, tw.mB4]}>
-                  <View style={[tw.w20, tw.h20, tw.roundedFull, tw.bgGray300, tw.justifyCenter, tw.itemsCenter, tw.mR4]}>
-                    <Text style={[tw.textGray700, tw.fontBold, tw.textLg]}>
-                      {getUserInitials(profile.firstname, profile.lastname)}
-                    </Text>
+                  <View style={[tw.w20, tw.h20, tw.roundedFull, tw.mR4, tw.overflowHidden]}>
+                    {getProfileImage() ? (
+                      <ImageWithFallback
+                        source={{ uri: getProfileImage()! }}
+                        style={[tw.wFull, tw.hFull]}
+                        resizeMode="cover"
+                        fallbackSource={null}
+                      />
+                    ) : (
+                      <View style={[tw.wFull, tw.hFull, tw.bgGray300, tw.justifyCenter, tw.itemsCenter]}>
+                        <Text style={[tw.textGray700, tw.fontBold, tw.textLg]}>
+                          {getUserInitials(profile.firstname, profile.lastname)}
+                        </Text>
+                      </View>
+                    )}
                   </View>
                   <View style={[tw.flex1]}>
                     <Text style={[tw.textGray900, tw.fontBold, tw.textXl]}>{getDisplayName()}</Text>
@@ -200,6 +246,14 @@ const UserProfileView: React.FC<UserProfileViewProps> = ({
                     </Text>
                   </View>
                 </View>
+
+                {/* Bio Section */}
+                {profile.bio && (
+                  <View style={[tw.mB4]}>
+                    <Text style={[tw.textGray900, tw.fontBold, tw.textBase, tw.mB2]}>About</Text>
+                    <Text style={[tw.textGray700, tw.textBase]}>{profile.bio}</Text>
+                  </View>
+                )}
 
                 {/* Action Buttons */}
                 {/* <View style={[tw.flexRow, tw.spaceX3]}>
@@ -272,6 +326,73 @@ const UserProfileView: React.FC<UserProfileViewProps> = ({
                   </View>
                 )}
               </View>
+
+              {/* Gallery Section */}
+              {profile.gallery && profile.gallery.length > 0 && (
+                <View style={[tw.bgWhite, tw.roundedLg, tw.p6, tw.mB4, tw.shadow]}>
+                  <Text style={[tw.textGray900, tw.fontBold, tw.textLg, tw.mB4]}>Photos</Text>
+                  <View style={[tw.flexRow, tw.flexWrap, { gap: 8 }]}>
+                    {profile.gallery.slice(0, 6).map((item, index) => (
+                      <TouchableOpacity
+                        key={item.id}
+                        style={[tw.roundedLg, tw.overflowHidden, { width: '30%', aspectRatio: 1 }]}
+                        onPress={() => {
+                          // TODO: Open full screen image viewer
+                          Alert.alert('Photo', 'Full screen photo viewer coming soon!');
+                        }}
+                      >
+                        <ImageWithFallback
+                          source={{ uri: item.thumbnailUrl }}
+                          style={[tw.wFull, tw.hFull]}
+                          resizeMode="cover"
+                          fallbackSource={null}
+                        />
+                        {index === 5 && profile.gallery && profile.gallery.length > 6 && (
+                          <View style={[tw.absolute, tw.inset0, tw.bgBlack, tw.opacity50, tw.justifyCenter, tw.itemsCenter]}>
+                            <Text style={[tw.textWhite, tw.fontBold, tw.textLg]}>
+                              +{profile.gallery.length - 6}
+                            </Text>
+                          </View>
+                        )}
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                </View>
+              )}
+
+              {/* Profile Answers Section */}
+              {profile.answers && profile.answers.length > 0 && (
+                <View style={[tw.bgWhite, tw.roundedLg, tw.p6, tw.mB4, tw.shadow]}>
+                  <Text style={[tw.textGray900, tw.fontBold, tw.textLg, tw.mB4]}>Profile Questions</Text>
+                  {profile.answers.slice(0, 3).map((answer, index) => (
+                    <View key={answer.id} style={[tw.mB4, index === 2 ? tw.mB0 : tw.mB4]}>
+                      <Text style={[tw.textGray700, tw.fontMedium, tw.textBase, tw.mB2]}>
+                        {answer.question}
+                      </Text>
+                      <View style={[tw.flexRow, tw.flexWrap]}>
+                        {answer.answers.map((ans, ansIndex) => (
+                          <View key={ans.id} style={[tw.bgGray100, tw.roundedFull, tw.pX3, tw.pY1, tw.mR2, tw.mB1]}>
+                            <Text style={[tw.textGray700, tw.textSm]}>{ans.text}</Text>
+                          </View>
+                        ))}
+                      </View>
+                    </View>
+                  ))}
+                  {profile.answers.length > 3 && (
+                    <TouchableOpacity
+                      style={[tw.itemsCenter, tw.mT2]}
+                      onPress={() => {
+                        // TODO: Show all answers in a modal or separate screen
+                        Alert.alert('Profile Questions', 'View all answers coming soon!');
+                      }}
+                    >
+                      <Text style={[tw.textPink700, tw.fontMedium]}>
+                        View all {profile.answers.length} questions
+                      </Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
+              )}
 
               {/* Additional Actions */}
               <View style={[tw.bgWhite, tw.roundedLg, tw.p6, tw.mB4, tw.shadow]}>

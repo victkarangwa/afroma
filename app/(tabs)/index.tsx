@@ -535,10 +535,21 @@ const HomeScreen: React.FC = () => {
           onPress={() => handleViewProfile(item.user.id)}
           activeOpacity={0.7}
         >
-          <View style={[tw.w10, tw.h10, tw.roundedFull, tw.mR3, tw.bgGray300, tw.justifyCenter, tw.itemsCenter]}>
-            <Text style={[tw.textGray700, tw.fontBold, tw.textSm]}>
-              {getUserInitials(item.user.firstname, item.user.lastname)}
-            </Text>
+          <View style={[tw.w10, tw.h10, tw.roundedFull, tw.mR3, tw.overflowHidden]}>
+            {item.user.photo ? (
+              <ImageWithFallback
+                source={{ uri: item.user.photo }}
+                style={[tw.wFull, tw.hFull]}
+                resizeMode="cover"
+                fallbackSource={null}
+              />
+            ) : (
+              <View style={[tw.wFull, tw.hFull, tw.bgGray300, tw.justifyCenter, tw.itemsCenter]}>
+                <Text style={[tw.textGray700, tw.fontBold, tw.textSm]}>
+                  {getUserInitials(item.user.firstname, item.user.lastname)}
+                </Text>
+              </View>
+            )}
           </View>
           <View>
             <Text style={[tw.textGray900, tw.fontBold, tw.textBase]}>{`${item.user.firstname} ${item.user.lastname}`}</Text>

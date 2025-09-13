@@ -53,6 +53,7 @@ export interface PostUser {
   longitude: number;
   profileType: string;
   profileTypes: string[];
+  photo?: string;
 }
 
 export interface PostAttachment {

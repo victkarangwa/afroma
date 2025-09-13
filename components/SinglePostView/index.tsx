@@ -13,6 +13,7 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { tw } from "react-native-tailwindcss";
+import ImageWithFallback from "@/components/ImageWithFallback";
 import { getUserInitials } from "@/utils/userInitials";
 import CommentSection from "../CommentSection";
 import { Comment, CommentListResponse } from "@/types";
@@ -26,6 +27,7 @@ export interface GenericPost {
   user: {
     name: string;
     avatar?: string; // Optional since we use initials instead
+    photo?: string; // User's profile photo
     headline?: string;
     userId?: number; // Add userId for profile viewing
   };
@@ -235,13 +237,24 @@ const SinglePostView: React.FC<SinglePostViewProps> = ({
               activeOpacity={0.7}
               disabled={!post.user.userId}
             >
-              <View style={[tw.w12, tw.h12, tw.roundedFull, tw.mR3, tw.bgGray300, tw.justifyCenter, tw.itemsCenter]}>
-                <Text style={[tw.textGray700, tw.fontBold, tw.textSm]}>
-                  {(() => {
-                    const nameParts = post.user.name.split(' ');
-                    return getUserInitials(nameParts[0] || '', nameParts[1] || '');
-                  })()}
-                </Text>
+              <View style={[tw.w12, tw.h12, tw.roundedFull, tw.mR3, tw.overflowHidden]}>
+                {post.user.photo ? (
+                  <ImageWithFallback
+                    source={{ uri: post.user.photo }}
+                    style={[tw.wFull, tw.hFull]}
+                    resizeMode="cover"
+                    fallbackSource={null}
+                  />
+                ) : (
+                  <View style={[tw.wFull, tw.hFull, tw.bgGray300, tw.justifyCenter, tw.itemsCenter]}>
+                    <Text style={[tw.textGray700, tw.fontBold, tw.textSm]}>
+                      {(() => {
+                        const nameParts = post.user.name.split(' ');
+                        return getUserInitials(nameParts[0] || '', nameParts[1] || '');
+                      })()}
+                    </Text>
+                  </View>
+                )}
               </View>
               <View style={[tw.flex1]}>
                 <Text style={[tw.textGray900, tw.fontBold, tw.textBase]}>{post.user.name}</Text>

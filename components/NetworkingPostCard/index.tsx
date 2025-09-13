@@ -2,6 +2,8 @@ import React from "react";
 import { View, Text, Image, TouchableOpacity } from "react-native";
 import { tw } from "react-native-tailwindcss";
 import { Ionicons } from "@expo/vector-icons";
+import ImageWithFallback from "@/components/ImageWithFallback";
+import { getUserInitials } from "@/utils/userInitials";
 import { NetworkingPost } from "../NetworkingCard";
 
 interface NetworkingPostCardProps {
@@ -39,10 +41,22 @@ const NetworkingPostCard: React.FC<NetworkingPostCardProps> = ({
       {/* Header */}
       <View style={[tw.flexRow, tw.itemsCenter, tw.justifyBetween, tw.p4, tw.pB2]}>
         <View style={[tw.flexRow, tw.itemsCenter]}>
-          <Image
-            source={{ uri: post.user.avatar }}
-            style={[tw.w10, tw.h10, tw.roundedFull, tw.mR3]}
-          />
+          <View style={[tw.w10, tw.h10, tw.roundedFull, tw.mR3, tw.overflowHidden]}>
+            {post.user.avatar ? (
+              <ImageWithFallback
+                source={{ uri: post.user.avatar }}
+                style={[tw.wFull, tw.hFull]}
+                resizeMode="cover"
+                fallbackSource={null}
+              />
+            ) : (
+              <View style={[tw.wFull, tw.hFull, tw.bgGray300, tw.justifyCenter, tw.itemsCenter]}>
+                <Text style={[tw.textGray700, tw.fontBold, tw.textSm]}>
+                  {getUserInitials(post.user.name.split(' ')[0] || '', post.user.name.split(' ')[1] || '')}
+                </Text>
+              </View>
+            )}
+          </View>
           <View>
             <Text style={[tw.textGray900, tw.fontBold, tw.textBase]}>{post.user.name}</Text>
             <Text style={[tw.textGray700, tw.textSm]}>{post.user.headline}</Text>

@@ -278,8 +278,9 @@ const Networking: React.FC<NetworkingProps> = ({
         const newMap = new Map(prev);
         const currentPost = apiPosts.find(post => post.id === postId);
         if (currentPost) {
-          const currentCount = currentPost.likeCount;
-          const newCount = wasLiked ? currentCount - 1 : currentCount + 1;
+          // Use the optimistic count if it exists, otherwise use the API count
+          const currentCount = prev.get(postId) ?? currentPost.likeCount;
+          const newCount = wasLiked ? Math.max(0, currentCount - 1) : currentCount + 1;
           newMap.set(postId, newCount);
         }
         return newMap;
@@ -312,7 +313,13 @@ const Networking: React.FC<NetworkingProps> = ({
       // Revert optimistic like count on error
       setOptimisticLikeCounts(prev => {
         const newMap = new Map(prev);
-        newMap.delete(postId);
+        const currentPost = apiPosts.find(post => post.id === postId);
+        if (currentPost) {
+          // Revert to the original API count
+          newMap.set(postId, currentPost.likeCount);
+        } else {
+          newMap.delete(postId);
+        }
         return newMap;
       });
     } finally {

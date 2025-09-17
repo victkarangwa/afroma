@@ -34,6 +34,12 @@
       <dict>
         <key>CFBundleURLSchemes</key>
         <array>
+          <string>com.googleusercontent.apps.264350061976-tsqp24rnknu5915rb7spu7gh13mce25m</string>
+        </array>
+      </dict>
+      <dict>
+        <key>CFBundleURLSchemes</key>
+        <array>
           <string>exp+afroma</string>
         </array>
       </dict>
@@ -41,12 +47,6 @@
         <key>CFBundleURLSchemes</key>
         <array>
           <string>fb1921081955393227</string>
-        </array>
-      </dict>
-      <dict>
-        <key>CFBundleURLSchemes</key>
-        <array>
-          <string>com.googleusercontent.apps.net.afroma.app</string>
         </array>
       </dict>
     </array>
@@ -136,8 +136,6 @@
     <key>UIUserInterfaceStyle</key>
     <string>Automatic</string>
     <key>UIViewControllerBasedStatusBarAppearance</key>
-    <false/>
-    <key>ITSAppUsesNonExemptEncryption</key>
     <false/>
   </dict>
 </plist>

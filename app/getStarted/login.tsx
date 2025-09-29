@@ -14,7 +14,9 @@ import localStore from "@/utils/localValues";
 import LocalStorage from "@/utils/storage";
 import moment from "moment";
 import { saveAuthData } from "@/utils/auth";
-import { onGoogleButtonPress, onFacebookButtonPress } from "@/components/SocialLogin";
+import { onGoogleButtonPress, onFacebookButtonPress, onAppleButtonPress } from "@/components/SocialLogin";
+// import { SignInWithAppleButton } from "@/components/Button/SignInWithAppleButton.ios";
+import * as AppleAuthentication from 'expo-apple-authentication';
 
 // Map API profileType to local value used in app
 const mapApiProfileTypeToLocal = (apiType?: string): 'travel' | 'networking' | 'dating' | null => {
@@ -194,7 +196,7 @@ const LoginScreen: React.FC = () => {
     }
   };
 
-  const handleSocialLogin = async (provider: 'google' | 'facebook', token: string) => {
+  const handleSocialLogin = async (provider: 'google' | 'facebook' | 'apple', token: string) => {
     try {
       if (token) {
         const result = await send(
@@ -294,6 +296,41 @@ const LoginScreen: React.FC = () => {
       setModalInfo({
         title: "Facebook Login Failed",
         description: "An error occurred during Facebook login. Please try again.",
+        status: "error",
+        btnText: "OK",
+        onDismiss: () => setVisible(false),
+      });
+      setVisible(true);
+    }
+  };
+
+  const handleAppleLogin = async () => {
+    try {
+      const identityToken = await onAppleButtonPress();
+      if (identityToken) {
+        setModalInfo({
+          title: "Apple Login Success",
+          description: `Apple authentication token received. ${identityToken}`,
+          status: "success",
+          btnText: "OK",
+          onDismiss: () => setVisible(false),
+        });
+        await handleSocialLogin('apple', identityToken);
+      } else {
+        setModalInfo({
+          title: "Apple Login Failed",
+          description: "Failed to get Apple authentication token. Please try again.",
+          status: "error",
+          btnText: "OK",
+          onDismiss: () => setVisible(false),
+        });
+        setVisible(true);
+      }
+    } catch (error) {
+      console.error("Apple login error:", error);
+      setModalInfo({
+        title: "Apple Login Failed",
+        description: "An error occurred during Apple login. Please try again.",
         status: "error",
         btnText: "OK",
         onDismiss: () => setVisible(false),
@@ -426,6 +463,38 @@ const LoginScreen: React.FC = () => {
           <TouchableOpacity style={[tw.bgWhite, tw.roundedFull, tw.p3, primaryShadow, tw.mX2]} onPress={handleGoogleLogin}>
             <FontAwesome name="google" size={24} color="#EA4335" />
           </TouchableOpacity>
+          {/* <SignInWithAppleButton /> */}
+          {/* <View>
+      <AppleAuthentication.AppleAuthenticationButton
+        buttonType={AppleAuthentication.AppleAuthenticationButtonType.SIGN_IN}
+        buttonStyle={AppleAuthentication.AppleAuthenticationButtonStyle.BLACK}
+        cornerRadius={5}
+        style={{ width: 200, height: 44 }}
+        onPress={async () => {
+          try {
+            const credential = await AppleAuthentication.signInAsync({
+              requestedScopes: [
+                AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
+                AppleAuthentication.AppleAuthenticationScope.EMAIL,
+              ],
+            });
+            console.log(credential);
+            // send credential.identityToken to backend to validate
+          } catch (e) {
+            if (e.code === 'ERR_CANCELED') {
+              // user cancelled
+            } else {
+              console.error(e);
+            }
+          }
+        }}
+      />
+    </View> */}
+          {Platform.OS === 'ios' && (
+            <TouchableOpacity style={[tw.bgWhite, tw.roundedFull, tw.p3, primaryShadow, tw.mX2]} onPress={handleAppleLogin}>
+              <FontAwesome name="apple" size={24} color="#000000" />
+            </TouchableOpacity>
+          )}
         </View>
         {/* Don't have an account? */}
         <View style={[tw.flex, tw.flexRow, tw.justifyCenter, tw.itemsCenter, tw.mT8]}>

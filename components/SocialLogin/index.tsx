@@ -5,6 +5,7 @@ import {
   AuthenticationToken,
   LoginManager,
 } from "react-native-fbsdk-next";
+import * as AppleAuthentication from 'expo-apple-authentication';
 
 // export default function App() {
 
@@ -29,7 +30,7 @@ export async function onGoogleButtonPress() {
 
     if (!idToken) {
       // if you are using older versions of google-signin, try old style result
-      idToken = signInResult.idToken;
+      idToken = (signInResult as any).idToken;
     }
     if (!idToken) {
       throw new Error("No ID token found");
@@ -72,5 +73,29 @@ export async function onFacebookButtonPress() {
     return data;
   } catch (error) {
     console.log("---FB_LOGIN_ERROR--", error);
+  }
+}
+
+export async function onAppleButtonPress() {
+  try {
+    // Start the sign-in request
+    const credential = await AppleAuthentication.signInAsync({
+      requestedScopes: [
+        AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
+        AppleAuthentication.AppleAuthenticationScope.EMAIL,
+      ],
+    });
+
+    // Ensure Apple returned a user identityToken
+    if (!credential.identityToken) {
+      throw new Error('Apple Sign-In failed - no identify token returned');
+    }
+
+    // Return the identity token for use with your backend API
+    console.log("----APPLE_LOGIN_RESULT---", credential);
+    return credential.identityToken;
+  } catch (error) {
+    console.log("---APPLE_LOGIN_ERROR--", error);
+    throw error;
   }
 }

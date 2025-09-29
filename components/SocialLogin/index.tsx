@@ -91,9 +91,9 @@ export async function onAppleButtonPress() {
       throw new Error('Apple Sign-In failed - no identify token returned');
     }
 
-    // Return the identity token for use with your backend API
+    // Return the full credential object for use with your backend API
     console.log("----APPLE_LOGIN_RESULT---", credential);
-    return credential.identityToken;
+    return credential;
   } catch (error) {
     console.log("---APPLE_LOGIN_ERROR--", error);
     throw error;

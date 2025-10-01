@@ -238,7 +238,6 @@ const LoginScreen: React.FC = () => {
           },
         });
 
-
         if (result?.errors) {
           setModalInfo({
             title: "Error",
@@ -369,10 +368,6 @@ const LoginScreen: React.FC = () => {
               const payloadData = JSON.parse(decodedPayload);
               emailFromToken = payloadData.email || "";
               userIdFromToken = payloadData.sub || ""; // 'sub' is the subject (user ID) in JWT
-              console.log("Email from JWT token:", emailFromToken);
-              console.log("User ID from JWT token:", userIdFromToken);
-              console.log("Full JWT payload:", payloadData);
-              console.log("JWT decoding successful - email found:", !!emailFromToken);
             }
           }
         } catch (tokenError) {
@@ -395,25 +390,17 @@ const LoginScreen: React.FC = () => {
           realUserStatus: appleCredential.realUserStatus || 2,
         };
 
-        console.log("Apple login data:", userInfo);
-        console.log("Raw Apple credential:", appleCredential);
-        console.log("Email from credential:", appleCredential.email);
-        console.log("Email from JWT token:", emailFromToken);
-        console.log("Final email used:", userEmail);
+        console.log("User info:", userInfo);
 
         // Make API call to Apple authentication endpoint
         const result = await send("post", `/socialmedia/auth/apple`, {
-          data: userInfo,
-          headers: {
-            platform: Platform.OS,
-          },
+          ...userInfo,
         });
 
         console.log("Apple auth API result:", result);
-
         if (result?.errors) {
           setModalInfo({
-            title: "Apple Login Failed",
+            title: "Apple Login Failed+++",
             description:
               result?.errors ||
               "An error occurred during Apple login. Please try again.",
@@ -421,34 +408,24 @@ const LoginScreen: React.FC = () => {
             btnText: "OK",
             onDismiss: () => setVisible(false),
           });
-          setVisible(true);
-        } else if (result?.data) {
+          return setVisible(true);
+        } else if (result?.code === "00") {
           if (!result?.newAccount) {
             LocalStorage.setItem(
               localStore.token,
-              result?.tokenResponse?.otpToken
+              result?.tokenResponse?.token
             );
-            router.push({ pathname: "/getStarted/otp" });
+            router.push({ pathname: "/(tabs)" });
           } else {
             router.push({ pathname: "/getStarted/accountType" });
           }
-          setVisible(true);
+          // return setVisible(true);
         }
-      } else {
-        setModalInfo({
-          title: "Apple Login Failed",
-          description:
-            "Failed to get Apple authentication token. Please try again.",
-          status: "error",
-          btnText: "OK",
-          onDismiss: () => setVisible(false),
-        });
-        setVisible(true);
       }
     } catch (error) {
       console.error("Apple login error:", error);
       setModalInfo({
-        title: "Apple Login Failed",
+        title: "Apple Login Failed----",
         description: "An error occurred during Apple login. Please try again.",
         status: "error",
         btnText: "OK",

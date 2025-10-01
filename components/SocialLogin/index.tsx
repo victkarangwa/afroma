@@ -92,7 +92,7 @@ export async function onAppleButtonPress() {
     }
 
     // Return the full credential object for use with your backend API
-    console.log("----APPLE_LOGIN_RESULT---", credential);
+    // console.log("----APPLE_LOGIN_RESULT---", credential);
     return credential;
   } catch (error) {
     console.log("---APPLE_LOGIN_ERROR--", error);

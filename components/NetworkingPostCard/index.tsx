@@ -78,7 +78,7 @@ const NetworkingPostCard: React.FC<NetworkingPostCardProps> = ({
       {/* Images */}
       <View style={[tw.pX4, tw.pB2]}>
         {post.images.length === 1 && (
-          <Image
+          <ImageWithFallback
             source={{ uri: post.images[0] }}
             style={[tw.wFull, { height: 240 }, tw.roundedLg]}
             resizeMode="cover"
@@ -87,7 +87,7 @@ const NetworkingPostCard: React.FC<NetworkingPostCardProps> = ({
         {post.images.length === 2 && (
           <View style={{ flexDirection: 'row', gap: 8 }}>
             {post.images.map((img, idx) => (
-              <Image
+              <ImageWithFallback
                 key={idx}
                 source={{ uri: img }}
                 style={[{ width: '50%', height: 180, borderRadius: 12 }]}
@@ -98,14 +98,14 @@ const NetworkingPostCard: React.FC<NetworkingPostCardProps> = ({
         )}
         {post.images.length >= 3 && (
           <View style={{ flexDirection: 'row', gap: 8, height: 200 }}>
-            <Image
+            <ImageWithFallback
               source={{ uri: post.images[0] }}
               style={[{ width: '66%', height: '100%', borderRadius: 12 }]}
               resizeMode="cover"
             />
             <View style={{ width: '33%', justifyContent: 'space-between' }}>
               {[post.images[1], post.images[2]].map((img, idx) => (
-                <Image
+                <ImageWithFallback
                   key={idx}
                   source={{ uri: img }}
                   style={[{ width: '100%', height: '48%', borderRadius: 12 }]}

@@ -77,15 +77,15 @@ const OtpScreen: React.FC = () => {
         return;
       }
 
-      console.log("Verifying OTP:", data.code);
-      console.log("OTP Token:", otpToken);
+      // console.log("Verifying OTP:", data.code);
+      // console.log("OTP Token:", otpToken);
 
       const result = await send("post", "/auth/login-auth2", { 
         code: data.code,
         otpToken: otpToken
       });
 
-      console.log("OTP verification result:", result);
+      // console.log("OTP verification result:", result);
 
       if (result?.errors) {
         setModalInfo({

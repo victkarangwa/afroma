@@ -200,7 +200,7 @@ const SinglePostView: React.FC<SinglePostViewProps> = ({
             >
               {post.images.map((image, index) => (
                 <View key={index} style={[{ width: screenWidth, height: screenHeight * 0.5 }]}>
-                  <Image
+                  <ImageWithFallback
                     source={{ uri: image }}
                     style={[{ width: '100%', height: '100%' }]}
                     resizeMode="cover"

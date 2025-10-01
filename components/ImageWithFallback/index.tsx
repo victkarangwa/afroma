@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Image, ImageStyle, ViewStyle } from 'react-native';
+import { View, Image, ImageStyle, ViewStyle, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { tw } from 'react-native-tailwindcss';
 
@@ -19,6 +19,7 @@ const ImageWithFallback: React.FC<ImageWithFallbackProps> = ({
   fallbackSource
 }) => {
   const [hasError, setHasError] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   // If no source or error occurred, show fallback
   if (!source || hasError) {
@@ -39,13 +40,22 @@ const ImageWithFallback: React.FC<ImageWithFallbackProps> = ({
   }
 
   return (
-    <Image
-      source={source}
-      style={style}
-      resizeMode={resizeMode}
-      onError={() => setHasError(true)}
-      onPress={onPress}
-    />
+    <View style={[style, tw.relative]}>
+      {isLoading && (
+        <View style={[tw.absolute, tw.inset0, tw.bgGray200, tw.justifyCenter, tw.itemsCenter, { zIndex: 1 }]}>
+          <ActivityIndicator size="small" color="#fb6c31" />
+        </View>
+      )}
+      <Image
+        source={source}
+        style={style}
+        resizeMode={resizeMode}
+        onError={() => setHasError(true)}
+        onLoad={() => setIsLoading(false)}
+        onLoadStart={() => setIsLoading(true)}
+        onPress={onPress}
+      />
+    </View>
   );
 };
 

@@ -49,7 +49,9 @@ http.interceptors.response.use(
     return response
   },
   async (error) => {
-    console.error('Axios Error:', error)
+    // console.error('Axios Error message:', error.message)
+    // console.log('URL====>', error.config.url)
+    // console.log('Request data====>', error.config.data)
 
     // Handle authentication errors
     if (error.response?.status === 401) {

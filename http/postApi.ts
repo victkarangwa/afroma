@@ -86,5 +86,39 @@ export const postApi = {
       console.error('Error uploading media:', error);
       return null;
     }
+  },
+
+  /**
+   * Track engagement (like, comment, share, view)
+   * @param data - Engagement tracking data
+   * @returns Promise<any>
+   */
+  trackEngagement: async (data: {
+    postId: number;
+    engagementType: 'LIKE' | 'COMMENT' | 'SHARE' | 'VIEW';
+    timestamp: string;
+  }): Promise<any> => {
+    try {
+      const response = await http.post('/post/engagement/track', data);
+      return response.data;
+    } catch (error) {
+      console.error('Error tracking engagement:', error);
+      return null;
+    }
+  },
+
+  /**
+   * Get engagement metrics for a post
+   * @param postId - Post ID
+   * @returns Promise<any>
+   */
+  getEngagementMetrics: async (postId: number): Promise<any> => {
+    try {
+      const response = await http.get(`/post/engagement/metrics/${postId}`);
+      return response.data;
+    } catch (error) {
+      console.error('Error getting engagement metrics:', error);
+      return null;
+    }
   }
 };

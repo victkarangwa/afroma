@@ -130,11 +130,17 @@ const NetworkingPostCard: React.FC<NetworkingPostCardProps> = ({
       {/* Engagement Metrics */}
       <View style={[tw.flexRow, tw.itemsCenter, tw.justifyBetween, tw.pX4, tw.pB4]}>
         <View style={[tw.flexRow, tw.itemsCenter]}>
-          <TouchableOpacity style={[tw.flexRow, tw.itemsCenter, tw.mR6]}>
+          <TouchableOpacity 
+            style={[tw.flexRow, tw.itemsCenter, tw.mR6]}
+            onPress={() => onToggleBookmark?.(post.id)}
+          >
             <Ionicons name="heart-outline" size={20} color="#6b7280" />
             <Text style={[tw.textGray600, tw.textSm, tw.mL1]}>{formatNumber(post.likes)}</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={[tw.flexRow, tw.itemsCenter, tw.mR6]}>
+          <TouchableOpacity 
+            style={[tw.flexRow, tw.itemsCenter, tw.mR6]}
+            onPress={() => onPress?.(post)}
+          >
             <Ionicons name="chatbubble-outline" size={20} color="#6b7280" />
             <Text style={[tw.textGray600, tw.textSm, tw.mL1]}>{formatNumber(post.comments)}</Text>
           </TouchableOpacity>

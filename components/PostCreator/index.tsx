@@ -35,13 +35,14 @@ const PostCreator: React.FC<PostCreatorProps> = ({ profileType, onPostCreated })
   const [caption, setCaption] = useState("");
   const [location, setLocation] = useState("");
   const [selectedImages, setSelectedImages] = useState<string[]>([]);
+  const [selectedVideos, setSelectedVideos] = useState<string[]>([]);
   const captionInputRef = useRef<TextInput>(null);
   
   // Use the create post hook
   const { createPost, loading: isPosting, error, success, reset } = useCreatePost();
   
   // Use the media upload hook
-  const { uploadImages, loading: isUploading, error: uploadError, success: uploadSuccess, reset: resetUpload } = useMediaUpload();
+  const { uploadImages, uploadVideos, loading: isUploading, error: uploadError, success: uploadSuccess, reset: resetUpload } = useMediaUpload();
 
   const getProfileTypeConfig = () => {
     switch (profileType) {
@@ -128,13 +129,63 @@ const PostCreator: React.FC<PostCreatorProps> = ({ profileType, onPostCreated })
     }
   };
 
+  const pickVideos = async () => {
+    try {
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('Permission needed', 'Please grant camera roll permissions to select videos.');
+        return;
+      }
+
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Videos,
+        allowsMultipleSelection: true,
+        quality: 0.8,
+        videoMaxDuration: 60, // 60 seconds max
+      });
+
+      if (!result.canceled && result.assets) {
+        const newVideos = result.assets.map(asset => asset.uri);
+        setSelectedVideos(prev => [...prev, ...newVideos].slice(0, 3)); // Limit to 3 videos
+      }
+    } catch (error) {
+      Alert.alert('Error', 'Failed to pick videos. Please try again.');
+    }
+  };
+
+  const recordVideo = async () => {
+    try {
+      const { status } = await ImagePicker.requestCameraPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('Permission needed', 'Please grant camera permissions to record videos.');
+        return;
+      }
+
+      const result = await ImagePicker.launchCameraAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Videos,
+        quality: 0.8,
+        videoMaxDuration: 60, // 60 seconds max
+      });
+
+      if (!result.canceled && result.assets && result.assets[0]) {
+        setSelectedVideos(prev => [...prev, result.assets[0].uri].slice(0, 3));
+      }
+    } catch (error) {
+      Alert.alert('Error', 'Failed to record video. Please try again.');
+    }
+  };
+
   const removeImage = (index: number) => {
     setSelectedImages(prev => prev.filter((_, i) => i !== index));
   };
 
+  const removeVideo = (index: number) => {
+    setSelectedVideos(prev => prev.filter((_, i) => i !== index));
+  };
+
   const handlePost = async () => {
-    if (!caption.trim() && selectedImages.length === 0) {
-      Alert.alert('Empty Post', 'Please add some content or images to your post.');
+    if (!caption.trim() && selectedImages.length === 0 && selectedVideos.length === 0) {
+      Alert.alert('Empty Post', 'Please add some content, images, or videos to your post.');
       return;
     }
 
@@ -145,9 +196,20 @@ const PostCreator: React.FC<PostCreatorProps> = ({ profileType, onPostCreated })
       if (selectedImages.length > 0) {
         const uploadedIds = await uploadImages(selectedImages);
         if (uploadedIds) {
-          mediaFileIds = uploadedIds;
+          mediaFileIds = [...mediaFileIds, ...uploadedIds];
         } else {
           Alert.alert('Error', uploadError || 'Failed to upload images. Please try again.');
+          return;
+        }
+      }
+
+      // Upload videos if any are selected
+      if (selectedVideos.length > 0) {
+        const uploadedVideoIds = await uploadVideos(selectedVideos);
+        if (uploadedVideoIds) {
+          mediaFileIds = [...mediaFileIds, ...uploadedVideoIds];
+        } else {
+          Alert.alert('Error', uploadError || 'Failed to upload videos. Please try again.');
           return;
         }
       }
@@ -159,6 +221,7 @@ const PostCreator: React.FC<PostCreatorProps> = ({ profileType, onPostCreated })
         // Call the callback with the post data
         const postData = {
           images: selectedImages,
+          videos: selectedVideos,
           caption: caption.trim(),
           location: location.trim(),
         };
@@ -175,7 +238,7 @@ const PostCreator: React.FC<PostCreatorProps> = ({ profileType, onPostCreated })
     }
   };
 
-  const canPost = caption.trim().length > 0 || selectedImages.length > 0;
+  const canPost = caption.trim().length > 0 || selectedImages.length > 0 || selectedVideos.length > 0;
 
   return (
     <SafeAreaView style={[tw.flex1, tw.bgWhite]}>
@@ -361,13 +424,46 @@ const PostCreator: React.FC<PostCreatorProps> = ({ profileType, onPostCreated })
               </View>
             )}
 
+            {/* Selected Videos */}
+            {selectedVideos.length > 0 && (
+              <View style={[tw.mB4]}>
+                <Text style={[tw.textGray700, tw.fontMedium, tw.mB2]}>
+                  Videos ({selectedVideos.length}/3)
+                </Text>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                  {selectedVideos.map((video, index) => (
+                    <View key={index} style={[tw.mR3, tw.relative]}>
+                      <View style={[tw.w20, tw.h20, tw.roundedLg, tw.bgGray200, tw.justifyCenter, tw.itemsCenter]}>
+                        <Ionicons name="play-circle" size={32} color="#6b7280" />
+                      </View>
+                      <TouchableOpacity
+                        style={[
+                          tw.absolute,
+                          { top: -8, right: -8 },
+                          tw.bgRed500,
+                          tw.roundedFull,
+                          tw.w6,
+                          tw.h6,
+                          tw.justifyCenter,
+                          tw.itemsCenter,
+                        ]}
+                        onPress={() => removeVideo(index)}
+                      >
+                        <Ionicons name="close" size={12} color="white" />
+                      </TouchableOpacity>
+                    </View>
+                  ))}
+                </ScrollView>
+              </View>
+            )}
+
             {/* Media Options */}
             <View style={[tw.borderT, tw.borderGray200, tw.pT4]}>
               <Text style={[tw.textGray700, tw.fontMedium, tw.mB3]}>
                 Add Media
               </Text>
               
-              <View style={[tw.flexRow, { gap: 16 }]}>
+              <View style={[tw.flexRow, { gap: 12 }]}>
                 <TouchableOpacity
                   style={[
                     tw.flex1,
@@ -383,7 +479,7 @@ const PostCreator: React.FC<PostCreatorProps> = ({ profileType, onPostCreated })
                 >
                   <Ionicons name="images-outline" size={20} color="#6b7280" />
                   <Text style={[tw.textGray700, tw.fontMedium, tw.mL2]}>
-                    Gallery
+                    Photos
                   </Text>
                 </TouchableOpacity>
                 
@@ -403,6 +499,46 @@ const PostCreator: React.FC<PostCreatorProps> = ({ profileType, onPostCreated })
                   <Ionicons name="camera-outline" size={20} color="#6b7280" />
                   <Text style={[tw.textGray700, tw.fontMedium, tw.mL2]}>
                     Camera
+                  </Text>
+                </TouchableOpacity>
+              </View>
+
+              <View style={[tw.flexRow, { gap: 12 }, tw.mT3]}>
+                <TouchableOpacity
+                  style={[
+                    tw.flex1,
+                    tw.flexRow,
+                    tw.itemsCenter,
+                    tw.justifyCenter,
+                    tw.pY3,
+                    tw.border,
+                    tw.borderGray300,
+                    tw.roundedLg,
+                  ]}
+                  onPress={pickVideos}
+                >
+                  <Ionicons name="videocam-outline" size={20} color="#6b7280" />
+                  <Text style={[tw.textGray700, tw.fontMedium, tw.mL2]}>
+                    Videos
+                  </Text>
+                </TouchableOpacity>
+                
+                <TouchableOpacity
+                  style={[
+                    tw.flex1,
+                    tw.flexRow,
+                    tw.itemsCenter,
+                    tw.justifyCenter,
+                    tw.pY3,
+                    tw.border,
+                    tw.borderGray300,
+                    tw.roundedLg,
+                  ]}
+                  onPress={recordVideo}
+                >
+                  <Ionicons name="recording-outline" size={20} color="#6b7280" />
+                  <Text style={[tw.textGray700, tw.fontMedium, tw.mL2]}>
+                    Record
                   </Text>
                 </TouchableOpacity>
               </View>

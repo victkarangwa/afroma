@@ -5,6 +5,7 @@ import { convertImagesToBase64 } from '@/utils/imageToBase64';
 
 interface UseMediaUploadReturn {
   uploadImages: (imageUris: string[]) => Promise<number[] | null>;
+  uploadVideos: (videoUris: string[]) => Promise<number[] | null>;
   loading: boolean;
   error: string | null;
   success: boolean;
@@ -61,6 +62,51 @@ export const useMediaUpload = (): UseMediaUploadReturn => {
     }
   }, []);
 
+  const uploadVideos = useCallback(async (videoUris: string[]): Promise<number[] | null> => {
+    try {
+      setLoading(true);
+      setError(null);
+      setSuccess(false);
+
+      if (videoUris.length === 0) {
+        return [];
+      }
+
+      // Convert videos to base64
+      const base64Strings = await convertImagesToBase64(videoUris);
+      
+      // Upload each video
+      const uploadPromises = base64Strings.map(async (base64, index) => {
+        const requestData: MediaUploadRequest = {
+          fileContent: base64,
+          mediaType: 'VIDEO',
+          fileRefType: 'POST',
+          featured: index === 0 // First video is featured
+        };
+        
+        const response = await postApi.uploadMedia(requestData);
+        
+        if (response && response.data) {
+          return response.data.id;
+        } else {
+          throw new Error(response?.message || 'Failed to upload video');
+        }
+      });
+
+      const mediaIds = await Promise.all(uploadPromises);
+      setSuccess(true);
+      return mediaIds;
+      
+    } catch (err) {
+      const errorMessage = 'Error uploading videos. Please try again.';
+      setError(errorMessage);
+      console.error('Error in uploadVideos:', err);
+      return null;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   const reset = useCallback(() => {
     setLoading(false);
     setError(null);
@@ -69,6 +115,7 @@ export const useMediaUpload = (): UseMediaUploadReturn => {
 
   return {
     uploadImages,
+    uploadVideos,
     loading,
     error,
     success,

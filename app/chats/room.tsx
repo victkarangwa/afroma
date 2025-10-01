@@ -32,6 +32,7 @@ import config from "@/utils/localValues";
 import moment from "moment";
 import { convertSecondsToTime } from "@/utils";
 import { useState as useReactState } from "react";
+import UserProfileView from "@/components/UserProfileView";
 
 const ChatScreen = () => {
   const router = useRouter();
@@ -54,6 +55,7 @@ const ChatScreen = () => {
     { id: '3', text: 'I wanted to discuss the project update.', createdAt: new Date(), senderId: 'them' },
   ]);
   const [dummyInput, setDummyInput] = useReactState('');
+  const [showProfileModal, setShowProfileModal] = useState(false);
 
   // Detect if this is a networking/travel chat (by presence of avatar and name)
   const isNetworkingOrTravel = !!userData.avatar;
@@ -228,25 +230,45 @@ const ChatScreen = () => {
 
   return (
     <SafeAreaView style={[tw.bgGray100, tw.hFull]}>
-      <View style={[tw.flex, tw.flexRow, tw.itemsCenter, tw.bgPink100, tw.p2]}>
-        <TouchableOpacity onPress={onGoBack}>
-          <Ionicons name="chevron-back-outline" size={24} color="white" />
+      <View style={[tw.flex, tw.flexRow, tw.itemsCenter, tw.bgWhite, tw.p4, tw.shadow, tw.borderB, tw.borderGray200]}>
+        <TouchableOpacity onPress={onGoBack} style={[tw.mR3]}>
+          <Ionicons name="chevron-back-outline" size={24} color="#374151" />
         </TouchableOpacity>
         <Image
-          src={
+          source={
             userData?.mediaList?.find(
               (media: { featured: boolean; thumbnailUrl: string }) =>
                 media.featured
             )?.thumbnailUrl
+              ? { uri: userData.mediaList.find((media: { featured: boolean; thumbnailUrl: string }) => media.featured).thumbnailUrl }
+              : require("../../assets/images/default_avatar.jpg")
           }
-          source={require("../../assets/images/default_avatar.jpg")}
-          style={[tw.h12, tw.w12, tw.roundedFull]}
+          style={[tw.h12, tw.w12, tw.roundedFull, tw.mR3]}
         />
-        <TextComponent
-          style={[tw.textBase, tw.textCenter, tw.textGray600, tw.mX6, tw.pY4]}
+        <TouchableOpacity
+          onPress={() => {
+            // Show user profile modal
+            setShowProfileModal(true);
+          }}
+          style={[tw.flex1]}
         >
-          {userData.firstname} {userData.lastname}
-        </TextComponent>
+          <TextComponent
+            style={[tw.textBase, tw.fontBold, tw.textGray900]}
+          >
+            {userData.firstname} {userData.lastname}
+          </TextComponent>
+          <TextComponent
+            style={[tw.textSm, tw.textGray500]}
+          >
+            {userData.online ? 'Online' : 'Last seen recently'}
+          </TextComponent>
+        </TouchableOpacity>
+        {/* <TouchableOpacity style={[tw.mL2]}>
+          <Ionicons name="call-outline" size={24} color="#6b7280" />
+        </TouchableOpacity>
+        <TouchableOpacity style={[tw.mL3]}>
+          <Ionicons name="videocam-outline" size={24} color="#6b7280" />
+        </TouchableOpacity> */}
       </View>
       <View style={[tw.bgWhite, tw.roundedTLg]}></View>
       {/*<GiftedChat
@@ -261,83 +283,120 @@ const ChatScreen = () => {
           keyExtractor={(item) => item.id}
           renderItem={({ item }) => (
             <View
-              style={
-                item.senderId === senderId
-                  ? [
-                      tw.bgPink700,
-                      tw.pX2,
-                      tw.pT2,
-                      tw.roundedLg,
-                      tw.roundedBrNone,
-                      tw.selfEnd,
-                      tw.m1,
-                    ]
-                  : [
-                      tw.bgGray300,
-                      tw.pX2,
-                      tw.pT2,
-                      tw.roundedLg,
-                      tw.roundedBlNone,
-                      tw.selfStart,
-                      tw.m1,
-                    ]
-              }
+              style={[
+                tw.mX4,
+                tw.mY1,
+                tw.flexRow,
+                item.senderId === senderId ? tw.justifyEnd : tw.justifyStart
+              ]}
             >
-              <Text>{item.text}</Text>
-              <Text
-                style={[tw.textRight, { fontSize: 9 }, tw.pY1, tw.textGray700]}
+              <View
+                style={[
+                  tw.maxW80,
+                  tw.pX4,
+                  tw.pY3,
+                  tw.roundedLg,
+                  item.senderId === senderId
+                    ? [
+                        tw.bgBlue500,
+                        tw.roundedBrSm,
+                        { backgroundColor: '#007AFF' }
+                      ]
+                    : [
+                        tw.bgGray200,
+                        tw.roundedBlSm,
+                        { backgroundColor: '#E5E5EA' }
+                      ]
+                ]}
               >
-                {convertSecondsToTime(item.createdAt)}
-              </Text>
+                <Text
+                  style={[
+                    tw.textBase,
+                    item.senderId === senderId ? tw.textWhite : tw.textGray900
+                  ]}
+                >
+                  {item.text}
+                </Text>
+                <Text
+                  style={[
+                    tw.textXs,
+                    tw.mT1,
+                    tw.textRight,
+                    item.senderId === senderId ? tw.textBlue100 : tw.textGray500
+                  ]}
+                >
+                  {convertSecondsToTime(item.createdAt)}
+                </Text>
+              </View>
             </View>
           )}
         />
         <View
           style={[
-            tw.flex,
+            tw.bgWhite,
+            tw.pX4,
+            tw.pY3,
+            tw.borderT,
+            tw.borderGray200,
             tw.flexRow,
-            tw.justifyCenter,
-            tw.itemsCenter,
-            tw.mX6,
+            tw.itemsEnd,
+            tw.justifyBetween
           ]}
         >
           <View
             style={[
-              tw.wFull,
-              tw.flex,
+              tw.flex1,
               tw.flexRow,
-              tw.itemsCenter,
-              tw.bgGray300,
-              tw.p2,
-              tw.roundedLg,
+              tw.itemsEnd,
+              tw.bgGray100,
+              tw.roundedFull,
+              tw.pX4,
+              tw.pY2,
+              tw.mR3
             ]}
           >
-            <Ionicons name="happy-outline" size={24} color="black" />
+            {/* <TouchableOpacity style={[tw.mR2]}>
+              <Ionicons name="add-circle-outline" size={24} color="#6b7280" />
+            </TouchableOpacity> */}
             <TextInput
-              style={[tw.pX2]}
+              style={[tw.flex1, tw.textBase, tw.textGray900, { minHeight: 20, maxHeight: 100 }]}
               value={message}
               onChangeText={setMessage}
-              placeholder="Type a message"
+              placeholder="Message"
+              placeholderTextColor="#9ca3af"
+              multiline={true}
             />
+            {/* <TouchableOpacity style={[tw.mL2]}>
+              <Ionicons name="camera-outline" size={24} color="#6b7280" />
+            </TouchableOpacity> */}
           </View>
           <TouchableOpacity
             onPress={handleSend}
+            disabled={!message.trim()}
             style={[
-              tw.p2,
-              tw.w10,
-              tw.h10,
-              tw.mX1,
-              tw.flex,
+              tw.w12,
+              tw.h12,
+              tw.roundedFull,
               tw.justifyCenter,
               tw.itemsCenter,
-              tw.bgPink700,
-              tw.roundedFull,
+              { backgroundColor: message.trim() ? '#007AFF' : '#E5E5EA' }
             ]}
           >
-            <Ionicons name="send" size={24} style={[tw.textPink100]} />
+            <Ionicons 
+              name="send" 
+              size={20} 
+              color={message.trim() ? 'white' : '#9ca3af'} 
+            />
           </TouchableOpacity>
         </View>
       </View>
+
+      {/* User Profile Modal */}
+      <UserProfileView
+        visible={showProfileModal}
+        onClose={() => setShowProfileModal(false)}
+        userId={userData.id || 0}
+      />
     </SafeAreaView>
   );
 };

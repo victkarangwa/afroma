@@ -30,6 +30,7 @@ import localStore from "@/utils/localValues";
 import { useFocusEffect } from "expo-router";
 import NotificationBadge from "@/components/NotificationBadge";
 import { MOCK_NOTIFICATIONS } from "@/components/NotificationCenter";
+import UserProfileView from "@/components/UserProfileView";
 
 const ChatsScreen: React.FC = () => {
   const router = useRouter();
@@ -61,6 +62,8 @@ const ChatsScreen: React.FC = () => {
   const [userId, setUserId] = useState<number | null>(null);
   const [chattedUsers, setChattedUsers] = useState([]);
   const [approvedFriends, setApprovedFriends] = useState<any[]>([]);
+  const [showProfileModal, setShowProfileModal] = useState(false);
+  const [selectedUserId, setSelectedUserId] = useState<number | null>(null);
 
   const getUserId = async () => {
     const userId: number | null = await LocalStorage.getItem(localStore.userId);
@@ -104,14 +107,23 @@ const ChatsScreen: React.FC = () => {
         // console.log("--userChats---", userChats);
         setChats(userChats);
 
-        const filteredSuggestions = matchSuggestions?.filter((user: any) => {
-          return chats.some((chat) => {
-            // console.log("---k--", chat.participants.includes(user.id.toString()));
-            return chat.participants.includes(user.id.toString());
-          });
-        });
-
-        // console.log("--filteredSuggestions---", filteredSuggestions);
+        // Filter users based on profile type to avoid duplicates
+        let filteredSuggestions = [];
+        if (profileType === "dating") {
+          // For dating, use match suggestions
+          filteredSuggestions = matchSuggestions?.filter((user: any) => {
+            return chats.some((chat) => {
+              return chat.participants.includes(user.id.toString());
+            });
+          }) || [];
+        } else if (profileType === "networking" || profileType === "travel") {
+          // For networking/travel, use approved friends
+          filteredSuggestions = approvedFriends?.filter((user: any) => {
+            return chats.some((chat) => {
+              return chat.participants.includes(user.id.toString());
+            });
+          }) || [];
+        }
 
         setChattedUsers(filteredSuggestions);
       } catch (error) {
@@ -120,7 +132,7 @@ const ChatsScreen: React.FC = () => {
     };
 
     fetchChats();
-  }, [userId]);
+  }, [userId, profileType, matchSuggestions, approvedFriends]);
 
   const getMatchSuggestions = async () => {
     try {
@@ -345,24 +357,28 @@ const ChatsScreen: React.FC = () => {
           >
             {matchSuggestions?.length ? (
               matchSuggestions?.map((user: any) => (
-                <TouchableOpacity onPress={() => openChatRoom(user)}>
+                <TouchableOpacity 
+                  key={user.id}
+                  onPress={() => openChatRoom(user)}
+                  style={[tw.itemsCenter, tw.mX2]}
+                >
                   <Image
-                    src={
+                    source={
                       user?.mediaList?.find((media: any) => media.featured)
                         ?.thumbnailUrl
+                        ? { uri: user.mediaList.find((media: any) => media.featured).thumbnailUrl }
+                        : require("../../assets/images/default_avatar.jpg")
                     }
-                    source={require("../../assets/images/default_avatar.jpg")}
                     style={[
                       tw.w20,
                       tw.h20,
                       tw.roundedFull,
-                      tw.mX2,
                       tw.mY1,
                       tw.border2,
                       tw.borderPink700,
                     ]}
                   />
-                  <TextComponent style={[tw.fontBold, tw.textCenter]}>
+                  <TextComponent style={[tw.fontBold, tw.textCenter, tw.textSm, tw.mT1]}>
                     {user.firstName}
                   </TextComponent>
                 </TouchableOpacity>
@@ -390,30 +406,58 @@ const ChatsScreen: React.FC = () => {
                 <TouchableOpacity
                   key={user.id}
                   style={[
-                    tw.w11_12,
+                    tw.bgWhite,
+                    tw.mX4,
                     tw.mB2,
-                    tw.borderB,
-                    tw.borderGray300,
-                    // tw.flex,
+                    tw.roundedLg,
+                    tw.shadow,
+                    tw.p4
                   ]}
                   onPress={() => openChatRoom(user)}
                 >
-                  <View style={[tw.flex, tw.flexRow, tw.itemsCenter, tw.mY4]}>
-                    <Image
-                      src={
-                        user?.mediaList?.find((media: any) => media.featured)
-                          ?.thumbnailUrl
-                      }
-                      source={require("../../assets/images/default_avatar.jpg")}
-                      style={[tw.w10, tw.h10, tw.roundedFull]}
-                    />
-                    <View style={[tw.mX4]}>
-                      <TextComponent style={[tw.fontBold]}>
-                        {user.firstName} {user.middleName}
+                  <View style={[tw.flex, tw.flexRow, tw.itemsCenter]}>
+                    <View style={[tw.relative]}>
+                      <Image
+                        source={
+                          user?.mediaList?.find((media: any) => media.featured)
+                            ?.thumbnailUrl
+                            ? { uri: user.mediaList.find((media: any) => media.featured).thumbnailUrl }
+                            : require("../../assets/images/default_avatar.jpg")
+                        }
+                        style={[tw.w14, tw.h14, tw.roundedFull]}
+                      />
+                      <View style={[
+                        tw.absolute,
+                        tw.bottom0,
+                        tw.right0,
+                        tw.w4,
+                        tw.h4,
+                        tw.roundedFull,
+                        tw.border2,
+                        tw.borderWhite,
+                        { backgroundColor: '#22c55e' }
+                      ]} />
+                    </View>
+                    <View style={[tw.mL4, tw.flex1]}>
+                      <View style={[tw.flexRow, tw.justifyBetween, tw.itemsCenter]}>
+                        <TouchableOpacity
+                          onPress={() => {
+                            // Show user profile modal
+                            setSelectedUserId(user.id);
+                            setShowProfileModal(true);
+                          }}
+                        >
+                          <TextComponent style={[tw.fontBold, tw.textGray900, tw.textBase]}>
+                            {user.firstName} {user.middleName}
+                          </TextComponent>
+                        </TouchableOpacity>
+                        <TextComponent style={[tw.textGray400, tw.textXs]}>
+                          Now
+                        </TextComponent>
+                      </View>
+                      <TextComponent style={[tw.textGray500, tw.textSm, tw.mT1]}>
+                        Tap to start conversation
                       </TextComponent>
-                      {/* <TextComponent style={[tw.textGray700]}>
-                    {room.text}
-                  </TextComponent> */}
                     </View>
                   </View>
                 </TouchableOpacity>
@@ -431,6 +475,16 @@ const ChatsScreen: React.FC = () => {
           </View>
         </ScrollView>
       </View>
+
+      {/* User Profile Modal */}
+      <UserProfileView
+        visible={showProfileModal}
+        onClose={() => {
+          setShowProfileModal(false);
+          setSelectedUserId(null);
+        }}
+        userId={selectedUserId || 0}
+      />
     </ScreenContainer>
   );
 };

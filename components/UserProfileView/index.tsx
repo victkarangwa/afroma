@@ -449,7 +449,7 @@ const UserProfileView: React.FC<UserProfileViewProps> = ({
               )}
 
               {/* Additional Actions */}
-              <View style={[tw.bgWhite, tw.roundedLg, tw.p6, tw.mB4, tw.shadow]}>
+              {/* <View style={[tw.bgWhite, tw.roundedLg, tw.p6, tw.mB4, tw.shadow]}>
                 <Text style={[tw.textGray900, tw.fontBold, tw.textLg, tw.mB4]}>More Actions</Text>
                 
                 <TouchableOpacity
@@ -476,7 +476,7 @@ const UserProfileView: React.FC<UserProfileViewProps> = ({
                   </View>
                   <Ionicons name="chevron-forward" size={20} color="#9ca3af" />
                 </TouchableOpacity>
-              </View>
+              </View> */}
             </View>
           ) : null}
         </ScrollView>

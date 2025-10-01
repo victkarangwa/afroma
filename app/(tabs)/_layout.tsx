@@ -1,5 +1,6 @@
 import { Tabs } from "expo-router";
 import React from "react";
+import { Platform } from "react-native";
 
 import { TabBarIcon } from "@/components/navigation/TabBarIcon";
 import { Colors } from "@/constants/Colors";
@@ -12,26 +13,28 @@ export default function TabLayout() {
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? "light"].activeText,
-        tabBarInactiveTintColor: Colors[colorScheme ?? "light"].inactiveText,
+        tabBarActiveTintColor: '#fb6c31', // Afroma brand orange
+        tabBarInactiveTintColor: '#9ca3af', // Subtle gray for inactive
         headerShown: false,
         // tabBarStyle: {
         //   backgroundColor: "#1d1b2c",
         // },
         tabBarStyle: {
-          backgroundColor: '#111827', // Set background color
-          borderTopColor: 'transparent',
+          backgroundColor: '#ffffff', // Clean white background
+          borderTopColor: '#e5e7eb', // Subtle border
+          borderTopWidth: 1,
           position: 'absolute', // Ensures the bar is "detached"
-          bottom: 10, // Position above the bottom of the screen
-          marginHorizontal: 10, // Add space on the sides
-          paddingVertical: 5, // Add padding between the bar and the screen
-          borderRadius: 10, // Round the edges
-          shadowColor: '#000', // Add shadow for iOS
-          shadowOffset: { width: 0, height: 5 },
-          shadowOpacity: 0.1,
-          shadowRadius: 5,
-          elevation: 5, // Add shadow for Android
-          height: 60, // Set the height
+          bottom: 0, // Position at the very bottom
+          marginHorizontal: 20, // Add space on the sides
+          paddingTop: 8, // Add padding at the top
+          paddingBottom: Platform.OS === 'ios' ? 25 : 20, // Platform-specific bottom padding
+          borderRadius: 20, // More rounded edges for modern look
+          shadowColor: '#000', // Enhanced shadow for iOS
+          shadowOffset: { width: 0, height: 8 },
+          shadowOpacity: 0.15,
+          shadowRadius: 12,
+          elevation: 8, // Enhanced shadow for Android
+          height: Platform.OS === 'ios' ? 95 : 90, // Platform-specific height to accommodate bottom padding
         },
 
         tabBarLabelStyle: {
@@ -65,7 +68,7 @@ export default function TabLayout() {
           },
           tabBarIcon: ({ color, focused }) => (
             <TabBarIcon
-              name={focused ? "chatbubble" : "chatbubble-outline"}
+              name={focused ? "chatbubble-ellipses" : "chatbubble-ellipses-outline"}
               color={color}
             />
           ),
@@ -79,7 +82,7 @@ export default function TabLayout() {
           },
           tabBarIcon: ({ color, focused }) => (
             <TabBarIcon
-              name={focused ? "chatbubbles" : "chatbubbles-outline"}
+              name={focused ? "library" : "library-outline"}
               color={color}
             />
           ),

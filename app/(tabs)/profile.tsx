@@ -383,6 +383,9 @@ const ProfileScreen: React.FC = () => {
               onPress={() => router.push('/notifications')}
               size="medium"
             />
+            <TouchableOpacity style={[tw.mL4]} onPress={() => router.push('/saved')}>
+              <Ionicons name="bookmark-outline" size={24} color="#6b7280" />
+            </TouchableOpacity>
             <TouchableOpacity style={[tw.mL4]} onPress={() => router.push('/settings')}>
               <Ionicons name="settings-outline" size={24} color="#6b7280" />
             </TouchableOpacity>

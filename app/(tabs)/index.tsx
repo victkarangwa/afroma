@@ -27,6 +27,7 @@ import DatingCardSkeleton from "@/components/Skeleton/DatingCardSkeleton";
 import DatingMatchSkeleton from "@/components/Skeleton/DatingMatchSkeleton";
 import DatingCard from "@/components/DatingCard";
 import useApiRequest from "@/hooks/useApiRequest";
+import { useBookmarks } from "@/hooks/useBookmarks";
 import { checkAuthStatus } from "@/utils/auth";
 
 // Map API profileType to local value used in app
@@ -82,6 +83,7 @@ const HomeScreen: React.FC = () => {
   const [profileModalVisible, setProfileModalVisible] = useState(false);
 
   const { loading, send } = useApiRequest<ApiResponse>();
+  const { isBookmarked, toggleBookmark: toggleBookmarkHook } = useBookmarks();
 
   // Use the posts hook for real API data
   const {
@@ -556,11 +558,11 @@ const HomeScreen: React.FC = () => {
             <Text style={[tw.textGray500, tw.textSm]}>{getTimeAgo(item.createdAt)}</Text>
           </View>
         </TouchableOpacity>
-        <TouchableOpacity onPress={() => toggleBookmark(item.id)}>
+        <TouchableOpacity onPress={() => toggleBookmarkHook(item)}>
           <Ionicons
-            name="bookmark-outline"
+            name={isBookmarked(item.id) ? "bookmark" : "bookmark-outline"}
             size={24}
-            color="#6b7280"
+            color={isBookmarked(item.id) ? "#fb6c31" : "#6b7280"}
           />
         </TouchableOpacity>
       </View>
@@ -810,7 +812,7 @@ const HomeScreen: React.FC = () => {
         </View>
 
         {/* Action Buttons */}
-        <View style={[tw.bottom0, tw.left0, tw.right0, tw.flexRow, tw.justifyCenter, tw.itemsCenter, tw.pB6, tw.pT4, { backgroundColor: 'rgba(255,255,255,0.95)' }]}>
+        <View style={[tw.left0, tw.right0, tw.flexRow, tw.justifyCenter, tw.itemsCenter, tw.pB6, tw.pT4, { backgroundColor: 'rgba(255,255,255,0.95)', bottom: 100 }]}>
           <TouchableOpacity
             style={[
               tw.bgRed500, 
@@ -1573,7 +1575,7 @@ const HomeScreen: React.FC = () => {
         <TouchableOpacity
           style={[
             tw.absolute,
-            { bottom: 72, right: 24 },
+            { bottom: 110, right: 24 }, // Increased from 72 to 110 to clear the navigation bar
             tw.bgPink700,
             tw.roundedFull,
             tw.w12,

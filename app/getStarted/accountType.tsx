@@ -1,6 +1,6 @@
 import React from "react";
 import { useForm, Controller } from "react-hook-form";
-import { useRouter } from "expo-router";
+import { useRouter, useLocalSearchParams } from "expo-router";
 import { View, Image, TouchableOpacity, TextInput, Text, ScrollView } from "react-native";
 import { Button } from "react-native-paper";
 import DateTimePicker from "@react-native-community/datetimepicker";
@@ -18,6 +18,12 @@ type FormData = {
 
 const AccountTypeScreen: React.FC = () => {
   const router = useRouter();
+  const params = useLocalSearchParams();
+  
+  // Parse pre-filled data from social media login
+  const prefilledData = params.prefilledData ? JSON.parse(params.prefilledData as string) : {};
+  const isSocialMediaSignup = prefilledData.socialMediaSignup || false;
+  
   const {
     control,
     handleSubmit,
@@ -25,16 +31,17 @@ const AccountTypeScreen: React.FC = () => {
     watch,
   } = useForm<FormData>({
     defaultValues: {
-      name: "",
-      email: "",
+      name: prefilledData.name || "",
+      email: prefilledData.email || "",
       phone_number: "",
       password: "",
     },
   });
 
+
   const onSubmit = (data: FormData) => {
     // Validate all required fields
-    if (!data.name || !data.email || !data.phone_number || !data.password) {
+    if (!data.name || !data.email || !data.phone_number) {
       console.error("Missing required fields:", data);
       return;
     }
@@ -46,16 +53,19 @@ const AccountTypeScreen: React.FC = () => {
       return;
     }
 
-    // Validate password length
-    if (data.password.length < 6) {
+    // Validate password length (only required for non-social media signup)
+    if (!isSocialMediaSignup && data.password.length < 6) {
       console.error("Password too short");
       return;
     }
 
-    // Validate phone number format
-    const phoneRegex = /^\+[1-9]\d{1,14}$/;
+    // Validate phone number format - very flexible regex
+    const phoneRegex = /^\+[1-9]\d{5,15}$/;
+    console.log("Phone number to validate:", data.phone_number);
+    console.log("Phone number length:", data.phone_number.length);
+    console.log("Regex test result:", phoneRegex.test(data.phone_number));
     if (!phoneRegex.test(data.phone_number)) {
-      console.error("Invalid phone number format");
+      console.error("Invalid phone number format:", data.phone_number);
       return;
     }
 
@@ -63,6 +73,7 @@ const AccountTypeScreen: React.FC = () => {
     const registrationData = {
       ...data,
       phone_number: data.phone_number.slice(1), // Remove the + prefix
+      socialMediaSignup: isSocialMediaSignup,
     };
     
     console.log("Basic registration data:", registrationData);
@@ -175,18 +186,20 @@ const AccountTypeScreen: React.FC = () => {
         )}
 
         {/* Password */}
-        <Text style={[tw.textPink700, tw.textBase, tw.fontBold, tw.mB2]}>Password</Text>
+        <Text style={[tw.textPink700, tw.textBase, tw.fontBold, tw.mB2]}>
+          Password {isSocialMediaSignup && <Text style={[tw.textGray500, tw.textSm]}>(Optional for social media signup)</Text>}
+        </Text>
         <Controller
           control={control}
           name="password"
           rules={{
-            required: "Password is required",
+            required: isSocialMediaSignup ? false : "Password is required",
             minLength: { value: 6, message: "Password must be at least 6 characters" },
           }}
           render={({ field: { onChange, onBlur, value } }) => (
             <TextInput
               style={[tw.bgWhite, tw.rounded, tw.p3, tw.mB2, primaryShadow]}
-              placeholder="Enter a secure password"
+              placeholder={isSocialMediaSignup ? "Enter a password (optional)" : "Enter a secure password"}
               secureTextEntry
               onBlur={onBlur}
               onChangeText={onChange}
@@ -199,15 +212,15 @@ const AccountTypeScreen: React.FC = () => {
         )}
 
         {/* Validation Summary */}
-        {(!watch("name") || !watch("email") || !watch("phone_number") || !watch("password") || watch("password").length < 6 || !/^\+[1-9]\d{1,14}$/.test(watch("phone_number"))) && (
+        {(!watch("name") || !watch("email") || !watch("phone_number") || (!isSocialMediaSignup && (!watch("password") || watch("password").length < 6)) || !/^\+[1-9]\d{5,15}$/.test(watch("phone_number"))) && (
           <View style={[tw.bgRed100, tw.p3, tw.rounded, tw.mT2]}>
             <Text style={[tw.textRed700, tw.textSm, tw.fontBold]}>Please complete all fields:</Text>
             {!watch("name") && <Text style={[tw.textRed600, tw.textSm]}>• Full name is required</Text>}
             {!watch("email") && <Text style={[tw.textRed600, tw.textSm]}>• Valid email is required</Text>}
             {!watch("phone_number") && <Text style={[tw.textRed600, tw.textSm]}>• Phone number with country code is required</Text>}
-            {!watch("password") && <Text style={[tw.textRed600, tw.textSm]}>• Password is required</Text>}
-            {watch("password") && watch("password").length < 6 && <Text style={[tw.textRed600, tw.textSm]}>• Password must be at least 6 characters</Text>}
-            {watch("phone_number") && !/^\+[1-9]\d{1,14}$/.test(watch("phone_number")) && <Text style={[tw.textRed600, tw.textSm]}>• Phone number must be valid (e.g., +1234567890)</Text>}
+            {!isSocialMediaSignup && !watch("password") && <Text style={[tw.textRed600, tw.textSm]}>• Password is required</Text>}
+            {!isSocialMediaSignup && watch("password") && watch("password").length < 6 && <Text style={[tw.textRed600, tw.textSm]}>• Password must be at least 6 characters</Text>}
+            {watch("phone_number") && !/^\+[1-9]\d{5,15}$/.test(watch("phone_number")) && <Text style={[tw.textRed600, tw.textSm]}>• Phone number must be valid (e.g., +1234567890)</Text>}
           </View>
         )}
         {/* Submit Button */}
@@ -220,9 +233,9 @@ const AccountTypeScreen: React.FC = () => {
             !watch("name") ||
             !watch("email") ||
             !watch("phone_number") ||
-            !watch("password") ||
-            watch("password").length < 6 ||
-            !/^\+[1-9]\d{1,14}$/.test(watch("phone_number"))
+            (!isSocialMediaSignup && (!watch("password") || watch("password").length < 6))
+            //  ||
+            // !/^\+[1-9]\d{5,15}$/.test(watch("phone_number"))
           }
         >
           Continue

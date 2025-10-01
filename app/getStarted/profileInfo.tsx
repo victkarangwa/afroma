@@ -126,12 +126,14 @@ const ProfileInfoScreen: React.FC = () => {
         email: params.email as string,
         phone_number: params.phone_number as string,
         password: params.password as string,
+        socialMediaSignup: params.socialMediaSignup === "true",
       };
 
       console.log("Basic data from params:", basicData);
+      console.log("Social media signup flag:", basicData.socialMediaSignup);
 
       // Validate that we have the required data
-      if (!basicData.name || !basicData.email || !basicData.password) {
+      if (!basicData.name || !basicData.email || (!basicData.password && !basicData.socialMediaSignup)) {
         console.error("Missing required registration data!");
         setModalInfo({
           title: "Error",
@@ -156,7 +158,7 @@ const ProfileInfoScreen: React.FC = () => {
         latitude: location?.coords?.latitude || 0,
         longitude: location?.coords?.longitude || 0,
         publicFigure: data.publicFigure,
-        socialMediaSignup: false,
+        socialMediaSignup: basicData.socialMediaSignup,
         profileTypes: [params.profileType || "NETWORKING"]
       };
 

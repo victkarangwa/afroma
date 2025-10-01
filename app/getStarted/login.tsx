@@ -93,6 +93,7 @@ const LoginScreen: React.FC = () => {
 
   const [isLoading, setIsLoading] = React.useState(false);
 
+
   const handleLogin = async (credentials: FormData) => {
     try {
       setIsLoading(true);
@@ -248,7 +249,7 @@ const LoginScreen: React.FC = () => {
             onDismiss: () => setVisible(false),
           });
           setVisible(true);
-          return;
+          return result;
         }
         if (!result?.newAccount) {
           LocalStorage.setItem(
@@ -259,6 +260,7 @@ const LoginScreen: React.FC = () => {
         } else {
           router.push({ pathname: "/getStarted/accountType" });
         }
+        return result;
       }
     } catch (error) {
       console.log("error", error, token);
@@ -269,7 +271,53 @@ const LoginScreen: React.FC = () => {
     try {
       const idToken = await onGoogleButtonPress();
       if (idToken) {
-        await handleSocialLogin("google", idToken);
+        const result = await handleSocialLogin("google", idToken);
+        
+        // If new account, navigate to accountType with pre-filled data
+        if (result?.newAccount) {
+          // Decode Google ID token to get user info
+          try {
+            const tokenParts = idToken.split('.');
+            if (tokenParts.length === 3) {
+              const payload = tokenParts[1];
+              const paddedPayload = payload + '='.repeat((4 - payload.length % 4) % 4);
+              const base64Payload = paddedPayload.replace(/-/g, '+').replace(/_/g, '/');
+              
+              let decodedPayload;
+              if (typeof Buffer !== 'undefined') {
+                decodedPayload = Buffer.from(base64Payload, 'base64').toString('utf-8');
+              } else {
+                decodedPayload = atob(base64Payload);
+              }
+              
+              const payloadData = JSON.parse(decodedPayload);
+              
+              // Navigate to accountType with pre-filled data
+              router.push({
+                pathname: "/getStarted/accountType",
+                params: {
+                  prefilledData: JSON.stringify({
+                    email: payloadData.email || '',
+                    name: payloadData.name || '',
+                    phone_number: '', // Google doesn't provide phone number
+                    socialMediaSignup: true
+                  })
+                }
+              });
+            }
+          } catch (tokenError) {
+            console.log("Error decoding Google token:", tokenError);
+            // Still navigate to accountType even if token decoding fails
+            router.push({
+              pathname: "/getStarted/accountType",
+              params: {
+                prefilledData: JSON.stringify({
+                  socialMediaSignup: true
+                })
+              }
+            });
+          }
+        }
       } else {
         setModalInfo({
           title: "Google Login Failed",
@@ -307,7 +355,20 @@ const LoginScreen: React.FC = () => {
           // @ts-ignore - accessToken exists on FBAccessToken
           token = accessToken.accessToken;
         }
-        await handleSocialLogin("facebook", token);
+        const result = await handleSocialLogin("facebook", token);
+        
+        // If new account, navigate to accountType
+        if (result?.newAccount) {
+          // Facebook provides limited info in the token, user will need to fill the form
+          router.push({
+            pathname: "/getStarted/accountType",
+            params: {
+              prefilledData: JSON.stringify({
+                socialMediaSignup: true
+              })
+            }
+          });
+        }
       } else {
         setModalInfo({
           title: "Facebook Login Failed",
@@ -409,18 +470,28 @@ const LoginScreen: React.FC = () => {
             onDismiss: () => setVisible(false),
           });
           return setVisible(true);
-        } else if (result?.code === "00") {
-          if (!result?.newAccount) {
-            LocalStorage.setItem(
-              localStore.token,
-              result?.tokenResponse?.token
-            );
-            router.push({ pathname: "/(tabs)" });
-          } else {
-            router.push({ pathname: "/getStarted/accountType" });
-          }
-          // return setVisible(true);
-        }
+         } else if (result?.code === "00") {
+           if (!result?.newAccount) {
+             LocalStorage.setItem(
+               localStore.token,
+               result?.tokenResponse?.token
+             );
+             router.push({ pathname: "/(tabs)" });
+           } else {
+             // If new account, navigate to accountType with pre-filled data
+             router.push({
+               pathname: "/getStarted/accountType",
+               params: {
+                 prefilledData: JSON.stringify({
+                   email: userEmail,
+                   name: `${appleCredential.fullName?.givenName || ''} ${appleCredential.fullName?.familyName || ''}`.trim(),
+                   phone_number: '', // Apple doesn't provide phone number
+                   socialMediaSignup: true
+                 })
+               }
+             });
+           }
+         }
       }
     } catch (error) {
       console.error("Apple login error:", error);

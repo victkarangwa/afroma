@@ -95,7 +95,7 @@ const CompleteProfileScreen: React.FC = () => {
   };
   const handleBack = () => {
     // Don't allow going back if user came from registration flow
-    if (params.fromRegistration === 'true') return;
+    // if (params.fromRegistration === 'true') return;
     if (step > 0) setStep(step - 1);
   };
   const handleFinish = () => {
@@ -451,14 +451,14 @@ const CompleteProfileScreen: React.FC = () => {
           <View style={[tw.flexRow, tw.justifyBetween, tw.itemsCenter]}>
             <TouchableOpacity
               onPress={handleBack}
-              disabled={step === 0 || params.fromRegistration === 'true'}
+              disabled={step === 0 }
               style={[
                 tw.justifyCenter,
                 tw.itemsCenter,
                 tw.roundedFull,
                 tw.border2,
                 tw.borderPink700,
-                { backgroundColor: '#fff', width: 48, height: 48, opacity: (step === 0 || params.fromRegistration === 'true') ? 0.5 : 1 }
+                { backgroundColor: '#fff', width: 48, height: 48, opacity: (step === 0) ? 0.5 : 1 }
               ]}
             >
               <Ionicons name="chevron-back-outline" size={28} color="#fb6c31" />

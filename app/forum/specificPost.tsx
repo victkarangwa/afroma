@@ -27,7 +27,7 @@ import { convertToMilliseconds } from "@/utils";
 import moment from "moment";
 import useApiRequest from "@/hooks/useApiRequest";
 import { ApiResponse } from "@/types";
-import Placeholder from "@/components/Skeleton";
+import { ForumPostSkeleton, CommentSkeleton } from "@/components/Skeleton";
 
 const SpecificForumScreen: React.FC = () => {
   const { postId } = useLocalSearchParams() as { postId: string };
@@ -41,6 +41,7 @@ const SpecificForumScreen: React.FC = () => {
   const [postInfo, setPostInfo] = useState<any>({});
   const [postComments, setPostComments] = useState<any[]>([]);
   const [loadingPost, setLoadingPost] = useState(true);
+  const [loadingComments, setLoadingComments] = useState(true);
 
   const getMyBasicProfile = async () => {
     const result = await send("get", "/users/me");
@@ -57,7 +58,7 @@ const SpecificForumScreen: React.FC = () => {
     });
   };
 
-  const listenToCommentsForPost = (onCommentsUpdate) => {
+  const listenToCommentsForPost = (onCommentsUpdate: (comments: any[]) => void) => {
     try {
       // Reference the comments subcollection
       const commentsRef = collection(db, "posts", postId, "comments");
@@ -75,6 +76,7 @@ const SpecificForumScreen: React.FC = () => {
         // console.log("=======", comments);
         // Call the callback function with the updated comments
         onCommentsUpdate(comments);
+        setLoadingComments(false);
       });
 
       // Return the unsubscribe function to stop listening when needed
@@ -191,7 +193,7 @@ const SpecificForumScreen: React.FC = () => {
         <View style={[tw.bgGray200, tw.wFull, tw.hFull]}>
           {/* Forum posts */}
           {loadingPost ? (
-            <Placeholder />
+            <ForumPostSkeleton />
           ) : (
             <View style={[tw.roundedLg, tw.bgWhite, tw.m2, tw.p4]}>
               <View
@@ -205,8 +207,11 @@ const SpecificForumScreen: React.FC = () => {
                 ]}
               >
                 <Image
-                  src={postInfo?.created_by?.photo}
-                  source={require("../../assets/images/default_avatar.jpg")}
+                  source={
+                    postInfo?.created_by?.photo
+                      ? { uri: postInfo.created_by.photo }
+                      : require("../../assets/images/default_avatar.jpg")
+                  }
                   style={[
                     tw.w8,
                     tw.h8,
@@ -278,9 +283,16 @@ const SpecificForumScreen: React.FC = () => {
               Comments
             </TextComponent>
           </View>
-          {postComments.length ? (
+          {loadingComments ? (
+            // Show comment skeletons while loading
+            <>
+              <CommentSkeleton />
+              <CommentSkeleton />
+              <CommentSkeleton />
+            </>
+          ) : postComments.length ? (
             postComments.map((comment) => (
-              <View style={[tw.roundedLg, tw.bgWhite, tw.m2, tw.p4]}>
+              <View key={comment.comment_id || comment.id} style={[tw.roundedLg, tw.bgWhite, tw.m2, tw.p4]}>
                 <View
                   style={[
                     tw.bgWhite,
@@ -291,8 +303,11 @@ const SpecificForumScreen: React.FC = () => {
                   ]}
                 >
                   <Image
-                    src={comment?.created_by?.photo}
-                    source={require("../../assets/images/default_avatar.jpg")}
+                    source={
+                      comment?.created_by?.photo
+                        ? { uri: comment.created_by.photo }
+                        : require("../../assets/images/default_avatar.jpg")
+                    }
                     style={[tw.w8, tw.h8, tw.roundedFull, tw.mR2, tw.mY1]}
                   />
                   <View

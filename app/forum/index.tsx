@@ -27,9 +27,27 @@ import { PostSkeleton } from "@/components/Skeleton";
 import LocalStorage from "@/utils/storage";
 import config from "@/utils/localValues";
 
+interface ForumThread {
+  post_id: string;
+  thread: {
+    id: string;
+    title: string;
+  };
+  created_by?: {
+    photo?: string;
+    name?: string;
+  };
+  content?: string;
+  created_at?: any;
+  likes?: number;
+  liked_by?: string[];
+  views?: number;
+  [key: string]: any; // Allow additional properties
+}
+
 const ForumScreen: React.FC = () => {
   const router = useRouter();
-  const [threads, setThreads] = useState([]);
+  const [threads, setThreads] = useState<ForumThread[]>([]);
   const [loading, setLoading] = useState(true);
   const [userId, setUserId] = useState<number | null>(null);
 
@@ -78,7 +96,7 @@ const ForumScreen: React.FC = () => {
     fetchThreads();
   }, [db]);
 
-  const updatePostLikes = async (postId: string, incrementValue = 1) => {
+  const updatePostLikes = async (postId: string, incrementValue: number = 1) => {
     try {
       const postRef = doc(db, "posts", postId);
 
@@ -94,7 +112,7 @@ const ForumScreen: React.FC = () => {
     }
   };
 
-  const openSpecificForum = (postId) => {
+  const openSpecificForum = (postId: string) => {
     router.navigate(`/forum/specificPost?postId=${postId}`);
   };
 
@@ -143,6 +161,7 @@ const ForumScreen: React.FC = () => {
               threads.map((thread) => {
                 return (
                   <TouchableOpacity
+                    key={thread.post_id}
                     style={[tw.roundedLg, tw.bgWhite, tw.m2, tw.p4]}
                     onPress={() => openSpecificForum(thread.post_id)}
                   >
@@ -157,12 +176,17 @@ const ForumScreen: React.FC = () => {
                       ]}
                     >
                       <Image
-                        src={thread?.created_by?.photo?.replace(
-                          // Replace the URL with the correct one if needed !!this will be removed on production
-                          "http://203.161.50.115:5001",
-                          "https://uat-user-api.bondedapp.io"
-                        )}
-                        source={require("../../assets/images/default_avatar.jpg")}
+                        source={
+                          thread?.created_by?.photo
+                            ? { 
+                                uri: thread.created_by.photo.replace(
+                                  // Replace the URL with the correct one if needed !!this will be removed on production
+                                  "http://203.161.50.115:5001",
+                                  "https://uat-user-api.bondedapp.io"
+                                )
+                              }
+                            : require("../../assets/images/default_avatar.jpg")
+                        }
                         style={[
                           tw.w12,
                           tw.h12,
@@ -225,13 +249,13 @@ const ForumScreen: React.FC = () => {
                         onPress={() =>
                           updatePostLikes(
                             thread.post_id,
-                            thread?.liked_by?.includes(userId) ? -1 : 1
+                            thread?.liked_by?.includes(userId?.toString() || '') ? -1 : 1
                           )
                         }
                       >
                         <Ionicons
                           name={
-                            thread?.liked_by?.includes(userId)
+                            thread?.liked_by?.includes(userId?.toString() || '')
                               ? "heart"
                               : "heart-outline"
                           }

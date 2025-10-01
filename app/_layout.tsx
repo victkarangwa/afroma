@@ -172,6 +172,7 @@ export default function RootLayout() {
                 options={{
                   headerTitle: "View Post",
                   headerTitleAlign: "center",
+                  headerBackTitle: "Forums",
                 }}
               />
               <Stack.Screen

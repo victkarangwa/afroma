@@ -211,12 +211,17 @@ const SwiperComponent = ({
                 />
               </TouchableOpacity>
               <Image
-                src={card?.mediaList
-                  .find((img: any) => img.featured)
-                  ?.thumbnailUrl.replace( // Replace the URL with the correct one if needed !!this will be removed on production
-                    "http://203.161.50.115:5001",
-                    "https://uat-user-api.bondedapp.io"
-                  )}
+                src={card?.mediaList && card.mediaList.length > 0
+                  ? card.mediaList
+                      .find((img: any) => img.featured)
+                      ?.thumbnailUrl?.replace( // Replace the URL with the correct one if needed !!this will be removed on production
+                        "http://203.161.50.115:5001",
+                        "https://uat-user-api.bondedapp.io"
+                      ) || card.mediaList[0]?.thumbnailUrl?.replace(
+                        "http://203.161.50.115:5001",
+                        "https://uat-user-api.bondedapp.io"
+                      )
+                  : undefined}
                 source={require("@/assets/images/afroma_logo.png")}
                 style={[tw.wAuto, tw.roundedLg, tw.m4, { height: "100%" }]}
                 blurRadius={20}

@@ -255,7 +255,7 @@ const ChatScreen = () => {
           <TextComponent
             style={[tw.textBase, tw.fontBold, tw.textGray900]}
           >
-            {userData.firstname} {userData.lastname}
+            {userData.firstName || userData.firstname} {userData.middleName || userData.lastname || ''}
           </TextComponent>
           <TextComponent
             style={[tw.textSm, tw.textGray500]}

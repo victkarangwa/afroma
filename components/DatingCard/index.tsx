@@ -204,7 +204,7 @@ const DatingCard: React.FC<DatingCardProps> = ({ profile, onSwipe, onViewProfile
       </View>
       
       {/* Profile Info Card */}
-      <View style={[tw.absolute, tw.bottom0, tw.left0, tw.right0, tw.p6]}>
+      <View style={[tw.absolute, tw.left0, tw.right0, tw.p6, { bottom: 80 }]}>
         <TouchableOpacity 
           style={[
             tw.roundedL, 
@@ -227,11 +227,11 @@ const DatingCard: React.FC<DatingCardProps> = ({ profile, onSwipe, onViewProfile
             </View>
             
             {/* Match percentage badge */}
-            <View style={[tw.bgWhite, tw.roundedFull, tw.pX3, tw.pY2, tw.shadow]}>
+            {/* <View style={[tw.bgWhite, tw.roundedFull, tw.pX3, tw.pY2, tw.shadow]}>
               <Text style={[tw.textPink700, tw.textSm, tw.fontBold]}>
                 {formatMatchingRate(profile.matchingResult.matchingRate)}
               </Text>
-            </View>
+            </View> */}
           </View>
           
           {/* Distance and Gender */}

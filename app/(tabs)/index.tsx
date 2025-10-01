@@ -434,7 +434,7 @@ const HomeScreen: React.FC = () => {
         });
         return;
       }
-
+      console.log("------MATCHED------", result);
       if (result?.matched) {
         console.log('Match found!', result);
         router.push({

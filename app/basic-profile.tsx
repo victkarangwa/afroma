@@ -5,6 +5,7 @@ import {
   TouchableOpacity,
   Alert,
   Platform,
+  TextInput,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button, RadioButton, Text } from 'react-native-paper';
@@ -31,7 +32,9 @@ const BasicProfileScreen: React.FC = () => {
   // Form data
   const [formData, setFormData] = useState({
     gender: '',
-    dateOfBirth: ''
+    dateOfBirth: '',
+    bio: '',
+    interestedIn: ''
   });
   
   // Photo management
@@ -53,6 +56,13 @@ const BasicProfileScreen: React.FC = () => {
     // { id: 'Other', label: 'Other' }
   ];
 
+  // Interested In options (for dating profiles)
+  const interestedInOptions = [
+    { id: 'Male', label: 'Male' },
+    { id: 'Female', label: 'Female' },
+    { id: 'Both', label: 'Both' },
+  ];
+
   // Fetch user profile
   const fetchUserProfile = async () => {
     try {
@@ -63,7 +73,9 @@ const BasicProfileScreen: React.FC = () => {
         // Initialize form data with existing profile
         setFormData({
           gender: result.gender || '',
-          dateOfBirth: result.dateOfBirth || ''
+          dateOfBirth: result.dateOfBirth || '',
+          bio: result.bio || '',
+          interestedIn: result.interestedIn || ''
         });
         
         // Initialize gallery with existing photos
@@ -228,15 +240,27 @@ const BasicProfileScreen: React.FC = () => {
       Alert.alert('Validation Error', 'Please select your date of birth.');
       return;
     }
+    
+    // Validate interestedIn for dating profiles
+    if ((userProfile?.profileType === 'DATING' || userProfile?.profileTypes?.includes('DATING')) && !formData.interestedIn) {
+      Alert.alert('Validation Error', 'Please select who you are interested in.');
+      return;
+    }
 
     try {
       setIsSubmitting(true);
       
       // Prepare data for API (only basic profile fields)
-      const submitData = {
+      const submitData: any = {
         gender: formData.gender,
-        dateOfBirth: formData.dateOfBirth
+        dateOfBirth: formData.dateOfBirth,
+        bio: formData.bio
       };
+      
+      // Add interestedIn only for dating profiles
+      if (userProfile?.profileType === 'DATING' || userProfile?.profileTypes?.includes('DATING')) {
+        submitData.interestedIn = formData.interestedIn;
+      }
       
       console.log('Submitting to API:', submitData);
       
@@ -324,6 +348,36 @@ const BasicProfileScreen: React.FC = () => {
           </RadioButton.Group>
         </View>
 
+        {/* Interested In (only for dating profiles) */}
+        {(userProfile?.profileType === 'DATING' || userProfile?.profileTypes?.includes('DATING')) && (
+          <View style={[tw.bgWhite, tw.p4, tw.rounded, tw.mT3, tw.shadow]}>
+            <Text style={[tw.textBase, tw.fontBold, tw.mB3, { color: primaryColor }]}>
+              Interested In
+            </Text>
+            
+            <RadioButton.Group
+              value={formData.interestedIn}
+              onValueChange={(value) => setFormData(prev => ({ ...prev, interestedIn: value }))}
+            >
+              {interestedInOptions.map((option) => (
+                <TouchableOpacity
+                  key={option.id}
+                  style={[tw.flexRow, tw.itemsCenter, tw.p2, tw.rounded, tw.mB1]}
+                  onPress={() => setFormData(prev => ({ ...prev, interestedIn: option.id }))}
+                >
+                  <RadioButton
+                    value={option.id}
+                    color={primaryColor}
+                  />
+                  <Text style={[tw.mL2, tw.flex1, tw.textSm]}>
+                    {option.label}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </RadioButton.Group>
+          </View>
+        )}
+
         {/* Date of Birth */}
         <View style={[tw.bgWhite, tw.p4, tw.rounded, tw.mT3, tw.shadow]}>
           <Text style={[tw.textBase, tw.fontBold, tw.mB3, { color: primaryColor }]}>
@@ -335,7 +389,14 @@ const BasicProfileScreen: React.FC = () => {
             onPress={() => setShowDatePicker(true)}
           >
             <Text style={[tw.textSm, tw.textGray700]}>
-              {formData.dateOfBirth || 'Select your date of birth'}
+              {formData.dateOfBirth 
+                ? new Date(formData.dateOfBirth).toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                  })
+                : 'Select your date of birth'
+              }
             </Text>
             <Ionicons name="calendar-outline" size={20} color={primaryColor} />
           </TouchableOpacity>
@@ -349,6 +410,39 @@ const BasicProfileScreen: React.FC = () => {
               maximumDate={new Date()}
             />
           )}
+        </View>
+
+        {/* Bio */}
+        <View style={[tw.bgWhite, tw.p4, tw.rounded, tw.mT3, tw.shadow]}>
+          <Text style={[tw.textBase, tw.fontBold, tw.mB3, { color: primaryColor }]}>
+            Bio
+          </Text>
+          
+          <Text style={[tw.textSm, tw.textGray600, tw.mB3]}>
+            Tell others about yourself (optional)
+          </Text>
+          
+          <TextInput
+            style={[
+              tw.bgGray100,
+              tw.p3,
+              tw.rounded,
+              tw.textSm,
+              tw.textGray700,
+              { minHeight: 80, textAlignVertical: 'top' }
+            ]}
+            value={formData.bio}
+            onChangeText={(text) => setFormData(prev => ({ ...prev, bio: text }))}
+            placeholder="Write a short bio about yourself..."
+            placeholderTextColor="#9ca3af"
+            multiline={true}
+            numberOfLines={4}
+            maxLength={500}
+          />
+          
+          <Text style={[tw.textXs, tw.textGray500, tw.mT1, tw.textRight]}>
+            {formData.bio.length}/500 characters
+          </Text>
         </View>
 
         {/* Profile Photos */}

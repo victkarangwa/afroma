@@ -2,7 +2,7 @@ import TextComponent from "@/components/Text";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
-import { Image, TouchableOpacity } from "react-native";
+import { Image, ScrollView, TouchableOpacity } from "react-native";
 import { View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { tw } from "react-native-tailwindcss";
@@ -96,7 +96,10 @@ const ForumScreen: React.FC = () => {
     fetchThreads();
   }, [db]);
 
-  const updatePostLikes = async (postId: string, incrementValue: number = 1) => {
+  const updatePostLikes = async (
+    postId: string,
+    incrementValue: number = 1
+  ) => {
     try {
       const postRef = doc(db, "posts", postId);
 
@@ -146,13 +149,17 @@ const ForumScreen: React.FC = () => {
           </View>
         </View>
 
-        <View
-          style={[
-            tw.bgGray200,
-            tw.wFull,
-            tw.hFull,
-            tw.pY10,
-            { borderTopLeftRadius: 50, borderTopRightRadius: 50 },
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={[
+            {
+              paddingTop: 30,
+              paddingHorizontal: 10,
+              paddingBottom: 350, // Add bottom padding to clear navigation bar
+              ...tw.bgGray200,
+              borderTopLeftRadius: 50,
+              borderTopRightRadius: 50,
+            },
           ]}
         >
           {/* Forum posts */}
@@ -178,12 +185,12 @@ const ForumScreen: React.FC = () => {
                       <Image
                         source={
                           thread?.created_by?.photo
-                            ? { 
+                            ? {
                                 uri: thread.created_by.photo.replace(
                                   // Replace the URL with the correct one if needed !!this will be removed on production
                                   "http://203.161.50.115:5001",
                                   "https://uat-user-api.bondedapp.io"
-                                )
+                                ),
                               }
                             : require("../../assets/images/default_avatar.jpg")
                         }
@@ -249,13 +256,15 @@ const ForumScreen: React.FC = () => {
                         onPress={() =>
                           updatePostLikes(
                             thread.post_id,
-                            thread?.liked_by?.includes(userId?.toString() || '') ? -1 : 1
+                            thread?.liked_by?.includes(userId?.toString() || "")
+                              ? -1
+                              : 1
                           )
                         }
                       >
                         <Ionicons
                           name={
-                            thread?.liked_by?.includes(userId?.toString() || '')
+                            thread?.liked_by?.includes(userId?.toString() || "")
                               ? "heart"
                               : "heart-outline"
                           }
@@ -330,7 +339,7 @@ const ForumScreen: React.FC = () => {
               ))}
             </View>
           )}
-        </View>
+        </ScrollView>
       </View>
     </View>
   );

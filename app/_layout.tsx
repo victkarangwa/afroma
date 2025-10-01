@@ -173,6 +173,7 @@ export default function RootLayout() {
                   headerTitle: "View Post",
                   headerTitleAlign: "center",
                   headerBackTitle: "Forums",
+                  headerTintColor: "#fb6c31",
                 }}
               />
               <Stack.Screen

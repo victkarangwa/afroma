@@ -47,13 +47,24 @@ export interface PostUser {
   lastname: string;
   gender: string;
   interestedIn: string;
+  bio?: string;
   dateOfBirth: string;
+  gallery?: {
+    id: number;
+    thumbnailUrl: string;
+    mediaUrl: string;
+    fileName: string;
+    featured: boolean;
+    mediaType: string;
+  }[];
   publicFigure: boolean;
   latitude: number;
   longitude: number;
   profileType: string;
   profileTypes: string[];
-  photo?: string;
+  hasPendingRequest?: boolean;
+  friend?: boolean;
+  photo?: string; // Keep for backward compatibility
 }
 
 export interface PostAttachment {

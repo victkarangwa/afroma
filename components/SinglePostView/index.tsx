@@ -33,6 +33,17 @@ export interface GenericPost {
     photo?: string; // User's profile photo
     headline?: string;
     userId?: number; // Add userId for profile viewing
+    // Additional user profile fields for proper image display
+    firstname?: string;
+    lastname?: string;
+    gallery?: {
+      id: number;
+      thumbnailUrl: string;
+      mediaUrl: string;
+      fileName: string;
+      featured: boolean;
+      mediaType: string;
+    }[];
   };
   timestamp: string;
   location?: string;
@@ -275,9 +286,15 @@ const SinglePostView: React.FC<SinglePostViewProps> = ({
               disabled={!post.user.userId}
             >
               <View style={[tw.w12, tw.h12, tw.roundedFull, tw.mR3, tw.overflowHidden]}>
-                {post.user.photo ? (
+                {post.user.gallery?.find((g: any) => g.featured)?.thumbnailUrl ||
+                 post.user.gallery?.[0]?.thumbnailUrl ||
+                 post.user.photo ? (
                   <ImageWithFallback
-                    source={{ uri: post.user.photo }}
+                    source={{ 
+                      uri: post.user.gallery?.find((g: any) => g.featured)?.thumbnailUrl ||
+                           post.user.gallery?.[0]?.thumbnailUrl ||
+                           post.user.photo
+                    }}
                     style={[tw.wFull, tw.hFull]}
                     resizeMode="cover"
                     fallbackSource={null}
@@ -285,10 +302,7 @@ const SinglePostView: React.FC<SinglePostViewProps> = ({
                 ) : (
                   <View style={[tw.wFull, tw.hFull, tw.bgGray300, tw.justifyCenter, tw.itemsCenter]}>
                     <Text style={[tw.textGray700, tw.fontBold, tw.textSm]}>
-                      {(() => {
-                        const nameParts = post.user.name.split(' ');
-                        return getUserInitials(nameParts[0] || '', nameParts[1] || '');
-                      })()}
+                      {getUserInitials(post.user.firstname || '', post.user.lastname || '')}
                     </Text>
                   </View>
                 )}

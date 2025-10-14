@@ -594,8 +594,13 @@ const HomeScreen: React.FC = () => {
           user: {
             name: `${item.user.firstname} ${item.user.lastname}`,
             avatar: "", // Not used anymore, we use initials instead
-            userId: item.user.id // Add userId for profile viewing
-          },
+            userId: item.user.id, // Add userId for profile viewing
+            // Pass the full user profile data for profile images
+            firstname: item.user.firstname,
+            lastname: item.user.lastname,
+            gallery: (item.user as any).gallery,
+            photo: item.user.photo
+          } as any,
           timestamp: getTimeAgo(item.createdAt),
           location: "", // API doesn't provide location
           caption: item.content,
@@ -617,9 +622,15 @@ const HomeScreen: React.FC = () => {
           activeOpacity={0.7}
         >
           <View style={[tw.w10, tw.h10, tw.roundedFull, tw.mR3, tw.overflowHidden]}>
-            {item.user.photo ? (
+            {(item.user as any).gallery?.find((g: any) => g.featured)?.thumbnailUrl ||
+             (item.user as any).gallery?.[0]?.thumbnailUrl ||
+             item.user.photo ? (
               <ImageWithFallback
-                source={{ uri: item.user.photo }}
+                source={{ 
+                  uri: (item.user as any).gallery?.find((g: any) => g.featured)?.thumbnailUrl ||
+                       (item.user as any).gallery?.[0]?.thumbnailUrl ||
+                       item.user.photo
+                }}
                 style={[tw.wFull, tw.hFull]}
                 resizeMode="cover"
                 fallbackSource={null}

@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from "react";
-import { View, Text, TextInput, ScrollView, Image, TouchableOpacity, FlatList, Dimensions, PanResponder, Animated, Modal, RefreshControl, BackHandler, Alert } from "react-native";
+import { View, Text, TextInput, ScrollView, Image, TouchableOpacity, FlatList, Dimensions, PanResponder, Animated, Modal, RefreshControl, BackHandler, Alert, AppState, AppStateStatus } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { tw } from "react-native-tailwindcss";
@@ -84,6 +84,11 @@ const HomeScreen: React.FC = () => {
 
   const { loading, send } = useApiRequest<ApiResponse>();
   const { isBookmarked, toggleBookmark: toggleBookmarkHook } = useBookmarks();
+
+  // Track app state for background/foreground checks
+  const [appState, setAppState] = useState<AppStateStatus>(AppState.currentState);
+  const [isNavigatingToMatch, setIsNavigatingToMatch] = useState(false);
+  const [lastHandledMatchId, setLastHandledMatchId] = useState<number | null>(null);
 
   // Use the posts hook for real API data
   const {
@@ -218,6 +223,72 @@ const HomeScreen: React.FC = () => {
       })();
     }, [apiDatingMatches, loadUserLikedPosts])
   );
+
+  // Check for unseen matches only while the Home screen is focused
+  useFocusEffect(
+    React.useCallback(() => {
+      const handleAppStateChange = (nextAppState: AppStateStatus) => {
+        setAppState(nextAppState);
+        if (nextAppState === 'active') {
+          checkForUnseenMatches();
+        }
+      };
+
+      const subscription = AppState.addEventListener('change', handleAppStateChange);
+
+      // Initial check shortly after focus
+      const initialTimeout = setTimeout(() => {
+        checkForUnseenMatches();
+      }, 1500);
+
+      // Periodic polling while on home screen focus
+      const intervalId = setInterval(() => {
+        checkForUnseenMatches();
+      }, 60000); // every 60s
+
+      return () => {
+        subscription.remove();
+        clearTimeout(initialTimeout);
+        clearInterval(intervalId);
+      };
+    }, [])
+  );
+
+  const checkForUnseenMatches = async () => {
+    try {
+      if (isNavigatingToMatch) return;
+      const result: any = await send('get', '/matches/unseen');
+      if (!Array.isArray(result) || result.length === 0) return;
+
+      const firstUnseen = result.find((m: any) => m && m.seen === false) || result[0];
+      if (!firstUnseen) return;
+      if (lastHandledMatchId && firstUnseen.matchId === lastHandledMatchId) return;
+
+      // Map API response profile to the structure expected by match screen
+      const matchedProfile = firstUnseen.profile || {};
+      const payload = {
+        matchId: firstUnseen.matchId,
+        id: matchedProfile.id,
+        // Map gallery -> mediaList expected by match screen
+        mediaList: Array.isArray(matchedProfile.gallery) ? matchedProfile.gallery.map((g: any) => ({
+          id: g.id,
+          thumbnailUrl: g.thumbnailUrl,
+          mediaUrl: g.mediaUrl || g.thumbnailUrl,
+          fileName: g.fileName,
+          featured: !!g.featured,
+          mediaType: g.mediaType || 'PHOTO',
+        })) : [],
+      };
+
+      setIsNavigatingToMatch(true);
+      setLastHandledMatchId(firstUnseen.matchId);
+      router.push({ pathname: '/match', params: { user: JSON.stringify(payload) } });
+      // Allow navigation again after short delay to avoid multiple pushes
+      setTimeout(() => setIsNavigatingToMatch(false), 2000);
+    } catch (error) {
+      console.error('Error checking unseen matches:', error);
+    }
+  };
 
   // Handle 401 errors by checking if user is still authenticated
   useEffect(() => {
@@ -420,7 +491,7 @@ const HomeScreen: React.FC = () => {
           swipedId: currentProfile.id,
           swipeType: swipeType,
       });
-
+    console.log("=== SWIPE API swipeType ===", { swipeType, swipedId: currentProfile.id});
       console.log("=== SWIPE API RESULT ===", result);
       
       // Handle match or payment requirements if needed

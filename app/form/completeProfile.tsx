@@ -253,7 +253,7 @@ const CompleteProfileScreen: React.FC = () => {
             <>
               <View style={[tw.bgWhite, tw.roundedLg, tw.p4, tw.shadow, tw.mB6]}>
                 <Text style={[tw.textPink700, tw.textLg, tw.fontBold, tw.mB2]}>Height</Text>
-                <View style={[tw.flexRow, tw.itemsCenter, tw.mB2]}>
+                <View style={[tw.flexRow, tw.flexWrap, tw.itemsCenter, tw.mB2]}>
                   {HEIGHT_OPTIONS.map((opt) => (
                     <TouchableOpacity
                       key={opt.value}

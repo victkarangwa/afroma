@@ -135,6 +135,8 @@ const LoginScreen: React.FC = () => {
         return;
       }
 
+      console.log("=== LOGIN API RESULT ===", result);
+
       // Check if login was successful
       if (result && result.code === "00" && result.token) {
         // Store the authentication token

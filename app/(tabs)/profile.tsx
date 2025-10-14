@@ -18,6 +18,7 @@ import useApiRequest from "@/hooks/useApiRequest";
 import { ApiResponse } from "@/types";
 import { removeUserData } from "@/utils";
 import * as ImagePicker from "expo-image-picker";
+import { convertImgToBase64, prepareImgForUpload } from "@/utils";
 import LocalStorage from "@/utils/storage";
 import { clearAuthData } from "@/utils/auth";
 import localStore from "@/utils/localValues";
@@ -240,22 +241,54 @@ const ProfileScreen: React.FC = () => {
     }
   };
 
-  const pickImage = async () => {
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status !== "granted") {
-      alert("Sorry, we need media library permissions to make this work!");
-      return;
+  const uploadProfilePicture = async (data: any) => {
+    try {
+      setIsUploading(true);
+      const result = await send(
+        "post",
+        "/media/upload",
+        { ...data, fileRefType: "PROFILE", featured: true, mediaType: "PHOTO" }
+      );
+
+      if (result?.errors) {
+        Alert.alert("Upload Failed", "Could not update profile picture. Try again.");
+        return;
+      }
+
+      // Refresh profile data after successful upload
+      await getMyBasicProfile();
+    } catch (e) {
+      console.error("Error uploading profile picture:", e);
+      Alert.alert("Upload Error", "An unexpected error occurred.");
+    } finally {
+      setIsUploading(false);
     }
+  };
 
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 1,
-    });
+  const pickImage = async () => {
+    try {
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== "granted") {
+        alert("Sorry, we need media library permissions to make this work!");
+        return;
+      }
 
-    if (!result.canceled && result.assets[0]) {
-      // Handle image upload here
+      const result: any = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 1,
+      });
+
+      if (result?.canceled || !result?.assets?.[0]?.uri) {
+        return;
+      }
+
+      const base64 = (await convertImgToBase64(result.assets[0].uri)) as string;
+      const data = prepareImgForUpload(base64, true, "PHOTO");
+      await uploadProfilePicture(data);
+    } catch (e) {
+      console.error("Error picking image:", e);
     }
   };
 
@@ -373,6 +406,14 @@ const ProfileScreen: React.FC = () => {
 
   return (
     <SafeAreaView style={[tw.flex1, tw.bgGray100]}>
+      {isUploading && (
+        <View style={[tw.absolute, tw.itemsCenter, tw.justifyCenter, { top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.25)', zIndex: 2000 }]}> 
+          <View style={[tw.bgWhite, tw.roundedLg, tw.p4, tw.itemsCenter, tw.justifyCenter]}> 
+            <ActivityIndicator size="large" color="#fb6c31" />
+            <Text style={[tw.textGray900, tw.mT2]}>Updating photo...</Text>
+          </View>
+        </View>
+      )}
       {/* Header */}
       {/* <View style={[tw.bgWhite, tw.pX4, tw.pT4, tw.pB4, tw.shadow]}>
         <View style={[tw.flexRow, tw.itemsCenter, tw.justifyBetween]}>
@@ -427,7 +468,8 @@ const ProfileScreen: React.FC = () => {
 
             {/* Profile Picture positioned at bottom center of gradient */}
             <TouchableOpacity
-              onPress={() => router.push("/basic-profile")}
+              onPress={pickImage}
+              disabled={isUploading}
               style={[tw.absolute, { bottom: 0, left: '50%', marginLeft: -50, zIndex: 999 }]}
             >
               <View style={[tw.relative]}>
@@ -436,6 +478,11 @@ const ProfileScreen: React.FC = () => {
                   source={require("../../assets/images/default_avatar.jpg")}
                   style={[tw.w24, tw.h24, tw.roundedFull, tw.border4, tw.borderWhite]}
                 />
+                {isUploading && (
+                  <View style={[tw.absolute, tw.itemsCenter, tw.justifyCenter, { top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(255,255,255,0.6)', borderRadius: 9999 }]}> 
+                    <ActivityIndicator size="small" color="#fb6c31" />
+                  </View>
+                )}
                 {/* Camera overlay to indicate clickable */}
                 {/* <View style={[tw.absolute, { bottom: 2, right: 2 }, tw.bgPink700, tw.roundedFull, tw.p1, tw.border2, tw.borderWhite]}>
                   <Ionicons name="camera" size={12} color="white" />

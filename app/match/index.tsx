@@ -4,8 +4,10 @@ import useApiRequest from "@/hooks/useApiRequest";
 import { ApiResponse } from "@/types";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
-import { View, Text, Image } from "react-native";
+import { View, Text, Image, TouchableOpacity, ActivityIndicator, Animated } from "react-native";
 import { tw } from "react-native-tailwindcss";
+import { Ionicons } from "@expo/vector-icons";
+import LinearGradient from 'react-native-linear-gradient';
 
 interface MatchScreenProps {
   user: any;
@@ -17,14 +19,14 @@ const MatchScreen = () => {
   const [myPhoto, setMyPhoto] = useState({
     thumbnailUrl: "",
   });
-  console.log("-=-", userData.id)
   const [currentUserId, setCurrentUserId] = useState(null);
   const { loading, send } = useApiRequest<ApiResponse>();
+  const [pulsate] = useState(new Animated.Value(1));
   const getMyProfile = async () => {
     const result = await send("get", "/users/me");
     setCurrentUserId(result?.id);
     const myPhoto = result?.gallery?.find((media: any) => media.featured);
-    setMyPhoto(myPhoto);
+    setMyPhoto(myPhoto || { thumbnailUrl: "" });
     return result;
   };
 
@@ -34,52 +36,120 @@ const MatchScreen = () => {
 
   const matchPhoto = userData?.mediaList?.find((media: any) => media.featured);
 
+  // Derive matched user display name if available (supports different payload shapes)
+  const matchedFirstName = userData?.firstName || userData?.firstname || userData?.profile?.firstname || "";
+  const matchedLastName = userData?.lastName || userData?.lastname || userData?.profile?.lastname || "";
+  const matchedDisplayName = `${matchedFirstName} ${matchedLastName}`.trim() || "Your match";
+
+  // Simple pulsing heart animation
+  useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulsate, { toValue: 1.15, duration: 800, useNativeDriver: true }),
+        Animated.timing(pulsate, { toValue: 1.0, duration: 800, useNativeDriver: true }),
+      ])
+    ).start();
+  }, [pulsate]);
+
+  const markMatchAsSeen = async () => {
+    try {
+      const matchId = (userData && (userData.matchId || userData?.profile?.matchId)) || null;
+      if (!matchId) return; // Nothing to mark
+      const result = await send('put', `/matches/${matchId}/seen`);
+      console.log("=== MARK MATCH AS SEEN API RESULT ===", result);
+    } catch (err) {
+      console.warn('Failed to mark match as seen:', err);
+    }
+  };
+
   const sendMsg = async () => {
+    await markMatchAsSeen();
     router.push({
       pathname: "/chats/room",
       params: { user: JSON.stringify(userData), currentUserId },
     });
   }
 
-    const goBack = () => {
+    const goBack = async () => {
+      await markMatchAsSeen();
       router.back();
     }
 
   return (
-    <ScreenContainer title="Match">
-      <View style={[tw.wFull, tw.flex1, tw.itemsCenter, tw.justifyCenter]}>
-        <View
-          style={[
-            tw.flex,
-            tw.flexRow,
-            tw.justifyCenter,
-            tw.itemsCenter,
-            tw.mB8,
-          ]}
+    <ScreenContainer title="">
+      <View style={[tw.flex1]}>
+        {/* Gradient Celebration Header */}
+        <LinearGradient
+          colors={["#fb6c31", "#ff8a65", "#ffab91"]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={[{ width: '90%', height: 260, alignSelf: 'center', borderRadius: 16 }, tw.itemsCenter, tw.justifyCenter, tw.mT6]}
         >
-          <Image
-            src={matchPhoto.thumbnailUrl}
-            style={[tw.h20, tw.w20, tw.roundedFull, tw.roundedBrNone, tw.mX2]}
-          />
-          <Image
-            src={myPhoto.thumbnailUrl}
-            style={[tw.h20, tw.w20, tw.roundedFull, tw.roundedBlNone, tw.mX2]}
-          />
-        </View>
-        <Text style={[tw.fontBold, tw.text2xl, tw.mB4, tw.textPink700]}>
-          Congrats, it's a match
-        </Text>
-        <Text style={[tw.textSm, tw.mB6, tw.textGray400]}>
-          This is a chance to get to know each other better
-        </Text>
+          <Animated.View style={{ transform: [{ scale: pulsate }] }}>
+            <Ionicons name="heart" size={72} color="#fff" />
+          </Animated.View>
+          <Text style={[tw.textWhite, tw.fontBold, tw.text2xl, tw.mT2]}>It's a Match!</Text>
+          <Text style={[tw.textWhite, tw.textSm, { opacity: 0.9 }, tw.mT1]}>You and {matchedDisplayName} liked each other</Text>
+        </LinearGradient>
 
-        <View style={[tw.w3_4]}>
-          <ButtonComponent mode="contained" style={[tw.m2]} onPress={sendMsg}>
-            Send a message
-          </ButtonComponent>
-          <ButtonComponent mode="outlined" textColor="#eca899" style={[tw.m2]} onPress={goBack}>
-            Keep Swiping
-          </ButtonComponent>
+        {/* Matched Avatars Card */}
+        <View style={[tw.itemsCenter, { marginTop: -48 }]}> 
+          <View style={[tw.bgWhite, tw.roundedLg, tw.shadow, tw.itemsCenter, tw.p6, tw.mX6, { width: '88%' }]}> 
+            <View style={[tw.flexRow, tw.itemsCenter, tw.justifyCenter, tw.mB4]}> 
+              {/* Matched user photo */}
+              <View style={[tw.mX2, tw.itemsCenter]}> 
+                <View style={[tw.roundedFull, tw.border4, { borderColor: '#fb6c31' }]}> 
+                  <Image
+                    src={matchPhoto?.thumbnailUrl}
+                    source={require("../../assets/images/default_avatar.jpg")}
+                    style={[tw.h20, tw.w20, tw.roundedFull]}
+                  />
+                </View>
+                <Text style={[tw.textGray800, tw.textSm, tw.mT2]} numberOfLines={1}>{matchedDisplayName}</Text>
+              </View>
+
+              <Ionicons name="heart" size={20} color="#fb6c31" style={[tw.mX2]} />
+
+              {/* Current user photo */}
+              <View style={[tw.mX2, tw.itemsCenter]}> 
+                <View style={[tw.roundedFull, tw.border4, { borderColor: '#fb6c31' }]}> 
+                  <Image
+                    src={myPhoto?.thumbnailUrl}
+                    source={require("../../assets/images/default_avatar.jpg")}
+                    style={[tw.h20, tw.w20, tw.roundedFull]}
+                  />
+                </View>
+                <Text style={[tw.textGray800, tw.textSm, tw.mT2]} numberOfLines={1}>You</Text>
+              </View>
+            </View>
+
+            <Text style={[tw.textGray600, tw.textCenter]}>Start a conversation and see where it goes.</Text>
+          </View>
+        </View>
+
+        {/* Actions */}
+        <View style={[tw.itemsCenter, tw.mT8, tw.pX6]}>
+          <TouchableOpacity
+            style={[tw.wFull, tw.roundedFull, tw.itemsCenter, tw.justifyCenter, tw.pY3, { backgroundColor: '#fb6c31' }]}
+            onPress={sendMsg}
+            activeOpacity={0.9}
+          >
+            <View style={[tw.flexRow, tw.itemsCenter]}> 
+              <Ionicons name="chatbubbles" size={20} color="#fff" style={[tw.mR2]} />
+              <Text style={[tw.textWhite, tw.fontBold]}>Send a message</Text>
+            </View>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[tw.wFull, tw.roundedFull, tw.itemsCenter, tw.justifyCenter, tw.pY3, tw.mT3, tw.border, { borderColor: '#fb6c31' }]}
+            onPress={goBack}
+            activeOpacity={0.9}
+          >
+            <View style={[tw.flexRow, tw.itemsCenter]}> 
+              <Ionicons name="reload" size={18} color="#fb6c31" style={[tw.mR2]} />
+              <Text style={[{ color: '#fb6c31' }, tw.fontBold]}>Keep Swiping</Text>
+            </View>
+          </TouchableOpacity>
         </View>
       </View>
     </ScreenContainer>

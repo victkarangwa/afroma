@@ -11,6 +11,7 @@ import {
   serverTimestamp,
 } from "firebase/firestore";
 import { getFirestore } from "firebase/firestore";
+import { setDoc, doc } from "firebase/firestore";
 import { db } from "@/configs/firebaseConfig";
 import {
   Button,
@@ -263,6 +264,16 @@ const ChatScreen = () => {
         createdAt: serverTimestamp(),
         senderId: senderId,
       });
+      // Update chat metadata for ordering by latest message
+      try {
+        await setDoc(
+          doc(db, "chats", chatId),
+          { lastMessageAt: serverTimestamp(), lastMessagePreview: message },
+          { merge: true }
+        );
+      } catch (e) {
+        console.log("Failed to update chat metadata:", e);
+      }
       setMessage("");
     }
   };

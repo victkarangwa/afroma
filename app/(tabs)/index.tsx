@@ -637,13 +637,13 @@ const HomeScreen: React.FC = () => {
             <Text style={[tw.textGray500, tw.textSm]}>{getTimeAgo(item.createdAt)}</Text>
           </View>
         </TouchableOpacity>
-        <TouchableOpacity onPress={() => toggleBookmarkHook(item)}>
+        {/* <TouchableOpacity onPress={() => toggleBookmarkHook(item)}>
           <Ionicons
             name={isBookmarked(item.id) ? "bookmark" : "bookmark-outline"}
             size={24}
             color={isBookmarked(item.id) ? "#fb6c31" : "#6b7280"}
           />
-        </TouchableOpacity>
+        </TouchableOpacity> */}
       </View>
       
       {/* Content/Caption - Always show above media */}
@@ -782,12 +782,12 @@ const HomeScreen: React.FC = () => {
             }}
           >
             <Ionicons name="chatbubble-outline" size={20} color="#6b7280" />
-            <Text style={[tw.textGray600, tw.textSm, tw.mL1]}>{formatNumber(0)}</Text>
+            {/* <Text style={[tw.textGray600, tw.textSm, tw.mL1]}>{formatNumber(0)}</Text> */}
           </TouchableOpacity>
-          <TouchableOpacity style={[tw.flexRow, tw.itemsCenter]}>
+          {/* <TouchableOpacity style={[tw.flexRow, tw.itemsCenter]}>
             <Ionicons name="arrow-redo-outline" size={20} color="#6b7280" />
             <Text style={[tw.textGray600, tw.textSm, tw.mL1]}>{formatNumber(0)}</Text>
-          </TouchableOpacity>
+          </TouchableOpacity> */}
         </View>
       </View>
       {/* Image Modal */}

@@ -69,6 +69,7 @@ const UserProfileView: React.FC<UserProfileViewProps> = ({
   const [showQuestionsModal, setShowQuestionsModal] = useState(false);
   const [showPhotoViewer, setShowPhotoViewer] = useState(false);
   const [selectedPhotoIndex, setSelectedPhotoIndex] = useState(0);
+  const [sendingRequest, setSendingRequest] = useState(false);
 
   // Calculate age from dateOfBirth
   const calculateAge = (dateOfBirth: string) => {
@@ -207,14 +208,60 @@ const UserProfileView: React.FC<UserProfileViewProps> = ({
     }
   }, [visible]);
 
-  const handleConnect = () => {
-    // TODO: Implement connection request
-    Alert.alert('Connect', 'Connection request feature coming soon!');
+  const handleConnect = async () => {
+    if (!profile || sendingRequest) return;
+    try {
+      setSendingRequest(true);
+      const response = await send('post', '/friendship/request', {
+        receiverId: profile.id
+      });
+      if (response?.success || response?.id) {
+        setProfile(prev => prev ? { ...prev, hasPendingRequest: true } as UserProfile : prev);
+        Alert.alert('Success', 'Friend request sent!');
+      } else {
+        Alert.alert('Error', response?.message || 'Failed to send friend request. Please try again.');
+      }
+    } catch (err) {
+      console.error('Error sending friend request:', err);
+      Alert.alert('Error', 'Failed to send friend request. Please try again.');
+    } finally {
+      setSendingRequest(false);
+    }
   };
 
-  const handleMessage = () => {
-    // TODO: Implement messaging
-    Alert.alert('Message', 'Messaging feature coming soon!');
+  const handleMessage = async () => {
+    if (!profile) return;
+    const payload: any = {
+      id: profile.id,
+      firstName: profile.firstname || '',
+      firstname: profile.firstname || '',
+      middleName: '',
+      lastName: profile.lastname || '',
+      lastname: profile.lastname || '',
+      // Intentionally omit avatar so chat uses the real chat path (non-networking)
+      mediaList: Array.isArray(profile.gallery) ? profile.gallery.map((g) => ({
+        id: g.id,
+        thumbnailUrl: g.thumbnailUrl,
+        mediaUrl: g.mediaUrl || g.thumbnailUrl,
+        fileName: g.fileName,
+        featured: !!g.featured,
+        mediaType: g.mediaType || 'PHOTO',
+      })) : [],
+    };
+    let currentId = currentUserProfile?.id;
+    if (!currentId) {
+      try {
+        const me: any = await send('get', '/users/me');
+        currentId = me?.id;
+      } catch (e) {
+        console.error('Failed to fetch current user id for chat:', e);
+      }
+    }
+    if (!currentId) {
+      Alert.alert('Error', 'Unable to open chat. Please try again.');
+      return;
+    }
+    router.push({ pathname: '/chats/room', params: { user: JSON.stringify(payload), currentUserId: String(currentId) } });
   };
 
   const handleViewPosts = () => {
@@ -329,6 +376,41 @@ const UserProfileView: React.FC<UserProfileViewProps> = ({
                     <Text style={[tw.textWhite, tw.fontMedium, tw.mL2]}>Message</Text>
                   </TouchableOpacity>
                 </View> */}
+              </View>
+
+              {/* Friendship Status & Actions */}
+              <View style={[tw.bgWhite, tw.roundedLg, tw.p6, tw.mB4, tw.shadow]}>
+                <View style={[tw.flexRow, tw.itemsCenter, tw.justifyBetween]}>
+                  <View style={[tw.flexRow, tw.itemsCenter]}>
+                    <Ionicons 
+                      name={profile.friend ? 'checkmark-done-circle' : profile.hasPendingRequest ? 'time' : 'person-add'} 
+                      size={20} 
+                      color={profile.friend ? '#10b981' : profile.hasPendingRequest ? '#f59e0b' : '#fb6c31'} 
+                    />
+                    <Text style={[tw.mL2, tw.textGray900, tw.fontMedium]}>
+                      {profile.friend ? 'You are friends' : profile.hasPendingRequest ? 'Friend request pending' : 'Not friends'}
+                    </Text>
+                  </View>
+                  <View style={[tw.flexRow, tw.itemsCenter]}>
+                    {profile.friend && (
+                      <TouchableOpacity
+                        style={[tw.bgBlue500, tw.roundedLg, tw.pX4, tw.pY2, tw.mR2]}
+                        onPress={handleMessage}
+                      >
+                        <Text style={[tw.textWhite, tw.fontMedium]}>Message</Text>
+                      </TouchableOpacity>
+                    )}
+                    {!profile.friend && !profile.hasPendingRequest && (
+                      <TouchableOpacity
+                        style={[tw.bgPink700, tw.roundedLg, tw.pX4, tw.pY2, sendingRequest ? tw.opacity50 : null]}
+                        onPress={handleConnect}
+                        disabled={sendingRequest}
+                      >
+                        <Text style={[tw.textWhite, tw.fontMedium]}>{sendingRequest ? 'Sending...' : 'Add Friend'}</Text>
+                      </TouchableOpacity>
+                    )}
+                  </View>
+                </View>
               </View>
 
               {/* Profile Details */}

@@ -10,6 +10,9 @@ import {
   SafeAreaView,
   StatusBar,
   ActivityIndicator,
+  TextInput,
+  KeyboardAvoidingView,
+  Platform,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { tw } from "react-native-tailwindcss";
@@ -70,6 +73,8 @@ const SinglePostView: React.FC<SinglePostViewProps> = ({
   const [comments, setComments] = useState<Comment[]>([]);
   const [commentsLoading, setCommentsLoading] = useState(false);
   const [commentCount, setCommentCount] = useState(0);
+  const [newComment, setNewComment] = useState('');
+  const [submittingComment, setSubmittingComment] = useState(false);
 
   const { send } = useApiRequest<CommentListResponse>();
 
@@ -148,6 +153,28 @@ const SinglePostView: React.FC<SinglePostViewProps> = ({
     }
   };
 
+  // Submit inline comment without opening the comments modal
+  const submitInlineComment = async () => {
+    if (!post || !newComment.trim() || submittingComment) return;
+    try {
+      setSubmittingComment(true);
+      const response: any = await send('post', '/comment/save', {
+        postId: post.id,
+        comment: newComment.trim(),
+      });
+      if (response?.success) {
+        setNewComment('');
+        // Optimistically bump count and refresh preview
+        setCommentCount(prev => prev + 1);
+        loadComments();
+      }
+    } catch (e) {
+      console.error('Error submitting inline comment:', e);
+    } finally {
+      setSubmittingComment(false);
+    }
+  };
+
   return (
     <Modal
       visible={visible}
@@ -159,6 +186,11 @@ const SinglePostView: React.FC<SinglePostViewProps> = ({
       hardwareAccelerated={true}
     >
       <StatusBar barStyle="light-content" backgroundColor="#000000" />
+      <KeyboardAvoidingView
+        style={[tw.flex1]}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+      >
       <SafeAreaView style={[tw.flex1, tw.bgBlack]}>
         {/* Header */}
         <View style={[tw.flexRow, tw.itemsCenter, tw.justifyBetween, tw.p4, tw.bgBlack]}>
@@ -186,7 +218,12 @@ const SinglePostView: React.FC<SinglePostViewProps> = ({
           </TouchableOpacity>
         </View>
 
-        <ScrollView style={[tw.flex1]} showsVerticalScrollIndicator={false}>
+        <ScrollView 
+          style={[tw.flex1]} 
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+          contentContainerStyle={[{ paddingBottom: 100 }]}
+        >
           {/* Images */}
           <View style={[tw.relative]}>
             <ScrollView 
@@ -375,7 +412,55 @@ const SinglePostView: React.FC<SinglePostViewProps> = ({
             ) : null}
           </View>
         </ScrollView>
+
+        {/* Inline Comment Input - always available like Instagram */}
+        <View style={[tw.p4, tw.borderT, tw.borderGray800, tw.bgBlack]}>
+          <View style={[tw.flexRow, tw.itemsEnd]}>
+            <View style={[tw.flex1, tw.mR3]}>
+              <TextInput
+                style={[
+                  tw.bgWhite,
+                  tw.roundedLg,
+                  tw.pX4,
+                  tw.pY3,
+                  tw.textBase,
+                  tw.textGray900,
+                  { minHeight: 40, maxHeight: 100 }
+                ]}
+                placeholder="Write a comment..."
+                placeholderTextColor="#9ca3af"
+                value={newComment}
+                onChangeText={setNewComment}
+                multiline
+                maxLength={500}
+                autoFocus
+                returnKeyType="send"
+                blurOnSubmit={false}
+                onSubmitEditing={submitInlineComment}
+              />
+            </View>
+            <TouchableOpacity
+              onPress={submitInlineComment}
+              disabled={!newComment.trim() || submittingComment}
+              style={[
+                tw.roundedLg,
+                tw.pX4,
+                tw.pY3,
+                tw.justifyCenter,
+                tw.itemsCenter,
+                { backgroundColor: newComment.trim() ? '#fb6c31' : '#4b5563', minHeight: 40 }
+              ]}
+            >
+              {submittingComment ? (
+                <ActivityIndicator size="small" color="#ffffff" />
+              ) : (
+                <Ionicons name="send" size={20} color="#ffffff" />
+              )}
+            </TouchableOpacity>
+          </View>
+        </View>
       </SafeAreaView>
+      </KeyboardAvoidingView>
 
       {/* Comment Section Modal */}
       <Modal

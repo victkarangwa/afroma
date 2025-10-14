@@ -576,7 +576,7 @@ const Networking: React.FC<NetworkingProps> = ({
             <Text style={[tw.textGray500, tw.textXs]}>{getTimeAgo(item.createdAt)}</Text>
           </View>
         </TouchableOpacity>
-        <TouchableOpacity 
+        {/* <TouchableOpacity 
           onPress={() => toggleBookmark(item.id)}
           disabled={likingPosts.has(item.id)}
         >
@@ -589,7 +589,7 @@ const Networking: React.FC<NetworkingProps> = ({
               color={likedPosts.has(item.id) ? "#ef4444" : "#6b7280"} 
             />
           )}
-        </TouchableOpacity>
+        </TouchableOpacity> */}
       </View>
 
       {/* Content */}
@@ -679,12 +679,12 @@ const Networking: React.FC<NetworkingProps> = ({
             }}
           >
             <Ionicons name="chatbubble-outline" size={18} color="#6b7280" />
-            <Text style={[tw.textGray600, tw.textSm, tw.mL1]}>0</Text>
+            {/* <Text style={[tw.textGray600, tw.textSm, tw.mL1]}>{item.commentCount}</Text> */}
           </TouchableOpacity>
-          <TouchableOpacity style={[tw.flexRow, tw.itemsCenter]} onPress={() => handleShare(item.id)}>
+          {/* <TouchableOpacity style={[tw.flexRow, tw.itemsCenter]} onPress={() => handleShare(item.id)}>
             <Ionicons name="arrow-redo-outline" size={18} color="#6b7280" />
             <Text style={[tw.textGray600, tw.textSm, tw.mL1]}>0</Text>
-          </TouchableOpacity>
+          </TouchableOpacity> */}
         </View>
       </View>
     </TouchableOpacity>

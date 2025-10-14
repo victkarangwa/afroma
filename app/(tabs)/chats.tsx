@@ -1,5 +1,6 @@
 import ScreenContainer from "@/components/container/screen";
 import TextComponent from "@/components/Text";
+import ImageWithFallback from "@/components/ImageWithFallback";
 import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
@@ -21,6 +22,7 @@ import {
   doc,
   where,
   getDocs,
+  limit,
 } from "firebase/firestore";
 import { db } from "@/configs/firebaseConfig";
 import { ApiResponse } from "@/types";
@@ -57,10 +59,11 @@ const ChatsScreen: React.FC = () => {
   );
   const [activeMenu, setActiveMenu] = useState(0);
   const [chats, setChats] = useState<
-    Array<{ id: string; participants: string[]; createdAt?: any }>
+    Array<{ id: string; participants: string[]; createdAt?: any; lastMessageAt?: any }>
   >([]);
   const [userId, setUserId] = useState<number | null>(null);
-  const [chattedUsers, setChattedUsers] = useState([]);
+  const [chattedUsers, setChattedUsers] = useState<any[]>([]);
+  const [lastMessages, setLastMessages] = useState<Record<string, string>>({});
   const [approvedFriends, setApprovedFriends] = useState<any[]>([]);
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [selectedUserId, setSelectedUserId] = useState<number | null>(null);
@@ -77,13 +80,30 @@ const ChatsScreen: React.FC = () => {
   useEffect(() => {
     const fetchChats = async () => {
       try {
-        const userId: number | null = await LocalStorage.getItem(
-          localStore.userId
-        );
+        let userId: number | null = await LocalStorage.getItem(localStore.userId);
+        if (!userId && userId !== 0) {
+          try {
+            const me: any = await send('get', '/users/me');
+            if (me?.id) {
+              userId = me.id;
+              await LocalStorage.setItem(localStore.userId, userId);
+            }
+          } catch (e) {
+            console.warn('fetchChats: could not resolve userId');
+          }
+        }
+        if (!userId && userId !== 0) {
+          console.warn('fetchChats: missing userId; skipping query');
+          setChats([]);
+          setChattedUsers([]);
+          return;
+        }
+        const currentUserIdStr = userId.toString();
         // Fetch chats where the user is a participant
         const chatsQuery = query(
           collection(db, "chats"),
-          where("participants", "array-contains", userId?.toString())
+          where("participants", "array-contains", currentUserIdStr),
+          orderBy("lastMessageAt", "desc")
         );
 
         // console.log("-----", userId)
@@ -93,6 +113,7 @@ const ChatsScreen: React.FC = () => {
           id: string;
           participants: string[];
           createdAt?: any;
+          lastMessageAt?: any;
         }> = [];
 
         chatsSnapshot.forEach((doc) => {
@@ -101,11 +122,62 @@ const ChatsScreen: React.FC = () => {
             id: doc.id,
             participants: data.participants,
             createdAt: data.createdAt,
+            lastMessageAt: data.lastMessageAt,
           });
         });
 
-        // console.log("--userChats---", userChats);
-        setChats(userChats);
+        // Enrich missing lastMessageAt by inspecting last message and fetch last message text
+        const enriched = await Promise.all(userChats.map(async (chat) => {
+          let lastMessageText = '';
+          if (!chat.lastMessageAt) {
+            try {
+              const msgsQ = query(
+                collection(db, `chats/${chat.id}/messages`),
+                orderBy('createdAt', 'desc'),
+                limit(1)
+              );
+              const msgsSnap = await getDocs(msgsQ);
+              const lastMsgDoc = msgsSnap.docs[0];
+              if (lastMsgDoc) {
+                const lastData: any = lastMsgDoc.data();
+                lastMessageText = lastData.text || '';
+                return { ...chat, lastMessageAt: lastData.createdAt || chat.createdAt };
+              }
+            } catch (e) {
+              // ignore error
+            }
+          } else {
+            // Fetch last message text even if lastMessageAt exists
+            try {
+              const msgsQ = query(
+                collection(db, `chats/${chat.id}/messages`),
+                orderBy('createdAt', 'desc'),
+                limit(1)
+              );
+              const msgsSnap = await getDocs(msgsQ);
+              const lastMsgDoc = msgsSnap.docs[0];
+              if (lastMsgDoc) {
+                const lastData: any = lastMsgDoc.data();
+                lastMessageText = lastData.text || '';
+              }
+            } catch (e) {
+              // ignore error
+            }
+          }
+          
+          // Store last message text
+          setLastMessages(prev => ({ ...prev, [chat.id]: lastMessageText }));
+          return chat;
+        }));
+
+        // Fallback client-side sort by lastMessageAt or createdAt
+        const sorted = [...enriched].sort((a: any, b: any) => {
+          const aTime = (a.lastMessageAt?.toDate ? a.lastMessageAt.toDate().getTime() : (a.lastMessageAt || 0)) || (a.createdAt?.toDate ? a.createdAt.toDate().getTime() : (a.createdAt || 0)) || 0;
+          const bTime = (b.lastMessageAt?.toDate ? b.lastMessageAt.toDate().getTime() : (b.lastMessageAt || 0)) || (b.createdAt?.toDate ? b.createdAt.toDate().getTime() : (b.createdAt || 0)) || 0;
+          return bTime - aTime;
+        });
+        // console.log("--sorted---", sorted);
+        setChats(sorted);
 
         // Filter users based on profile type to avoid duplicates
         let filteredSuggestions = [];
@@ -149,6 +221,7 @@ const ChatsScreen: React.FC = () => {
   const getApprovedFriends = async () => {
     try {
       const response = await send("get", "/friendship/approved");
+      console.log("------->", response)
       setApprovedFriends(Array.isArray(response) ? response : []);
     } catch (error) {
       console.error("Error fetching approved friends:", error);
@@ -250,73 +323,44 @@ const ChatsScreen: React.FC = () => {
               )}
             </ScrollView>
           </View> */}
-          {/* Messages */}
-          <View style={[tw.flex1, tw.pX4, tw.mT2]}>
-            <Text style={[tw.textGray900, tw.textXl, tw.fontBold, tw.mB2]}>
-              Messages
-            </Text>
+          {/* Friends */}
+          <View style={[tw.pX4, tw.mT2]}>
+            <Text style={[tw.textGray900, tw.textXl, tw.fontBold, tw.mB2]}>Friends</Text>
             {approvedFriends.length > 0 ? (
-              approvedFriends.map((friend) => (
-                <TouchableOpacity
-                  key={friend.id}
-                  style={[
-                    tw.bgWhite,
-                    tw.roundedLg,
-                    tw.flexRow,
-                    tw.itemsCenter,
-                    tw.p4,
-                    tw.mB1,
-                    tw.shadow,
-                  ]}
-                  onPress={() => {
-                    // router.push({
-                    //   pathname: "/chats/room",
-                    //   params: { user: JSON.stringify(friend) },
-                    // });
-                    openChatRoom(friend);
-                  }}
-                >
-                  <View style={{ position: "relative" }}>
-                    <Image
-                      // src={
-                      //   friend.gallery?.find((media: any) => media.featured)
-                      //     ?.thumbnailUrl || friend.gallery?.[0]?.thumbnailUrl
-                      // }
-                      source={require("../../assets/images/default_avatar.jpg")}
-                      style={[tw.w16, tw.h16, tw.roundedFull]}
-                    />
-                  </View>
-                  <View style={[tw.flex1, tw.mL4]}>
-                    <Text style={[tw.textGray900, tw.fontBold, tw.textBase]}>
-                      {friend.firstname} {friend.lastname}
-                    </Text>
+              <View style={[tw.flexRow, tw.flexWrap, { gap: 12 }]}>
+                {approvedFriends.map((friend) => (
+                  <TouchableOpacity
+                    key={friend.id}
+                    style={[tw.itemsCenter, tw.mB4]}
+                    onPress={() => openChatRoom(friend)}
+                  >
+                    {friend.gallery?.find((m: any) => m.featured)?.thumbnailUrl ||
+                     friend.gallery?.[0]?.thumbnailUrl ? (
+                      <Image
+                        source={{
+                          uri:
+                            friend.gallery?.find((m: any) => m.featured)
+                              ?.thumbnailUrl ||
+                            friend.gallery?.[0]?.thumbnailUrl,
+                        }}
+                        style={[tw.w20, tw.h20, tw.roundedFull, tw.mB2, tw.border2, tw.borderPink700]}
+                      />
+                    ) : (
+                      <View style={[tw.w20, tw.h20, tw.roundedFull, tw.mB2, tw.border2, tw.borderPink700, tw.bgPink700, tw.justifyCenter, tw.itemsCenter]}>
+                        <Text style={[tw.textWhite, tw.fontBold, tw.textSm]}>
+                          {friend.firstname?.[0]?.toUpperCase() || ''}{friend.lastname?.[0]?.toUpperCase() || ''}
+                        </Text>
+                      </View>
+                    )}
                     <Text
-                      style={[tw.textGray600, tw.textSm, tw.mT1]}
+                      style={[tw.textGray900, tw.fontMedium, tw.textSm, tw.textCenter]}
                       numberOfLines={1}
                     >
-                      {friend.bio || "Start a conversation..."}
+                      {friend.firstname} {friend.lastname}
                     </Text>
-                  </View>
-                  <View style={[tw.itemsEnd, tw.mL2]}>
-                    <Text style={[tw.textGray400, tw.textXs, tw.mB1]}>
-                      {friend.lastOnline
-                        ? new Date(friend.lastOnline).toLocaleDateString()
-                        : ""}
-                    </Text>
-                    {friend.status === "ACTIVE" && (
-                      <View
-                        style={{
-                          width: 8,
-                          height: 8,
-                          backgroundColor: "#22c55e",
-                          borderRadius: 4,
-                          alignSelf: "flex-end",
-                        }}
-                      />
-                    )}
-                  </View>
-                </TouchableOpacity>
-              ))
+                  </TouchableOpacity>
+                ))}
+              </View>
             ) : (
               <View
                 style={[
@@ -333,6 +377,49 @@ const ChatsScreen: React.FC = () => {
                 <Text style={[tw.textGray400, tw.textSm, tw.textCenter]}>
                   Connect with people to start chatting
                 </Text>
+              </View>
+            )}
+          </View>
+
+          {/* Chats (from Firebase) */}
+          <View style={[tw.pX4, tw.mT2, tw.mB2]}>
+            <Text style={[tw.textGray900, tw.textXl, tw.fontBold, tw.mB2]}>Chats</Text>
+            {chats.length > 0 ? (
+              chats.map((chat) => {
+                const meStr = (userId ?? '').toString();
+                const otherId = (chat.participants || []).find((p) => p !== meStr) || '';
+                const friend = approvedFriends.find((u: any) => (u.id ?? '').toString() === otherId);
+                const displayName = friend ? `${friend.firstname} ${friend.lastname}` : `User ${otherId}`;
+                const avatarUri = friend?.gallery?.find((m: any) => m.featured)?.thumbnailUrl || friend?.gallery?.[0]?.thumbnailUrl;
+                const payload = friend || { id: Number(otherId), firstName: `User`, middleName: '' };
+                return (
+                  <TouchableOpacity
+                    key={chat.id}
+                    style={[tw.bgWhite, tw.roundedLg, tw.flexRow, tw.itemsCenter, tw.p4, tw.mB1, tw.shadow]}
+                    onPress={() => openChatRoom(payload)}
+                  >
+                    <View style={{ position: 'relative' }}>
+                      <Image
+                        source={avatarUri ? { uri: avatarUri } : require("../../assets/images/default_avatar.jpg")}
+                        style={[tw.w16, tw.h16, tw.roundedFull]}
+                      />
+                    </View>
+                    <View style={[tw.flex1, tw.mL4]}> 
+                      <View style={[tw.flexRow, tw.justifyBetween, tw.itemsCenter]}> 
+                        <Text style={[tw.textGray900, tw.fontBold, tw.textBase]}>{displayName}</Text>
+                        <Text style={[tw.textGray400, tw.textXs]}>Recent</Text>
+                      </View>
+                      <Text style={[tw.textGray500, tw.textSm, tw.mT1]} numberOfLines={1}>
+                        {lastMessages[chat.id] || "No messages yet"}
+                      </Text>
+                    </View>
+                  </TouchableOpacity>
+                );
+              })
+            ) : (
+              <View style={[tw.bgWhite, tw.roundedLg, tw.p4, tw.itemsCenter, tw.justifyCenter]}>
+                <Text style={[tw.textGray500, tw.textCenter, tw.mB2]}>No chats available</Text>
+                <Text style={[tw.textGray400, tw.textSm, tw.textCenter]}>Start a conversation with a friend</Text>
               </View>
             )}
           </View>

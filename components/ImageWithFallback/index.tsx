@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { View, Image, ImageStyle, ViewStyle, ActivityIndicator } from 'react-native';
+import { View, Image, ImageStyle, ViewStyle, ActivityIndicator, Text } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { tw } from 'react-native-tailwindcss';
 
@@ -29,14 +29,34 @@ const ImageWithFallback: React.FC<ImageWithFallbackProps> = ({
   const optimizedSource = useMemo(() => {
     if (!source?.uri) return source;
     
+    // Validate URL format
+    try {
+      new URL(source.uri);
+    } catch {
+      // Invalid URL, return original source
+      return source;
+    }
+    
+    // Only add query parameters for certain domains that support them
+    const supportedDomains = ['bondedapp.io', 'afroma-master-service', 'picsum.photos'];
+    const shouldAddParams = supportedDomains.some(domain => source.uri.includes(domain));
+    
+    if (shouldAddParams) {
+      return {
+        ...source,
+        cache,
+        priority,
+        // Add query parameters for better caching
+        uri: source.uri.includes('?') 
+          ? `${source.uri}&w=800&q=80` // Add width and quality parameters if not present
+          : `${source.uri}?w=800&q=80`
+      };
+    }
+    
     return {
       ...source,
       cache,
-      priority,
-      // Add query parameters for better caching
-      uri: source.uri.includes('?') 
-        ? `${source.uri}&w=800&q=80` // Add width and quality parameters if not present
-        : `${source.uri}?w=800&q=80`
+      priority
     };
   }, [source, cache, priority]);
 
@@ -53,7 +73,8 @@ const ImageWithFallback: React.FC<ImageWithFallbackProps> = ({
     }
     return (
       <View style={[style, tw.bgGray200, tw.justifyCenter, tw.itemsCenter]}>
-        <Ionicons name="camera-outline" size={32} color="#9ca3af" />
+        <Ionicons name="image-outline" size={32} color="#9ca3af" />
+        <Text style={[tw.textGray500, tw.textXs, tw.mT1, tw.textCenter]}>Image unavailable</Text>
       </View>
     );
   }

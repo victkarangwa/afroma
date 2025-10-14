@@ -1508,6 +1508,13 @@ const HomeScreen: React.FC = () => {
           </View> */}
         </View>
         
+        {/* Right-side actions */}
+        <View style={[tw.flexRow, tw.itemsCenter, tw.justifyEnd, tw.mT2, tw.mX4]}>
+          <TouchableOpacity onPress={() => router.push('/saved')} style={[tw.mL3]}>
+            <Ionicons name="bookmark" size={22} color="#fb6c31" />
+          </TouchableOpacity>
+        </View>
+
         {/* Search Results */}
         {renderSearchResults()}
       </View>

@@ -16,6 +16,7 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import * as ImagePicker from 'expo-image-picker';
 import * as FileSystem from 'expo-file-system';
 import { Image } from 'react-native';
+import * as Location from 'expo-location';
 
 import useApiRequest from '@/hooks/useApiRequest';
 import { ApiResponse } from '@/types';
@@ -34,7 +35,9 @@ const BasicProfileScreen: React.FC = () => {
     gender: '',
     dateOfBirth: '',
     bio: '',
-    interestedIn: ''
+    interestedIn: '',
+    latitude: 0,
+    longitude: 0
   });
   
   // Photo management
@@ -60,7 +63,7 @@ const BasicProfileScreen: React.FC = () => {
   const interestedInOptions = [
     { id: 'Male', label: 'Male' },
     { id: 'Female', label: 'Female' },
-    { id: 'Both', label: 'Both' },
+    // { id: 'Both', label: 'Both' },
   ];
 
   // Fetch user profile
@@ -75,7 +78,9 @@ const BasicProfileScreen: React.FC = () => {
           gender: result.gender || '',
           dateOfBirth: result.dateOfBirth || '',
           bio: result.bio || '',
-          interestedIn: result.interestedIn || ''
+          interestedIn: result.interestedIn || '',
+          latitude: result.latitude || 0,
+          longitude: result.longitude || 0
         });
         
         // Initialize gallery with existing photos
@@ -254,7 +259,9 @@ const BasicProfileScreen: React.FC = () => {
       const submitData: any = {
         gender: formData.gender,
         dateOfBirth: formData.dateOfBirth,
-        bio: formData.bio
+        bio: formData.bio,
+        latitude: formData.latitude,
+        longitude: formData.longitude
       };
       
       // Add interestedIn only for dating profiles
@@ -316,7 +323,9 @@ const BasicProfileScreen: React.FC = () => {
         <Text style={[tw.textWhite, tw.textLg, tw.fontBold]}>
           Basic Profile
         </Text>
-        <View style={[tw.w6]} />
+        <TouchableOpacity onPress={handleSubmit} disabled={isSubmitting}>
+          <Ionicons name="save" size={24} color={isSubmitting ? '#f3f4f6' : 'white'} />
+        </TouchableOpacity>
       </View>
 
       <ScrollView style={[tw.flex1, tw.pX4]} showsVerticalScrollIndicator={false}>
@@ -410,6 +419,41 @@ const BasicProfileScreen: React.FC = () => {
               maximumDate={new Date()}
             />
           )}
+        </View>
+
+        {/* Location */}
+        <View style={[tw.bgWhite, tw.p4, tw.rounded, tw.mT3, tw.shadow]}>
+          <Text style={[tw.textBase, tw.fontBold, tw.mB3, { color: primaryColor }]}>Location</Text>
+          <Text style={[tw.textSm, tw.textGray600, tw.mB3]}>
+            We use your approximate location to show how far other dating or friendship profiles are from you.
+          </Text>
+          <View style={[tw.flexRow, tw.itemsCenter, tw.justifyBetween, tw.mB2]}>
+            <Text style={[tw.textSm, tw.textGray700]}>Latitude</Text>
+            <Text style={[tw.textSm, tw.fontBold]}>{formData.latitude?.toFixed ? formData.latitude.toFixed(6) : formData.latitude}</Text>
+          </View>
+          <View style={[tw.flexRow, tw.itemsCenter, tw.justifyBetween, tw.mB3]}>
+            <Text style={[tw.textSm, tw.textGray700]}>Longitude</Text>
+            <Text style={[tw.textSm, tw.fontBold]}>{formData.longitude?.toFixed ? formData.longitude.toFixed(6) : formData.longitude}</Text>
+          </View>
+          <TouchableOpacity
+            style={[tw.rounded, tw.pY3, tw.itemsCenter, { backgroundColor: primaryColor }]}
+            onPress={async () => {
+              try {
+                const { status } = await Location.requestForegroundPermissionsAsync();
+                if (status !== 'granted') {
+                  Alert.alert('Permission required', 'Location permission is needed to update your current location.');
+                  return;
+                }
+                const pos = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+                setFormData(prev => ({ ...prev, latitude: pos.coords.latitude, longitude: pos.coords.longitude }));
+              } catch (e) {
+                console.error('Error fetching location', e);
+                Alert.alert('Error', 'Failed to get current location. Please try again.');
+              }
+            }}
+          >
+            <Text style={[tw.textWhite, tw.fontBold]}>Use Current Location</Text>
+          </TouchableOpacity>
         </View>
 
         {/* Bio */}

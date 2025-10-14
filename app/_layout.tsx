@@ -249,6 +249,10 @@ export default function RootLayout() {
                 name="basic-profile"
                 options={{ headerShown: false }}
               />
+              <Stack.Screen
+                name="saved/index"
+                options={{ headerShown: false }}
+              />
               <Stack.Screen name="+not-found" />
             </Stack>
           </PaperProvider>

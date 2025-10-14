@@ -15,11 +15,44 @@ import { useRouter } from 'expo-router';
 import { useBookmarks } from '@/hooks/useBookmarks';
 import ImageWithFallback from '@/components/ImageWithFallback';
 import { PostSkeleton } from '@/components/Skeleton';
+import UserProfileView from '@/components/UserProfileView';
+
+// Mocked bookmarked dating profiles (to be replaced with API later)
+const MOCK_BOOKMARKED_PROFILES = [
+  {
+    matchId: 7,
+    matchedUserId: 100032,
+    profile: {
+      id: 100032,
+      firstname: "Male",
+      lastname: "Guy",
+      gender: "Male",
+      interestedIn: "Female",
+      dateOfBirth: "1998-10-14T00:00:00.000+00:00",
+      gallery: [
+        {
+          id: 55,
+          thumbnailUrl: "https://uat-user-api.bondedapp.io/afroma-master-service/media/stream/1jd6mzehoxnmm9wx.jpg",
+          mediaUrl: "https://uat-user-api.bondedapp.io/afroma-master-service/media/stream/1jd6mzehoxnmm9wx.jpg",
+          fileName: "1jd6mzehoxnmm9wx.jpg",
+          featured: true,
+          mediaType: "PHOTO"
+        }
+      ],
+      profileType: "DATING",
+      profileTypes: ["DATING"],
+      latitude: 37.785834,
+      longitude: -122.406417
+    }
+  }
+];
 
 const SavedPostsScreen: React.FC = () => {
   const router = useRouter();
   const { bookmarkedPosts, removeBookmark, loading } = useBookmarks();
   const [refreshing, setRefreshing] = useState(false);
+  const [profileModalVisible, setProfileModalVisible] = useState(false);
+  const [selectedUserId, setSelectedUserId] = useState<number | null>(null);
 
   const formatNumber = (num: number) => {
     if (num >= 1000) {
@@ -38,6 +71,18 @@ const SavedPostsScreen: React.FC = () => {
     if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
     if (diffInSeconds < 2592000) return `${Math.floor(diffInSeconds / 86400)}d ago`;
     return date.toLocaleDateString();
+  };
+
+  const calculateAge = (dobIso: string) => {
+    if (!dobIso) return null;
+    const birthDate = new Date(dobIso);
+    const today = new Date();
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const m = today.getMonth() - birthDate.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+      age--;
+    }
+    return age;
   };
 
   const handleRemoveBookmark = (postId: number) => {
@@ -59,6 +104,69 @@ const SavedPostsScreen: React.FC = () => {
     setRefreshing(true);
     // The useBookmarks hook will automatically reload when the component re-renders
     setTimeout(() => setRefreshing(false), 1000);
+  };
+
+  const viewProfile = (userId: number) => {
+    setSelectedUserId(userId);
+    setProfileModalVisible(true);
+  };
+
+  const messageProfile = (entry: any) => {
+    const p = entry.profile;
+    const payload = {
+      id: p.id,
+      firstName: p.firstname || '',
+      firstname: p.firstname || '',
+      middleName: '',
+      lastName: p.lastname || '',
+      lastname: p.lastname || '',
+      mediaList: Array.isArray(p.gallery) ? p.gallery.map((g: any) => ({
+        id: g.id,
+        thumbnailUrl: g.thumbnailUrl,
+        mediaUrl: g.mediaUrl || g.thumbnailUrl,
+        fileName: g.fileName,
+        featured: !!g.featured,
+        mediaType: g.mediaType || 'PHOTO',
+      })) : [],
+    };
+    router.push({ pathname: '/chats/room', params: { user: JSON.stringify(payload) } });
+  };
+
+  const renderProfile = ({ item }: { item: any }) => {
+    const p = item.profile;
+    const featured = Array.isArray(p.gallery) ? p.gallery.find((g: any) => g.featured) : null;
+    const avatarUri = featured?.thumbnailUrl || featured?.mediaUrl || '';
+    const age = calculateAge(p.dateOfBirth);
+    return (
+      <View style={[tw.bgWhite, tw.roundedLg, tw.mB4, tw.mX4, tw.shadow, tw.p4]}> 
+        <View style={[tw.flexRow, tw.itemsCenter]}> 
+          <Image
+            source={avatarUri ? { uri: avatarUri } : require('../../assets/images/default_avatar.jpg')}
+            style={[tw.w16, tw.h16, tw.roundedFull, tw.mR4]}
+          />
+          <View style={[tw.flex1]}> 
+            <Text style={[tw.textGray900, tw.fontBold, tw.textLg]}>{p.firstname} {p.lastname}{age ? `, ${age}` : ''}</Text>
+            <Text style={[tw.textGray500, tw.textSm]}>{p.gender}{p.interestedIn ? ` • Interested in ${p.interestedIn}` : ''}</Text>
+          </View>
+        </View>
+        <View style={[tw.flexRow, tw.justifyBetween, tw.mT4]}> 
+          <TouchableOpacity
+            style={[tw.flex1, tw.roundedFull, tw.itemsCenter, tw.justifyCenter, tw.pY3, tw.mR2, { backgroundColor: '#fb6c31' }]}
+            onPress={() => messageProfile(item)}
+            activeOpacity={0.9}
+          >
+            <Text style={[tw.textWhite, tw.fontBold]}>Message</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[tw.flex1, tw.roundedFull, tw.itemsCenter, tw.justifyCenter, tw.pY3, tw.mL2, tw.border, { borderColor: '#fb6c31' }]}
+            onPress={() => viewProfile(p.id)}
+            activeOpacity={0.9}
+          >
+            <Text style={[{ color: '#fb6c31' }, tw.fontBold]}>View Profile</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
   };
 
   const renderPost = ({ item }: { item: any }) => (
@@ -192,19 +300,35 @@ const SavedPostsScreen: React.FC = () => {
         >
           <Ionicons name="chevron-back-outline" size={24} color="#374151" />
           <Text style={[tw.textGray900, tw.textBase, tw.fontMedium, tw.mL2]}>
-            Saved Posts
+            Saved Profiles
           </Text>
         </TouchableOpacity>
         <View style={[tw.flexRow, tw.itemsCenter]}>
           <Ionicons name="bookmark" size={20} color="#fb6c31" />
-          <Text style={[tw.textGray600, tw.textSm, tw.mL1]}>
-            {bookmarkedPosts.length}
-          </Text>
+          <Text style={[tw.textGray600, tw.textSm, tw.mL1]}>{bookmarkedPosts.length}</Text>
         </View>
       </View>
 
+      {/* Bookmarked Dating Profiles (mocked) */}
+      <View style={[tw.mT4]}>
+        <Text style={[tw.mX4, tw.mB2, tw.textGray900, tw.fontBold, tw.textBase]}>Bookmarked Profiles</Text>
+        {MOCK_BOOKMARKED_PROFILES.length === 0 ? (
+          <View style={[tw.itemsCenter, tw.mY4]}>
+            <Text style={[tw.textGray500]}>No bookmarked profiles yet.</Text>
+          </View>
+        ) : (
+          <FlatList
+            data={MOCK_BOOKMARKED_PROFILES}
+            renderItem={renderProfile}
+            keyExtractor={(item) => `profile-${item.matchedUserId}`}
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={[tw.mB2]}
+          />
+        )}
+      </View>
+
       {/* Content */}
-      {loading ? (
+      {/* {loading ? (
         <View style={[tw.flex1, tw.pT4]}>
           <PostSkeleton />
           <PostSkeleton />
@@ -227,7 +351,14 @@ const SavedPostsScreen: React.FC = () => {
           }
           contentContainerStyle={[tw.pT4]}
         />
-      )}
+      )} */}
+
+      {/* User Profile Modal */}
+      <UserProfileView
+        visible={profileModalVisible}
+        onClose={() => setProfileModalVisible(false)}
+        userId={selectedUserId || 0}
+      />
     </SafeAreaView>
   );
 };

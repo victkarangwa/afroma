@@ -269,6 +269,14 @@ const HomeScreen: React.FC = () => {
       const payload = {
         matchId: firstUnseen.matchId,
         id: matchedProfile.id,
+        // Names (support both camelCase and lowercase variants used across app)
+        firstName: matchedProfile.firstname || matchedProfile.firstName || '',
+        middleName: matchedProfile.middleName || '',
+        lastName: matchedProfile.lastname || matchedProfile.lastName || '',
+        firstname: matchedProfile.firstname || matchedProfile.firstName || '',
+        lastname: matchedProfile.lastname || matchedProfile.lastName || '',
+        // Convenience avatar (used by networking/travel chat UI)
+        avatar: Array.isArray(matchedProfile.gallery) && matchedProfile.gallery.find((g: any) => g.featured)?.thumbnailUrl || '',
         // Map gallery -> mediaList expected by match screen
         mediaList: Array.isArray(matchedProfile.gallery) ? matchedProfile.gallery.map((g: any) => ({
           id: g.id,

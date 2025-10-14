@@ -153,7 +153,7 @@ const ProfileInfoScreen: React.FC = () => {
       const requestData = {
         ...basicData,
         gender: data.gender,
-        interestedIn: isDatingProfile ? data.interestedIn : "Male",
+        interestedIn: isDatingProfile ? data.interestedIn : data.gender === "Male" ? "Female" : "Male",
         dateOfBirth: moment(data.dateOfBirth).format("YYYY-MM-DD") + "T00:00:00.000Z",
         latitude: location?.coords?.latitude || 0,
         longitude: location?.coords?.longitude || 0,

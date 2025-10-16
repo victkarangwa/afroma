@@ -3,7 +3,7 @@ import { postApi } from '@/http/postApi';
 import { CreatePostRequest, CreatePostResponse } from '@/types';
 
 interface UseCreatePostReturn {
-  createPost: (content: string, mediaFileIds?: number[]) => Promise<CreatePostResponse | null>;
+  createPost: (content: string, mediaFileIds?: number[], location?: string) => Promise<CreatePostResponse | null>;
   loading: boolean;
   error: string | null;
   success: boolean;
@@ -15,7 +15,7 @@ export const useCreatePost = (): UseCreatePostReturn => {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<boolean>(false);
 
-  const createPost = useCallback(async (content: string, mediaFileIds?: number[]): Promise<CreatePostResponse | null> => {
+  const createPost = useCallback(async (content: string, mediaFileIds?: number[], location?: string): Promise<CreatePostResponse | null> => {
     try {
       setLoading(true);
       setError(null);
@@ -23,7 +23,8 @@ export const useCreatePost = (): UseCreatePostReturn => {
 
       const requestData: CreatePostRequest = {
         content,
-        mediaFileIds: mediaFileIds || []
+        mediaFileIds: mediaFileIds || [],
+        location: location || undefined
       };
 
       const response = await postApi.createPost(requestData);

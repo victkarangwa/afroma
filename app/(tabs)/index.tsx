@@ -213,6 +213,15 @@ const HomeScreen: React.FC = () => {
           addNewPost(newPost as { images: string[]; caption: string; location: string });
           await LocalStorage.removeItem('newPost'); // Clear the data
         }
+
+        // Check for refresh flag from post creation
+        const shouldRefresh = await LocalStorage.getItem('shouldRefreshPosts');
+        if (shouldRefresh) {
+          console.log('Refreshing posts after successful creation'); // Debug log
+          refresh();
+          networkingRefresh();
+          await LocalStorage.removeItem('shouldRefreshPosts'); // Clear the flag
+        }
         
         // TODO: Load user's liked posts if there's an API endpoint
         // This would help initialize the likedPosts state
@@ -222,36 +231,6 @@ const HomeScreen: React.FC = () => {
         loadUserLikedPosts();
       })();
     }, [apiDatingMatches, loadUserLikedPosts])
-  );
-
-  // Check for unseen matches only while the Home screen is focused
-  useFocusEffect(
-    React.useCallback(() => {
-      const handleAppStateChange = (nextAppState: AppStateStatus) => {
-        setAppState(nextAppState);
-        if (nextAppState === 'active') {
-          checkForUnseenMatches();
-        }
-      };
-
-      const subscription = AppState.addEventListener('change', handleAppStateChange);
-
-      // Initial check shortly after focus
-      const initialTimeout = setTimeout(() => {
-        checkForUnseenMatches();
-      }, 1500);
-
-      // Periodic polling while on home screen focus
-      const intervalId = setInterval(() => {
-        checkForUnseenMatches();
-      }, 60000); // every 60s
-
-      return () => {
-        subscription.remove();
-        clearTimeout(initialTimeout);
-        clearInterval(intervalId);
-      };
-    }, [])
   );
 
   const checkForUnseenMatches = async () => {
@@ -297,6 +276,48 @@ const HomeScreen: React.FC = () => {
       console.error('Error checking unseen matches:', error);
     }
   };
+
+  // Check for unseen matches and refresh posts when the Home screen is focused
+  useFocusEffect(
+    React.useCallback(() => {
+      const handleAppStateChange = (nextAppState: AppStateStatus) => {
+        setAppState(nextAppState);
+        if (nextAppState === 'active') {
+          checkForUnseenMatches();
+        }
+      };
+
+      const subscription = AppState.addEventListener('change', handleAppStateChange);
+
+      // Check for refresh flag when screen comes into focus
+      const checkForRefresh = async () => {
+        const shouldRefresh = await LocalStorage.getItem('shouldRefreshPosts');
+        if (shouldRefresh) {
+          console.log('Refreshing posts on focus after successful creation'); // Debug log
+          refresh();
+          networkingRefresh();
+          await LocalStorage.removeItem('shouldRefreshPosts'); // Clear the flag
+        }
+      };
+
+      // Initial check shortly after focus
+      const initialTimeout = setTimeout(() => {
+        checkForUnseenMatches();
+        checkForRefresh();
+      }, 1500);
+
+      // Periodic polling while on home screen focus
+      const intervalId = setInterval(() => {
+        checkForUnseenMatches();
+      }, 60000); // every 60s
+
+      return () => {
+        subscription.remove();
+        clearTimeout(initialTimeout);
+        clearInterval(intervalId);
+      };
+    }, [checkForUnseenMatches, refresh, networkingRefresh])
+  );
 
   // Handle 401 errors by checking if user is still authenticated
   useEffect(() => {
@@ -579,8 +600,9 @@ const HomeScreen: React.FC = () => {
     // Note: This function now only logs since we're using API posts
     // In a real implementation, you would make an API call to create a new post
     console.log('Adding new post:', postData);
-    // Refresh posts to get the latest data
+    // Refresh all relevant post feeds to get the latest data
     refresh();
+    networkingRefresh();
   };
 
   const renderPostCard = ({ item }: { item: Post }) => (
@@ -602,7 +624,7 @@ const HomeScreen: React.FC = () => {
             photo: item.user.photo
           } as any,
           timestamp: getTimeAgo(item.createdAt),
-          location: "", // API doesn't provide location
+          location: item.location || "", // Use location from API response
           caption: item.content,
           images: item.attachments.length > 0 ? item.attachments.map(att => att.mediaUrl) : [],
           likes: item.likeCount,
@@ -663,6 +685,18 @@ const HomeScreen: React.FC = () => {
           <Text style={[tw.textGray800, tw.textBase]} numberOfLines={3}>
             {renderCaptionWithHashtags(item.content)}
           </Text>
+        </View>
+      )}
+
+      {/* Location - Show if available */}
+      {item.location && (
+        <View style={[tw.pX4, tw.pB3]}>
+          <View style={[tw.flexRow, tw.itemsCenter]}>
+            <Ionicons name="location-outline" size={16} color="#6b7280" />
+            <Text style={[tw.textGray600, tw.textXs, tw.mL1]} numberOfLines={1}>
+              {item.location}
+            </Text>
+          </View>
         </View>
       )}
       
@@ -780,7 +814,7 @@ const HomeScreen: React.FC = () => {
                   avatar: "" // Not used anymore, we use initials instead
                 },
                 timestamp: getTimeAgo(item.createdAt),
-                location: "",
+                location: item.location || "",
                 caption: item.content,
                 images: item.attachments.length > 0 ? item.attachments.map(att => att.mediaUrl) : [],
                 likes: item.likeCount,

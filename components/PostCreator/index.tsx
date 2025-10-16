@@ -28,9 +28,10 @@ interface PostCreatorProps {
     caption: string;
     location: string;
   }) => void;
+  onPostSuccess?: () => void;
 }
 
-const PostCreator: React.FC<PostCreatorProps> = ({ profileType, onPostCreated }) => {
+const PostCreator: React.FC<PostCreatorProps> = ({ profileType, onPostCreated, onPostSuccess }) => {
   const router = useRouter();
   const [caption, setCaption] = useState("");
   const [location, setLocation] = useState("");
@@ -214,8 +215,8 @@ const PostCreator: React.FC<PostCreatorProps> = ({ profileType, onPostCreated })
         }
       }
 
-      // Create post using the API with media file IDs
-      const response = await createPost(caption.trim(), mediaFileIds);
+      // Create post using the API with media file IDs and location
+      const response = await createPost(caption.trim(), mediaFileIds, location.trim());
       
       if (response && response.success) {
         // Call the callback with the post data
@@ -227,6 +228,9 @@ const PostCreator: React.FC<PostCreatorProps> = ({ profileType, onPostCreated })
         };
         
         onPostCreated?.(postData);
+        
+        // Call the success callback to refresh posts
+        onPostSuccess?.();
         
         // Navigate back
         router.back();
@@ -384,7 +388,7 @@ const PostCreator: React.FC<PostCreatorProps> = ({ profileType, onPostCreated })
                       </TouchableOpacity>
                     );
                   }
-                  return null;
+                  return <View />;
                 }}
               />
             </View>

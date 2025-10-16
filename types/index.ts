@@ -85,6 +85,7 @@ export interface Post {
   likeCount: number;
   createdAt: string;
   attachments: PostAttachment[];
+  location?: string;
 }
 
 export interface PostListResponse {
@@ -103,6 +104,7 @@ export interface CreatePostRequest {
   id?: number;
   content: string;
   mediaFileIds?: number[];
+  location?: string;
 }
 
 export interface CreatePostResponse {

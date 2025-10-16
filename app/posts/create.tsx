@@ -16,10 +16,16 @@ const CreatePostScreen: React.FC = () => {
     await LocalStorage.setItem('newPost', postData);
   };
 
+  const handlePostSuccess = () => {
+    // Trigger a refresh by setting a flag in local storage
+    LocalStorage.setItem('shouldRefreshPosts', true);
+  };
+
   return (
     <PostCreator
       profileType={profileType as 'travel' | 'networking' | 'dating' | null}
       onPostCreated={handlePostCreated}
+      onPostSuccess={handlePostSuccess}
     />
   );
 };

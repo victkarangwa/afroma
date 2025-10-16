@@ -539,7 +539,7 @@ const Networking: React.FC<NetworkingProps> = ({
             photo: item.user.photo
           } as any,
           timestamp: getTimeAgo(item.createdAt),
-          location: "",
+          location: item.location || "",
           caption: item.content,
           images: item.attachments.length > 0 ? item.attachments.map(att => att.mediaUrl) : [],
           likes: item.likeCount,
@@ -608,6 +608,17 @@ const Networking: React.FC<NetworkingProps> = ({
         </Text>
       </View>
 
+      {/* Location - Show if available */}
+      {item.location && (
+        <View style={[tw.pX4, tw.pB3]}>
+          <View style={[tw.flexRow, tw.itemsCenter]}>
+            <Ionicons name="location-outline" size={14} color="#6b7280" />
+            <Text style={[tw.textGray600, tw.textXs, tw.mL1]} numberOfLines={1}>
+              {item.location}
+            </Text>
+          </View>
+        </View>
+      )}
 
       {/* Media */}
       {item.attachments.length > 0 && (
@@ -675,7 +686,7 @@ const Networking: React.FC<NetworkingProps> = ({
                   avatar: "" // Not used anymore, we use initials instead
                 },
                 timestamp: getTimeAgo(item.createdAt),
-                location: "",
+                location: item.location || "",
                 caption: item.content,
                 images: item.attachments.length > 0 ? item.attachments.map(att => att.mediaUrl) : [],
                 likes: item.likeCount,

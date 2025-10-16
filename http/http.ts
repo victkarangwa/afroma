@@ -7,6 +7,9 @@ import { getAuthToken, checkAuthStatus, clearAuthData } from '@/utils/auth'
 
 const authRequestInterceptor = async (settings: any) => {
   try {
+
+    // request path
+    // console.log('Request path:', settings.url);
     // Check if user is authenticated and token is valid
     const isAuthenticated = await checkAuthStatus();
     

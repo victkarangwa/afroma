@@ -89,6 +89,7 @@ const HomeScreen: React.FC = () => {
   const [appState, setAppState] = useState<AppStateStatus>(AppState.currentState);
   const [isNavigatingToMatch, setIsNavigatingToMatch] = useState(false);
   const [lastHandledMatchId, setLastHandledMatchId] = useState<number | null>(null);
+  const [lastUnseenMatchesCheck, setLastUnseenMatchesCheck] = useState<number>(0);
 
   // Use the posts hook for real API data
   const {
@@ -233,9 +234,18 @@ const HomeScreen: React.FC = () => {
     }, [apiDatingMatches, loadUserLikedPosts])
   );
 
-  const checkForUnseenMatches = async () => {
+  const checkForUnseenMatches = React.useCallback(async () => {
     try {
       if (isNavigatingToMatch) return;
+      
+      // Check if enough time has passed since last call (minimum 60 seconds)
+      const now = Date.now();
+      if (now - lastUnseenMatchesCheck < 60000) {
+        console.log('Skipping unseen matches check - too soon since last call');
+        return;
+      }
+      
+      setLastUnseenMatchesCheck(now);
       const result: any = await send('get', '/matches/unseen');
       if (!Array.isArray(result) || result.length === 0) return;
 
@@ -275,7 +285,7 @@ const HomeScreen: React.FC = () => {
     } catch (error) {
       console.error('Error checking unseen matches:', error);
     }
-  };
+  }, [isNavigatingToMatch, lastHandledMatchId, lastUnseenMatchesCheck, send, router]);
 
   // Check for unseen matches and refresh posts when the Home screen is focused
   useFocusEffect(
@@ -283,7 +293,11 @@ const HomeScreen: React.FC = () => {
       const handleAppStateChange = (nextAppState: AppStateStatus) => {
         setAppState(nextAppState);
         if (nextAppState === 'active') {
-          checkForUnseenMatches();
+          // Only check if enough time has passed since last check
+          const now = Date.now();
+          if (now - lastUnseenMatchesCheck >= 60000) {
+            checkForUnseenMatches();
+          }
         }
       };
 
@@ -300,9 +314,12 @@ const HomeScreen: React.FC = () => {
         }
       };
 
-      // Initial check shortly after focus
+      // Initial check shortly after focus (only if enough time has passed)
       const initialTimeout = setTimeout(() => {
-        checkForUnseenMatches();
+        const now = Date.now();
+        if (now - lastUnseenMatchesCheck >= 60000) {
+          checkForUnseenMatches();
+        }
         checkForRefresh();
       }, 1500);
 
@@ -316,7 +333,7 @@ const HomeScreen: React.FC = () => {
         clearTimeout(initialTimeout);
         clearInterval(intervalId);
       };
-    }, [checkForUnseenMatches, refresh, networkingRefresh])
+    }, [refresh, networkingRefresh, lastUnseenMatchesCheck, checkForUnseenMatches])
   );
 
   // Handle 401 errors by checking if user is still authenticated

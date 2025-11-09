@@ -216,10 +216,10 @@ const SwiperComponent = ({
                       .find((img: any) => img.featured)
                       ?.thumbnailUrl?.replace( // Replace the URL with the correct one if needed !!this will be removed on production
                         "http://203.161.50.115:5001",
-                        "https://uat-user-api.bondedapp.io"
+                        "https://uat-api.afroma.net"
                       ) || card.mediaList[0]?.thumbnailUrl?.replace(
                         "http://203.161.50.115:5001",
-                        "https://uat-user-api.bondedapp.io"
+                        "https://uat-api.afroma.net"
                       )
                   : undefined}
                 source={require("@/assets/images/afroma_logo.png")}

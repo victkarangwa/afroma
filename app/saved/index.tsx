@@ -32,8 +32,8 @@ const MOCK_BOOKMARKED_PROFILES = [
       gallery: [
         {
           id: 55,
-          thumbnailUrl: "https://uat-user-api.bondedapp.io/afroma-master-service/media/stream/1jd6mzehoxnmm9wx.jpg",
-          mediaUrl: "https://uat-user-api.bondedapp.io/afroma-master-service/media/stream/1jd6mzehoxnmm9wx.jpg",
+          thumbnailUrl: "https://uat-api.afroma.net/afroma-master-service/media/stream/1jd6mzehoxnmm9wx.jpg",
+          mediaUrl: "https://uat-api.afroma.net/afroma-master-service/media/stream/1jd6mzehoxnmm9wx.jpg",
           fileName: "1jd6mzehoxnmm9wx.jpg",
           featured: true,
           mediaType: "PHOTO"

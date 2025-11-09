@@ -72,8 +72,8 @@ export const postWithAttachmentsExample = () => {
     attachments: [
       {
         id: 22,
-        thumbnailUrl: "https://uat-user-api.bondedapp.io/afroma-master-service/media/stream/mfbjllgqgzdathzw.jpg",
-        mediaUrl: "https://uat-user-api.bondedapp.io/afroma-master-service/media/stream/mfbjllgqgzdathzw.jpg",
+        thumbnailUrl: "https://uat-api.afroma.net/afroma-master-service/media/stream/mfbjllgqgzdathzw.jpg",
+        mediaUrl: "https://uat-api.afroma.net/afroma-master-service/media/stream/mfbjllgqgzdathzw.jpg",
         fileName: "mfbjllgqgzdathzw.jpg",
         featured: true,
         mediaType: "PHOTO"

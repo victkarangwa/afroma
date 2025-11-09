@@ -38,7 +38,7 @@ const ImageWithFallback: React.FC<ImageWithFallbackProps> = ({
     }
     
     // Only add query parameters for certain domains that support them
-    const supportedDomains = ['bondedapp.io', 'afroma-master-service', 'picsum.photos'];
+    const supportedDomains = ['bondedapp.io', 'afroma.net', 'afroma-master-service', 'picsum.photos'];
     const shouldAddParams = supportedDomains.some(domain => source.uri.includes(domain));
     
     if (shouldAddParams) {
